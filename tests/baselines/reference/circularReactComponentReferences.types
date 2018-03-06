@@ -1,0 +1,68 @@
+=== tests/cases/compiler/mycomp.tsx ===
+import * as React from "react";
+>React : typeof React
+
+import { GeneratedComp } from "./file1";
+>GeneratedComp : any
+
+export class MyComponent extends React.Component<any, any> {
+>MyComponent : MyComponent
+>React.Component : React.Component<any, any>
+>React : typeof React
+>Component : typeof React.Component
+
+  render() {
+>render : () => any
+
+    return (
+>(      <div>        <GeneratedComp />      </div>    ) : JSX.Element
+
+      <div>
+><div>        <GeneratedComp />      </div> : JSX.Element
+>div : any
+
+        <GeneratedComp />
+><GeneratedComp /> : JSX.Element
+>GeneratedComp : any
+
+      </div>
+>div : any
+
+    );
+  }
+}
+
+=== tests/cases/compiler/file1.tsx ===
+import * as React from "react";
+>React : typeof React
+
+import { MyComponent } from "./mycomp";
+>MyComponent : typeof MyComponent
+
+declare function create<T extends React.ComponentClass<any>>(arg: {
+>create : <T extends React.ComponentClass<any>>(arg: { comp: T; }) => React.ComponentClass<any>
+>T : T
+>React : any
+>ComponentClass : React.ComponentClass<P>
+>arg : { comp: T; }
+
+  comp: T;
+>comp : T
+>T : T
+
+}): React.ComponentClass<any>;
+>React : any
+>ComponentClass : React.ComponentClass<P>
+
+export const GeneratedComp = create({
+>GeneratedComp : any
+>create({  comp: MyComponent}) : React.ComponentClass<any>
+>create : <T extends React.ComponentClass<any>>(arg: { comp: T; }) => React.ComponentClass<any>
+>{  comp: MyComponent} : { comp: typeof MyComponent; }
+
+  comp: MyComponent
+>comp : typeof MyComponent
+>MyComponent : typeof MyComponent
+
+});
+
