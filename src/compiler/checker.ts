@@ -615,6 +615,7 @@ namespace ts {
             EmptyObject = 1 << 10,
             Union = 1 << 11,
             Wildcard = 1 << 12,
+            Unknown = 1 << 13,
         }
 
         const enum MembersOrExportsResolutionKind {
@@ -4471,7 +4472,7 @@ namespace ts {
                 }
 
                 if (!popTypeResolution()) {
-                    type = reportCircularityError(symbol);
+                    type = reportCircularityError(symbol, type);
                 }
                 links.type = type;
             }
@@ -4551,8 +4552,8 @@ namespace ts {
                         }
                     }
                 }
-                if (!popTypeResolution()) {
-                    type = anyType;
+                if (!popTypeResolution() && containsUnknownType(type)) {
+                    type = unknownType;
                     if (noImplicitAny) {
                         const getter = getDeclarationOfKind<AccessorDeclaration>(symbol, SyntaxKind.GetAccessor);
                         error(getter, Diagnostics._0_implicitly_has_return_type_any_because_it_does_not_have_a_return_type_annotation_and_is_referenced_directly_or_indirectly_in_one_of_its_return_expressions, symbolToString(symbol));
@@ -4628,7 +4629,7 @@ namespace ts {
                     let type = instantiateType(getTypeOfSymbol(links.target), links.mapper);
                     symbolInstantiationDepth--;
                     if (!popTypeResolution()) {
-                        type = reportCircularityError(symbol);
+                        type = reportCircularityError(symbol, type);
                     }
                     links.type = type;
                 }
@@ -4636,7 +4637,7 @@ namespace ts {
             return links.type;
         }
 
-        function reportCircularityError(symbol: Symbol) {
+        function reportCircularityError(symbol: Symbol, type: Type = unknownType) {
             // Check if variable has type annotation that circularly references the variable itself
             if (getEffectiveTypeAnnotationNode(<VariableLikeDeclaration>symbol.valueDeclaration)) {
                 error(symbol.valueDeclaration, Diagnostics._0_is_referenced_directly_or_indirectly_in_its_own_type_annotation,
@@ -4644,11 +4645,42 @@ namespace ts {
                 return unknownType;
             }
             // Otherwise variable has initializer that circularly references the variable itself
-            if (noImplicitAny) {
-                error(symbol.valueDeclaration, Diagnostics._0_implicitly_has_type_any_because_it_does_not_have_a_type_annotation_and_is_referenced_directly_or_indirectly_in_its_own_initializer,
-                    symbolToString(symbol));
+            if (containsUnknownType(type)) {
+                if (noImplicitAny) {
+                    error(symbol.valueDeclaration, Diagnostics._0_implicitly_has_type_any_because_it_does_not_have_a_type_annotation_and_is_referenced_directly_or_indirectly_in_its_own_initializer,
+                        symbolToString(symbol));
+                }
+                return unknownType;
             }
-            return anyType;
+            return type;
+        }
+
+
+        function containsUnknownType(type: Type): boolean {
+            if (type.flags & TypeFlags.Union) {
+                for (const t of (<UnionType>type).types) {
+                    if (containsUnknownType(t)) {
+                        return true;
+                    }
+                }
+            }
+            if (isArrayType(type) || isTupleType(type)) {
+                for (const t of (<TypeReference>type).typeArguments) {
+                    if (containsUnknownType(t)) {
+                        return true;
+                    }
+                }
+            }
+            for (const p of getPropertiesOfObjectType(type)) {
+                const t = getTypeOfSymbol(p);
+                if (containsUnknownType(t)) {
+                    return true;
+                }
+            }
+            if (type === unknownType) {
+                return true;
+            }
+            return false;
         }
 
         function getTypeOfSymbol(symbol: Symbol): Type {
@@ -6915,8 +6947,8 @@ namespace ts {
                 else {
                     type = getReturnTypeFromBody(<FunctionLikeDeclaration>signature.declaration);
                 }
-                if (!popTypeResolution()) {
-                    type = anyType;
+                if (!popTypeResolution() && containsUnknownType(type)) {
+                    type = unknownType;
                     if (noImplicitAny) {
                         const declaration = <Declaration>signature.declaration;
                         const name = getNameOfDeclaration(declaration);
@@ -7688,6 +7720,7 @@ namespace ts {
             else if (flags & TypeFlags.Any) {
                 includes |= TypeIncludes.Any;
                 if (type === wildcardType) includes |= TypeIncludes.Wildcard;
+                if (type === unknownType) includes |= TypeIncludes.Unknown;
             }
             else if (!strictNullChecks && flags & TypeFlags.Nullable) {
                 if (flags & TypeFlags.Undefined) includes |= TypeIncludes.Undefined;
@@ -7807,6 +7840,9 @@ namespace ts {
             const typeSet: Type[] = [];
             const includes = addTypesToUnion(typeSet, 0, types);
             if (includes & TypeIncludes.Any) {
+                if (includes & TypeIncludes.Unknown) {
+                    return unknownType;
+                }
                 return includes & TypeIncludes.Wildcard ? wildcardType : anyType;
             }
             switch (unionReduction) {
