@@ -23,7 +23,7 @@ const [f, g = f, h = i, i = f] = [1]; // error for h = i
 >i : any
 >i : any
 >f : number
->[1] : [number, number, any, any]
+>[1] : [number, number, any, number]
 >1 : 1
 
 (function ([a, b = a]) { // ok

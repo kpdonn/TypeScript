@@ -16,7 +16,7 @@ tests/cases/conformance/parser/ecmascript5/RealWorld/parserharness.ts(691,50): e
 tests/cases/conformance/parser/ecmascript5/RealWorld/parserharness.ts(716,47): error TS2503: Cannot find namespace 'TypeScript'.
 tests/cases/conformance/parser/ecmascript5/RealWorld/parserharness.ts(721,62): error TS2304: Cannot find name 'ITextWriter'.
 tests/cases/conformance/parser/ecmascript5/RealWorld/parserharness.ts(724,29): error TS2304: Cannot find name 'ITextWriter'.
-tests/cases/conformance/parser/ecmascript5/RealWorld/parserharness.ts(754,53): error TS2552: Cannot find name 'TypeScript'. Did you mean 'TypeScriptLS'?
+tests/cases/conformance/parser/ecmascript5/RealWorld/parserharness.ts(754,53): error TS2304: Cannot find name 'TypeScript'.
 tests/cases/conformance/parser/ecmascript5/RealWorld/parserharness.ts(764,56): error TS2503: Cannot find namespace 'TypeScript'.
 tests/cases/conformance/parser/ecmascript5/RealWorld/parserharness.ts(765,37): error TS2304: Cannot find name 'TypeScript'.
 tests/cases/conformance/parser/ecmascript5/RealWorld/parserharness.ts(767,47): error TS2304: Cannot find name 'TypeScript'.
@@ -902,7 +902,7 @@ tests/cases/conformance/parser/ecmascript5/RealWorld/parserharness.ts(2030,32): 
     
             var libFolder: string = global['WScript'] ? TypeScript.filePath(global['WScript'].ScriptFullName) : (__dirname + '/');
                                                         ~~~~~~~~~~
-!!! error TS2552: Cannot find name 'TypeScript'. Did you mean 'TypeScriptLS'?
+!!! error TS2304: Cannot find name 'TypeScript'.
             export var libText = IO ? IO.readFile(libFolder + "lib.d.ts") : '';
     
             var stdout = new EmitterIOHost();
