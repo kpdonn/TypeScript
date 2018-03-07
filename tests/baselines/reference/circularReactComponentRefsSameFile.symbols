@@ -1,0 +1,52 @@
+=== tests/cases/compiler/circularReactComponentRefsSameFile.tsx ===
+import * as React from "react";
+>React : Symbol(React, Decl(circularReactComponentRefsSameFile.tsx, 0, 6))
+
+declare function create<T extends React.ComponentClass<any>>(arg: {
+>create : Symbol(create, Decl(circularReactComponentRefsSameFile.tsx, 0, 31))
+>T : Symbol(T, Decl(circularReactComponentRefsSameFile.tsx, 2, 24))
+>React : Symbol(React, Decl(circularReactComponentRefsSameFile.tsx, 0, 6))
+>ComponentClass : Symbol(React.ComponentClass, Decl(react.d.ts, 205, 5))
+>arg : Symbol(arg, Decl(circularReactComponentRefsSameFile.tsx, 2, 61))
+
+  comp: T;
+>comp : Symbol(comp, Decl(circularReactComponentRefsSameFile.tsx, 2, 67))
+>T : Symbol(T, Decl(circularReactComponentRefsSameFile.tsx, 2, 24))
+
+}): React.ComponentClass<any>;
+>React : Symbol(React, Decl(circularReactComponentRefsSameFile.tsx, 0, 6))
+>ComponentClass : Symbol(React.ComponentClass, Decl(react.d.ts, 205, 5))
+
+class MyComponent extends React.Component<any, any> {
+>MyComponent : Symbol(MyComponent, Decl(circularReactComponentRefsSameFile.tsx, 4, 30))
+>React.Component : Symbol(React.Component, Decl(react.d.ts, 158, 55), Decl(react.d.ts, 161, 66))
+>React : Symbol(React, Decl(circularReactComponentRefsSameFile.tsx, 0, 6))
+>Component : Symbol(React.Component, Decl(react.d.ts, 158, 55), Decl(react.d.ts, 161, 66))
+
+  render() {
+>render : Symbol(MyComponent.render, Decl(circularReactComponentRefsSameFile.tsx, 6, 53))
+
+    return (
+      <div>
+>div : Symbol(JSX.IntrinsicElements.div, Decl(react.d.ts, 2400, 45))
+
+        <GeneratedComp />
+>GeneratedComp : Symbol(GeneratedComp, Decl(circularReactComponentRefsSameFile.tsx, 16, 5))
+
+      </div>
+>div : Symbol(JSX.IntrinsicElements.div, Decl(react.d.ts, 2400, 45))
+
+    );
+  }
+}
+
+const GeneratedComp = create({
+>GeneratedComp : Symbol(GeneratedComp, Decl(circularReactComponentRefsSameFile.tsx, 16, 5))
+>create : Symbol(create, Decl(circularReactComponentRefsSameFile.tsx, 0, 31))
+
+  comp: MyComponent
+>comp : Symbol(comp, Decl(circularReactComponentRefsSameFile.tsx, 16, 30))
+>MyComponent : Symbol(MyComponent, Decl(circularReactComponentRefsSameFile.tsx, 4, 30))
+
+});
+

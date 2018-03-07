@@ -1,0 +1,160 @@
+=== tests/cases/compiler/circularReactRefThisStyles.tsx ===
+import * as React from "react";
+>React : Symbol(React, Decl(circularReactRefThisStyles.tsx, 0, 6))
+
+export type StyleValue = number | string;
+>StyleValue : Symbol(StyleValue, Decl(circularReactRefThisStyles.tsx, 0, 31))
+
+export type StyleRule = {
+>StyleRule : Symbol(StyleRule, Decl(circularReactRefThisStyles.tsx, 2, 41))
+
+  [key: string]: StyleValue | StyleValue[] | StyleRule;
+>key : Symbol(key, Decl(circularReactRefThisStyles.tsx, 5, 3))
+>StyleValue : Symbol(StyleValue, Decl(circularReactRefThisStyles.tsx, 0, 31))
+>StyleValue : Symbol(StyleValue, Decl(circularReactRefThisStyles.tsx, 0, 31))
+>StyleRule : Symbol(StyleRule, Decl(circularReactRefThisStyles.tsx, 2, 41))
+
+};
+
+export type StyleDeclaration<TKeys extends string> = {
+>StyleDeclaration : Symbol(StyleDeclaration, Decl(circularReactRefThisStyles.tsx, 6, 2))
+>TKeys : Symbol(TKeys, Decl(circularReactRefThisStyles.tsx, 8, 29))
+
+  [TKey in TKeys]: StyleRule
+>TKey : Symbol(TKey, Decl(circularReactRefThisStyles.tsx, 9, 3))
+>TKeys : Symbol(TKeys, Decl(circularReactRefThisStyles.tsx, 8, 29))
+>StyleRule : Symbol(StyleRule, Decl(circularReactRefThisStyles.tsx, 2, 41))
+
+};
+
+export type ModeDeclarations<TState> = {
+>ModeDeclarations : Symbol(ModeDeclarations, Decl(circularReactRefThisStyles.tsx, 10, 2))
+>TState : Symbol(TState, Decl(circularReactRefThisStyles.tsx, 12, 29))
+
+  [key: string]: (state: TState) => boolean;
+>key : Symbol(key, Decl(circularReactRefThisStyles.tsx, 13, 3))
+>state : Symbol(state, Decl(circularReactRefThisStyles.tsx, 13, 18))
+>TState : Symbol(TState, Decl(circularReactRefThisStyles.tsx, 12, 29))
+
+};
+
+export type StyleReducer = (modes: ActiveModes) => CSSClassName;
+>StyleReducer : Symbol(StyleReducer, Decl(circularReactRefThisStyles.tsx, 14, 2))
+>modes : Symbol(modes, Decl(circularReactRefThisStyles.tsx, 16, 28))
+>ActiveModes : Symbol(ActiveModes, Decl(circularReactRefThisStyles.tsx, 22, 2))
+>CSSClassName : Symbol(CSSClassName, Decl(circularReactRefThisStyles.tsx, 24, 53))
+
+export type CompiledStyle = CSSClassName | StyleReducer;
+>CompiledStyle : Symbol(CompiledStyle, Decl(circularReactRefThisStyles.tsx, 16, 64))
+>CSSClassName : Symbol(CSSClassName, Decl(circularReactRefThisStyles.tsx, 24, 53))
+>StyleReducer : Symbol(StyleReducer, Decl(circularReactRefThisStyles.tsx, 14, 2))
+
+export type CompiledStyleSheet<TKeys extends string> = {
+>CompiledStyleSheet : Symbol(CompiledStyleSheet, Decl(circularReactRefThisStyles.tsx, 18, 56))
+>TKeys : Symbol(TKeys, Decl(circularReactRefThisStyles.tsx, 20, 31))
+
+  [Key in TKeys]: CompiledStyle
+>Key : Symbol(Key, Decl(circularReactRefThisStyles.tsx, 21, 3))
+>TKeys : Symbol(TKeys, Decl(circularReactRefThisStyles.tsx, 20, 31))
+>CompiledStyle : Symbol(CompiledStyle, Decl(circularReactRefThisStyles.tsx, 16, 64))
+
+};
+
+export type ActiveModes = { [key: string]: boolean };
+>ActiveModes : Symbol(ActiveModes, Decl(circularReactRefThisStyles.tsx, 22, 2))
+>key : Symbol(key, Decl(circularReactRefThisStyles.tsx, 24, 29))
+
+export type CSSClassName = string;
+>CSSClassName : Symbol(CSSClassName, Decl(circularReactRefThisStyles.tsx, 24, 53))
+
+export type ComputedStyleSheet<Keys extends string> = {
+>ComputedStyleSheet : Symbol(ComputedStyleSheet, Decl(circularReactRefThisStyles.tsx, 26, 34))
+>Keys : Symbol(Keys, Decl(circularReactRefThisStyles.tsx, 28, 31))
+
+  [Key in Keys]: CSSClassName
+>Key : Symbol(Key, Decl(circularReactRefThisStyles.tsx, 29, 3))
+>Keys : Symbol(Keys, Decl(circularReactRefThisStyles.tsx, 28, 31))
+>CSSClassName : Symbol(CSSClassName, Decl(circularReactRefThisStyles.tsx, 24, 53))
+
+};
+
+declare function compile<TKeys extends string>(
+>compile : Symbol(compile, Decl(circularReactRefThisStyles.tsx, 30, 2))
+>TKeys : Symbol(TKeys, Decl(circularReactRefThisStyles.tsx, 32, 25))
+
+  styles: StyleDeclaration<TKeys>
+>styles : Symbol(styles, Decl(circularReactRefThisStyles.tsx, 32, 47))
+>StyleDeclaration : Symbol(StyleDeclaration, Decl(circularReactRefThisStyles.tsx, 6, 2))
+>TKeys : Symbol(TKeys, Decl(circularReactRefThisStyles.tsx, 32, 25))
+
+): CompiledStyleSheet<TKeys>;
+>CompiledStyleSheet : Symbol(CompiledStyleSheet, Decl(circularReactRefThisStyles.tsx, 18, 56))
+>TKeys : Symbol(TKeys, Decl(circularReactRefThisStyles.tsx, 32, 25))
+
+declare function reactTo<TProps, TState, TRules extends string>(
+>reactTo : Symbol(reactTo, Decl(circularReactRefThisStyles.tsx, 34, 29))
+>TProps : Symbol(TProps, Decl(circularReactRefThisStyles.tsx, 36, 25))
+>TState : Symbol(TState, Decl(circularReactRefThisStyles.tsx, 36, 32))
+>TRules : Symbol(TRules, Decl(circularReactRefThisStyles.tsx, 36, 40))
+
+  component: React.Component<TProps, TState>,
+>component : Symbol(component, Decl(circularReactRefThisStyles.tsx, 36, 64))
+>React : Symbol(React, Decl(circularReactRefThisStyles.tsx, 0, 6))
+>Component : Symbol(React.Component, Decl(react.d.ts, 158, 55), Decl(react.d.ts, 161, 66))
+>TProps : Symbol(TProps, Decl(circularReactRefThisStyles.tsx, 36, 25))
+>TState : Symbol(TState, Decl(circularReactRefThisStyles.tsx, 36, 32))
+
+  styles: CompiledStyleSheet<TRules>,
+>styles : Symbol(styles, Decl(circularReactRefThisStyles.tsx, 37, 45))
+>CompiledStyleSheet : Symbol(CompiledStyleSheet, Decl(circularReactRefThisStyles.tsx, 18, 56))
+>TRules : Symbol(TRules, Decl(circularReactRefThisStyles.tsx, 36, 40))
+
+  modes?: ModeDeclarations<{ props: TProps; state: TState }>
+>modes : Symbol(modes, Decl(circularReactRefThisStyles.tsx, 38, 37))
+>ModeDeclarations : Symbol(ModeDeclarations, Decl(circularReactRefThisStyles.tsx, 10, 2))
+>props : Symbol(props, Decl(circularReactRefThisStyles.tsx, 39, 28))
+>TProps : Symbol(TProps, Decl(circularReactRefThisStyles.tsx, 36, 25))
+>state : Symbol(state, Decl(circularReactRefThisStyles.tsx, 39, 43))
+>TState : Symbol(TState, Decl(circularReactRefThisStyles.tsx, 36, 32))
+
+): ComputedStyleSheet<TRules>;
+>ComputedStyleSheet : Symbol(ComputedStyleSheet, Decl(circularReactRefThisStyles.tsx, 26, 34))
+>TRules : Symbol(TRules, Decl(circularReactRefThisStyles.tsx, 36, 40))
+
+const STYLES = compile({
+>STYLES : Symbol(STYLES, Decl(circularReactRefThisStyles.tsx, 42, 5))
+>compile : Symbol(compile, Decl(circularReactRefThisStyles.tsx, 30, 2))
+
+  root: { padding: 10 }
+>root : Symbol(root, Decl(circularReactRefThisStyles.tsx, 42, 24))
+>padding : Symbol(padding, Decl(circularReactRefThisStyles.tsx, 43, 9))
+
+});
+
+export class App extends React.Component<{}, {}> {
+>App : Symbol(App, Decl(circularReactRefThisStyles.tsx, 44, 3))
+>React.Component : Symbol(React.Component, Decl(react.d.ts, 158, 55), Decl(react.d.ts, 161, 66))
+>React : Symbol(React, Decl(circularReactRefThisStyles.tsx, 0, 6))
+>Component : Symbol(React.Component, Decl(react.d.ts, 158, 55), Decl(react.d.ts, 161, 66))
+
+  styles = reactTo(this, STYLES);
+>styles : Symbol(App.styles, Decl(circularReactRefThisStyles.tsx, 46, 50))
+>reactTo : Symbol(reactTo, Decl(circularReactRefThisStyles.tsx, 34, 29))
+>this : Symbol(App, Decl(circularReactRefThisStyles.tsx, 44, 3))
+>STYLES : Symbol(STYLES, Decl(circularReactRefThisStyles.tsx, 42, 5))
+
+  render() {
+>render : Symbol(App.render, Decl(circularReactRefThisStyles.tsx, 47, 33))
+
+    return <div className={this.styles.root}> </div>;
+>div : Symbol(JSX.IntrinsicElements.div, Decl(react.d.ts, 2400, 45))
+>className : Symbol(className, Decl(circularReactRefThisStyles.tsx, 50, 15))
+>this.styles.root : Symbol(root)
+>this.styles : Symbol(App.styles, Decl(circularReactRefThisStyles.tsx, 46, 50))
+>this : Symbol(App, Decl(circularReactRefThisStyles.tsx, 44, 3))
+>styles : Symbol(App.styles, Decl(circularReactRefThisStyles.tsx, 46, 50))
+>root : Symbol(root)
+>div : Symbol(JSX.IntrinsicElements.div, Decl(react.d.ts, 2400, 45))
+  }
+}
+

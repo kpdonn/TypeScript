@@ -1,0 +1,166 @@
+=== tests/cases/compiler/circularReactRefThisStyles.tsx ===
+import * as React from "react";
+>React : typeof React
+
+export type StyleValue = number | string;
+>StyleValue : StyleValue
+
+export type StyleRule = {
+>StyleRule : StyleRule
+
+  [key: string]: StyleValue | StyleValue[] | StyleRule;
+>key : string
+>StyleValue : StyleValue
+>StyleValue : StyleValue
+>StyleRule : StyleRule
+
+};
+
+export type StyleDeclaration<TKeys extends string> = {
+>StyleDeclaration : StyleDeclaration<TKeys>
+>TKeys : TKeys
+
+  [TKey in TKeys]: StyleRule
+>TKey : TKey
+>TKeys : TKeys
+>StyleRule : StyleRule
+
+};
+
+export type ModeDeclarations<TState> = {
+>ModeDeclarations : ModeDeclarations<TState>
+>TState : TState
+
+  [key: string]: (state: TState) => boolean;
+>key : string
+>state : TState
+>TState : TState
+
+};
+
+export type StyleReducer = (modes: ActiveModes) => CSSClassName;
+>StyleReducer : StyleReducer
+>modes : ActiveModes
+>ActiveModes : ActiveModes
+>CSSClassName : string
+
+export type CompiledStyle = CSSClassName | StyleReducer;
+>CompiledStyle : CompiledStyle
+>CSSClassName : string
+>StyleReducer : StyleReducer
+
+export type CompiledStyleSheet<TKeys extends string> = {
+>CompiledStyleSheet : CompiledStyleSheet<TKeys>
+>TKeys : TKeys
+
+  [Key in TKeys]: CompiledStyle
+>Key : Key
+>TKeys : TKeys
+>CompiledStyle : CompiledStyle
+
+};
+
+export type ActiveModes = { [key: string]: boolean };
+>ActiveModes : ActiveModes
+>key : string
+
+export type CSSClassName = string;
+>CSSClassName : string
+
+export type ComputedStyleSheet<Keys extends string> = {
+>ComputedStyleSheet : ComputedStyleSheet<Keys>
+>Keys : Keys
+
+  [Key in Keys]: CSSClassName
+>Key : Key
+>Keys : Keys
+>CSSClassName : string
+
+};
+
+declare function compile<TKeys extends string>(
+>compile : <TKeys extends string>(styles: StyleDeclaration<TKeys>) => CompiledStyleSheet<TKeys>
+>TKeys : TKeys
+
+  styles: StyleDeclaration<TKeys>
+>styles : StyleDeclaration<TKeys>
+>StyleDeclaration : StyleDeclaration<TKeys>
+>TKeys : TKeys
+
+): CompiledStyleSheet<TKeys>;
+>CompiledStyleSheet : CompiledStyleSheet<TKeys>
+>TKeys : TKeys
+
+declare function reactTo<TProps, TState, TRules extends string>(
+>reactTo : <TProps, TState, TRules extends string>(component: React.Component<TProps, TState>, styles: CompiledStyleSheet<TRules>, modes?: ModeDeclarations<{ props: TProps; state: TState; }> | undefined) => ComputedStyleSheet<TRules>
+>TProps : TProps
+>TState : TState
+>TRules : TRules
+
+  component: React.Component<TProps, TState>,
+>component : React.Component<TProps, TState>
+>React : any
+>Component : React.Component<P, S>
+>TProps : TProps
+>TState : TState
+
+  styles: CompiledStyleSheet<TRules>,
+>styles : CompiledStyleSheet<TRules>
+>CompiledStyleSheet : CompiledStyleSheet<TKeys>
+>TRules : TRules
+
+  modes?: ModeDeclarations<{ props: TProps; state: TState }>
+>modes : ModeDeclarations<{ props: TProps; state: TState; }> | undefined
+>ModeDeclarations : ModeDeclarations<TState>
+>props : TProps
+>TProps : TProps
+>state : TState
+>TState : TState
+
+): ComputedStyleSheet<TRules>;
+>ComputedStyleSheet : ComputedStyleSheet<Keys>
+>TRules : TRules
+
+const STYLES = compile({
+>STYLES : CompiledStyleSheet<"root">
+>compile({  root: { padding: 10 }}) : CompiledStyleSheet<"root">
+>compile : <TKeys extends string>(styles: StyleDeclaration<TKeys>) => CompiledStyleSheet<TKeys>
+>{  root: { padding: 10 }} : { root: { padding: number; }; }
+
+  root: { padding: 10 }
+>root : { padding: number; }
+>{ padding: 10 } : { padding: number; }
+>padding : number
+>10 : 10
+
+});
+
+export class App extends React.Component<{}, {}> {
+>App : App
+>React.Component : React.Component<{}, {}>
+>React : typeof React
+>Component : typeof React.Component
+
+  styles = reactTo(this, STYLES);
+>styles : ComputedStyleSheet<"root">
+>reactTo(this, STYLES) : ComputedStyleSheet<"root">
+>reactTo : <TProps, TState, TRules extends string>(component: React.Component<TProps, TState>, styles: CompiledStyleSheet<TRules>, modes?: ModeDeclarations<{ props: TProps; state: TState; }> | undefined) => ComputedStyleSheet<TRules>
+>this : this
+>STYLES : CompiledStyleSheet<"root">
+
+  render() {
+>render : () => JSX.Element
+
+    return <div className={this.styles.root}> </div>;
+><div className={this.styles.root}> </div> : JSX.Element
+>div : any
+>className : string
+>this.styles.root : string
+>this.styles : ComputedStyleSheet<"root">
+>this : this
+>styles : ComputedStyleSheet<"root">
+>root : string
+>div : any
+  }
+}
+

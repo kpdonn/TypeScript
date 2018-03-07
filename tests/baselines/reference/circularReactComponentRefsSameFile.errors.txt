@@ -1,0 +1,26 @@
+tests/cases/compiler/circularReactComponentRefsSameFile.tsx(8,3): error TS7023: 'render' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.
+
+
+==== tests/cases/compiler/circularReactComponentRefsSameFile.tsx (1 errors) ====
+    import * as React from "react";
+    
+    declare function create<T extends React.ComponentClass<any>>(arg: {
+      comp: T;
+    }): React.ComponentClass<any>;
+    
+    class MyComponent extends React.Component<any, any> {
+      render() {
+      ~~~~~~
+!!! error TS7023: 'render' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.
+        return (
+          <div>
+            <GeneratedComp />
+          </div>
+        );
+      }
+    }
+    
+    const GeneratedComp = create({
+      comp: MyComponent
+    });
+    
