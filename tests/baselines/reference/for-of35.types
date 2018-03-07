@@ -3,7 +3,7 @@ class StringIterator {
 >StringIterator : StringIterator
 
     next() {
->next : () => any
+>next : () => { done: boolean; value: any; }
 
         return {
 >{            done: true,            value: v        } : { done: boolean; value: any; }

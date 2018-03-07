@@ -67,14 +67,14 @@ var fnr2: () => any = fnReturn2();
 
 // Comma
 var co1 = (co1, 3);
->co1 : any
+>co1 : number
 >(co1, 3) : 3
 >co1, 3 : 3
->co1 : any
+>co1 : number
 >3 : 3
 
 var co1: number;
->co1 : any
+>co1 : number
 
 var co2 = (3, 4, co2);
 >co2 : any
@@ -89,59 +89,59 @@ var co2: any;
 >co2 : any
 
 var co3 = (co1, co2, co3, co1);
->co3 : any
->(co1, co2, co3, co1) : any
->co1, co2, co3, co1 : any
->co1, co2, co3 : any
+>co3 : number
+>(co1, co2, co3, co1) : number
+>co1, co2, co3, co1 : number
+>co1, co2, co3 : number
 >co1, co2 : any
->co1 : any
+>co1 : number
 >co2 : any
->co3 : any
->co1 : any
+>co3 : number
+>co1 : number
 
 var co3: number;
->co3 : any
+>co3 : number
 
 // Assignment
 var as1 = (as1 = 2);
->as1 : any
+>as1 : number
 >(as1 = 2) : 2
 >as1 = 2 : 2
->as1 : any
+>as1 : number
 >2 : 2
 
 var as1: number;
->as1 : any
+>as1 : number
 
 var as2 = (as2 = as2 = 2);
->as2 : any
+>as2 : number
 >(as2 = as2 = 2) : 2
 >as2 = as2 = 2 : 2
->as2 : any
+>as2 : number
 >as2 = 2 : 2
->as2 : any
+>as2 : number
 >2 : 2
 
 var as2: number;
->as2 : any
+>as2 : number
 
 // Conditional
 var cnd1 = cnd1 ? 0 : 1;
->cnd1 : any
+>cnd1 : number
 >cnd1 ? 0 : 1 : 0 | 1
->cnd1 : any
+>cnd1 : number
 >0 : 0
 >1 : 1
 
 var cnd1: number;
->cnd1 : any
+>cnd1 : number
 
 var cnd2 = cnd1 ? cnd1 ? '' : "" : '';
 >cnd2 : string
 >cnd1 ? cnd1 ? '' : "" : '' : ""
->cnd1 : any
+>cnd1 : number
 >cnd1 ? '' : "" : ""
->cnd1 : any
+>cnd1 : number
 >'' : ""
 >"" : ""
 >'' : ""
@@ -179,22 +179,22 @@ var or3: any;
 
 // &&
 var and1 = and1 && '';
->and1 : any
+>and1 : ""
 >and1 && '' : ""
->and1 : any
+>and1 : ""
 >'' : ""
 
 var and1: string;
->and1 : any
+>and1 : ""
 
 var and2 = '' && and2;
->and2 : any
+>and2 : string
 >'' && and2 : ""
 >'' : ""
->and2 : any
+>and2 : string
 
 var and2: any;
->and2 : any
+>and2 : string
 
 var and3 = and3 && and3;
 >and3 : any

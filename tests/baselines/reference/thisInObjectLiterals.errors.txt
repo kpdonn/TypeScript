@@ -1,8 +1,9 @@
 tests/cases/conformance/expressions/thisKeyword/thisInObjectLiterals.ts(14,5): error TS7023: 'f' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.
 tests/cases/conformance/expressions/thisKeyword/thisInObjectLiterals.ts(15,21): error TS2339: Property 'spaaace' does not exist on type '{ f(): any; }'.
+tests/cases/conformance/expressions/thisKeyword/thisInObjectLiterals.ts(18,5): error TS2403: Subsequent variable declarations must have the same type.  Variable 'obj' must be of type '{ f(): any; }', but here has type '{ f: () => any; }'.
 
 
-==== tests/cases/conformance/expressions/thisKeyword/thisInObjectLiterals.ts (2 errors) ====
+==== tests/cases/conformance/expressions/thisKeyword/thisInObjectLiterals.ts (3 errors) ====
     class MyClass {
         t: number;
     
@@ -25,4 +26,6 @@ tests/cases/conformance/expressions/thisKeyword/thisInObjectLiterals.ts(15,21): 
         }
     };
     var obj: { f: () => any; };
+        ~~~
+!!! error TS2403: Subsequent variable declarations must have the same type.  Variable 'obj' must be of type '{ f(): any; }', but here has type '{ f: () => any; }'.
     

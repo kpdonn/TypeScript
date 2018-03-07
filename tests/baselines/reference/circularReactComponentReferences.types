@@ -12,7 +12,7 @@ export class MyComponent extends React.Component<any, any> {
 >Component : typeof React.Component
 
   render() {
->render : () => any
+>render : () => JSX.Element
 
     return (
 >(      <div>        <GeneratedComp />      </div>    ) : JSX.Element
@@ -55,7 +55,7 @@ declare function create<T extends React.ComponentClass<any>>(arg: {
 >ComponentClass : React.ComponentClass<P>
 
 export const GeneratedComp = create({
->GeneratedComp : any
+>GeneratedComp : React.ComponentClass<any>
 >create({  comp: MyComponent}) : React.ComponentClass<any>
 >create : <T extends React.ComponentClass<any>>(arg: { comp: T; }) => React.ComponentClass<any>
 >{  comp: MyComponent} : { comp: typeof MyComponent; }

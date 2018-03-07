@@ -1,9 +1,9 @@
 === tests/cases/conformance/statements/VariableStatements/recursiveInitializer.ts ===
 // number unless otherwise specified
 var n1 = n1++;
->n1 : any
+>n1 : number
 >n1++ : number
->n1 : any
+>n1 : number
 
 var n2: number = n2 + n2;
 >n2 : number
@@ -19,9 +19,9 @@ var n3 /* any */ = n3 + n3;
 
 // string unless otherwise specified
 var s1 = s1 + '';
->s1 : any
+>s1 : string
 >s1 + '' : string
->s1 : any
+>s1 : string
 >'' : ""
 
 var s2 /* any */ = s2 + s2;
@@ -37,22 +37,22 @@ var s3 : string = s3 + s3;
 >s3 : string
 
 var s4 = '' + s4;
->s4 : any
+>s4 : string
 >'' + s4 : string
 >'' : ""
->s4 : any
+>s4 : string
 
 // boolean unless otherwise specified
 var b1 = !b1;
->b1 : any
+>b1 : boolean
 >!b1 : boolean
->b1 : any
+>b1 : boolean
 
 var b2 = !!b2;
->b2 : any
+>b2 : boolean
 >!!b2 : boolean
 >!b2 : boolean
->b2 : any
+>b2 : boolean
 
 var b3 = !b3 || b3; // expected boolean here. actually 'any'
 >b3 : any

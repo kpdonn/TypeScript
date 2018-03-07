@@ -1,8 +1,7 @@
 tests/cases/conformance/es6/for-ofStatements/for-of33.ts(2,5): error TS7023: '[Symbol.iterator]' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.
-tests/cases/conformance/es6/for-ofStatements/for-of33.ts(7,10): error TS7022: 'v' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
 
 
-==== tests/cases/conformance/es6/for-ofStatements/for-of33.ts (2 errors) ====
+==== tests/cases/conformance/es6/for-ofStatements/for-of33.ts (1 errors) ====
     class StringIterator {
         [Symbol.iterator]() {
         ~~~~~~~~~~~~~~~~~
@@ -12,5 +11,3 @@ tests/cases/conformance/es6/for-ofStatements/for-of33.ts(7,10): error TS7022: 'v
     }
     
     for (var v of new StringIterator) { }
-             ~
-!!! error TS7022: 'v' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
