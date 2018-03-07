@@ -1,0 +1,15 @@
+=== tests/cases/compiler/circularReturnFunctionsStrict.ts ===
+function f1() {
+>f1 : Symbol(f1, Decl(circularReturnFunctionsStrict.ts, 0, 0))
+
+  return f2();
+>f2 : Symbol(f2, Decl(circularReturnFunctionsStrict.ts, 2, 1))
+}
+
+function f2() {
+>f2 : Symbol(f2, Decl(circularReturnFunctionsStrict.ts, 2, 1))
+
+  return f1();
+>f1 : Symbol(f1, Decl(circularReturnFunctionsStrict.ts, 0, 0))
+}
+

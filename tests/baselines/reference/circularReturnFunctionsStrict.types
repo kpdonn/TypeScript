@@ -1,0 +1,17 @@
+=== tests/cases/compiler/circularReturnFunctionsStrict.ts ===
+function f1() {
+>f1 : () => any
+
+  return f2();
+>f2() : any
+>f2 : () => any
+}
+
+function f2() {
+>f2 : () => any
+
+  return f1();
+>f1() : any
+>f1 : () => any
+}
+

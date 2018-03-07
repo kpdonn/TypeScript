@@ -330,6 +330,7 @@ namespace ts {
         const autoType = createIntrinsicType(TypeFlags.Any, "any");
         const wildcardType = createIntrinsicType(TypeFlags.Any, "any");
         const unknownType = createIntrinsicType(TypeFlags.Any, "unknown");
+        const circularAnyType = createIntrinsicType(TypeFlags.Any, "circularAny");
         const undefinedType = createIntrinsicType(TypeFlags.Undefined, "undefined");
         const undefinedWideningType = strictNullChecks ? undefinedType : createIntrinsicType(TypeFlags.Undefined | TypeFlags.ContainsWideningType, "undefined");
         const nullType = createIntrinsicType(TypeFlags.Null, "null");
@@ -421,6 +422,8 @@ namespace ts {
         let deferredGlobalTemplateStringsArrayType: ObjectType;
 
         let deferredNodes: Node[];
+        let deferredSignatures: Signature[];
+        let checkingDeferredSignatures: boolean;
         let deferredUnusedIdentifierNodes: Node[];
 
         let flowLoopStart = 0;
@@ -4677,7 +4680,7 @@ namespace ts {
                     return true;
                 }
             }
-            if (type === unknownType) {
+            if (type === unknownType || type === circularAnyType) {
                 return true;
             }
             return false;
@@ -6933,6 +6936,15 @@ namespace ts {
         }
 
         function getReturnTypeOfSignature(signature: Signature): Type {
+            if (checkingDeferredSignatures) {
+                return getReturnTypeOfSignatureDeferred(signature);
+            }
+            else {
+                return getReturnTypeOfSignatureUndeferred(signature);
+            }
+        }
+
+        function getReturnTypeOfSignatureUndeferred(signature: Signature): Type {
             if (!signature.resolvedReturnType) {
                 if (!pushTypeResolution(signature, TypeSystemPropertyName.ResolvedReturnType)) {
                     return unknownType;
@@ -6948,7 +6960,43 @@ namespace ts {
                     type = getReturnTypeFromBody(<FunctionLikeDeclaration>signature.declaration);
                 }
                 if (!popTypeResolution() && containsUnknownType(type)) {
-                    type = unknownType;
+                    checkSignatureDeferred(signature);
+                    return unknownType;
+                }
+                signature.resolvedReturnType = type;
+            }
+            return signature.resolvedReturnType;
+        }
+
+        function checkSignatureDeferred(signature: Signature) {
+            if (deferredSignatures) {
+                deferredSignatures.push(signature);
+            }
+        }
+
+        function checkDeferredSignatures() {
+            for (const signature of deferredSignatures) {
+                getReturnTypeOfSignatureDeferred(signature);
+            }
+        }
+
+        function getReturnTypeOfSignatureDeferred(signature: Signature): Type {
+            if (!signature.resolvedReturnType || signature.resolvedReturnType === unknownType) {
+                if (!pushTypeResolution(signature, TypeSystemPropertyName.ResolvedReturnType)) {
+                    return unknownType;
+                }
+                let type: Type;
+                if (signature.target) {
+                    type = instantiateType(getReturnTypeOfSignatureDeferred(signature.target), signature.mapper);
+                }
+                else if (signature.unionSignatures) {
+                    type = getUnionType(map(signature.unionSignatures, getReturnTypeOfSignatureDeferred), UnionReduction.Subtype);
+                }
+                else {
+                    type = getReturnTypeFromBody(<FunctionLikeDeclaration>signature.declaration);
+                }
+                if (!popTypeResolution() && containsUnknownType(type)) {
+                    type = circularAnyType;
                     if (noImplicitAny) {
                         const declaration = <Declaration>signature.declaration;
                         const name = getNameOfDeclaration(declaration);
@@ -7452,7 +7500,7 @@ namespace ts {
 
         function getTypeFromTypeReference(node: TypeReferenceType): Type {
             const links = getNodeLinks(node);
-            if (!links.resolvedType) {
+            if (!links.resolvedType || links.resolvedType === unknownType) {
                 let symbol: Symbol;
                 let type: Type;
                 let meaning = SymbolFlags.Type;
@@ -7478,7 +7526,7 @@ namespace ts {
 
         function getTypeFromTypeQueryNode(node: TypeQueryNode): Type {
             const links = getNodeLinks(node);
-            if (!links.resolvedType) {
+            if (!links.resolvedType || links.resolvedType === unknownType) {
                 // TypeScript 1.0 spec (April 2014): 3.6.3
                 // The expression is processed as an identifier expression (section 4.3)
                 // or property access expression(section 4.10),
@@ -7627,7 +7675,7 @@ namespace ts {
 
         function getTypeFromArrayTypeNode(node: ArrayTypeNode): Type {
             const links = getNodeLinks(node);
-            if (!links.resolvedType) {
+            if (!links.resolvedType || links.resolvedType === unknownType) {
                 links.resolvedType = createArrayType(getTypeFromTypeNode(node.elementType));
             }
             return links.resolvedType;
@@ -7682,7 +7730,7 @@ namespace ts {
 
         function getTypeFromTupleTypeNode(node: TupleTypeNode): Type {
             const links = getNodeLinks(node);
-            if (!links.resolvedType) {
+            if (!links.resolvedType || links.resolvedType === unknownType) {
                 links.resolvedType = createTupleType(map(node.elementTypes, getTypeFromTypeNode));
             }
             return links.resolvedType;
@@ -7928,7 +7976,7 @@ namespace ts {
 
         function getTypeFromUnionTypeNode(node: UnionTypeNode): Type {
             const links = getNodeLinks(node);
-            if (!links.resolvedType) {
+            if (!links.resolvedType || links.resolvedType === unknownType) {
                 links.resolvedType = getUnionType(map(node.types, getTypeFromTypeNode), UnionReduction.Literal,
                     getAliasSymbolForTypeNode(node), getAliasTypeArgumentsForTypeNode(node));
             }
@@ -8025,7 +8073,7 @@ namespace ts {
 
         function getTypeFromIntersectionTypeNode(node: IntersectionTypeNode): Type {
             const links = getNodeLinks(node);
-            if (!links.resolvedType) {
+            if (!links.resolvedType || links.resolvedType === unknownType) {
                 links.resolvedType = getIntersectionType(map(node.types, getTypeFromTypeNode),
                     getAliasSymbolForTypeNode(node), getAliasTypeArgumentsForTypeNode(node));
             }
@@ -8076,7 +8124,7 @@ namespace ts {
 
         function getTypeFromTypeOperatorNode(node: TypeOperatorNode) {
             const links = getNodeLinks(node);
-            if (!links.resolvedType) {
+            if (!links.resolvedType || links.resolvedType === unknownType) {
                 switch (node.operator) {
                     case SyntaxKind.KeyOfKeyword:
                         links.resolvedType = getIndexType(getTypeFromTypeNode(node.type));
@@ -8282,7 +8330,7 @@ namespace ts {
 
         function getTypeFromIndexedAccessTypeNode(node: IndexedAccessTypeNode) {
             const links = getNodeLinks(node);
-            if (!links.resolvedType) {
+            if (!links.resolvedType || links.resolvedType === unknownType) {
                 links.resolvedType = getIndexedAccessType(getTypeFromTypeNode(node.objectType), getTypeFromTypeNode(node.indexType), node);
             }
             return links.resolvedType;
@@ -8290,7 +8338,7 @@ namespace ts {
 
         function getTypeFromMappedTypeNode(node: MappedTypeNode): Type {
             const links = getNodeLinks(node);
-            if (!links.resolvedType) {
+            if (!links.resolvedType || links.resolvedType === unknownType) {
                 const type = <MappedType>createObjectType(ObjectFlags.Mapped, node.symbol);
                 type.declaration = node;
                 type.aliasSymbol = getAliasSymbolForTypeNode(node);
@@ -8381,7 +8429,7 @@ namespace ts {
 
         function getTypeFromConditionalTypeNode(node: ConditionalTypeNode): Type {
             const links = getNodeLinks(node);
-            if (!links.resolvedType) {
+            if (!links.resolvedType || links.resolvedType === unknownType) {
                 const checkType = getTypeFromTypeNode(node.checkType);
                 const aliasTypeArguments = getAliasTypeArgumentsForTypeNode(node);
                 const allOuterTypeParameters = getOuterTypeParameters(node, /*includeThisTypes*/ true);
@@ -8410,7 +8458,7 @@ namespace ts {
 
         function getTypeFromInferTypeNode(node: InferTypeNode): Type {
             const links = getNodeLinks(node);
-            if (!links.resolvedType) {
+            if (!links.resolvedType || links.resolvedType === unknownType) {
                 links.resolvedType = getDeclaredTypeOfTypeParameter(getSymbolOfNode(node.typeParameter));
             }
             return links.resolvedType;
@@ -8418,7 +8466,7 @@ namespace ts {
 
         function getTypeFromTypeLiteralOrFunctionOrConstructorTypeNode(node: TypeNode): Type {
             const links = getNodeLinks(node);
-            if (!links.resolvedType) {
+            if (!links.resolvedType || links.resolvedType === unknownType) {
                 // Deferred resolution of members is handled by resolveObjectTypeMembers
                 const aliasSymbol = getAliasSymbolForTypeNode(node);
                 if (getMembersOfSymbol(node.symbol).size === 0 && !aliasSymbol) {
@@ -8596,7 +8644,7 @@ namespace ts {
 
         function getTypeFromLiteralTypeNode(node: LiteralTypeNode): Type {
             const links = getNodeLinks(node);
-            if (!links.resolvedType) {
+            if (!links.resolvedType || links.resolvedType === unknownType) {
                 links.resolvedType = getRegularTypeOfLiteralType(checkExpression(node.literal));
             }
             return links.resolvedType;
@@ -8632,7 +8680,7 @@ namespace ts {
 
         function getTypeFromThisTypeNode(node: ThisExpression | ThisTypeNode): Type {
             const links = getNodeLinks(node);
-            if (!links.resolvedType) {
+            if (!links.resolvedType || links.resolvedType === unknownType) {
                 links.resolvedType = getThisType(node);
             }
             return links.resolvedType;
@@ -14979,7 +15027,7 @@ namespace ts {
 
         function checkComputedPropertyName(node: ComputedPropertyName): Type {
             const links = getNodeLinks(node.expression);
-            if (!links.resolvedType) {
+            if (!links.resolvedType || links.resolvedType === unknownType) {
                 links.resolvedType = checkExpression(node.expression);
                 // This will allow types number, string, symbol or any. It will also allow enums, the unknown
                 // type, and any union of these types (like string | number).
@@ -19556,7 +19604,7 @@ namespace ts {
 
         function checkExpressionCached(node: Expression, checkMode?: CheckMode): Type {
             const links = getNodeLinks(node);
-            if (!links.resolvedType) {
+            if (!links.resolvedType || links.resolvedType === unknownType) {
                 if (checkMode) {
                     return checkExpression(node, checkMode);
                 }
@@ -24496,12 +24544,16 @@ namespace ts {
                 clear(potentialNewTargetCollisions);
 
                 deferredNodes = [];
+                deferredSignatures = [];
                 deferredUnusedIdentifierNodes = produceDiagnostics && noUnusedIdentifiers ? [] : undefined;
                 flowAnalysisDisabled = false;
 
                 forEach(node.statements, checkSourceElement);
 
                 checkDeferredNodes();
+                checkingDeferredSignatures = true;
+                checkDeferredSignatures();
+                checkingDeferredSignatures = false;
 
                 if (isExternalOrCommonJsModule(node)) {
                     registerForUnusedIdentifiersCheck(node);
@@ -24512,6 +24564,7 @@ namespace ts {
                 }
 
                 deferredNodes = undefined;
+                deferredSignatures = undefined;
                 deferredUnusedIdentifierNodes = undefined;
 
                 if (isExternalOrCommonJsModule(node)) {

@@ -1,0 +1,17 @@
+tests/cases/compiler/circularReturnFunctionsStrict.ts(1,10): error TS7023: 'f1' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.
+tests/cases/compiler/circularReturnFunctionsStrict.ts(5,10): error TS7023: 'f2' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.
+
+
+==== tests/cases/compiler/circularReturnFunctionsStrict.ts (2 errors) ====
+    function f1() {
+             ~~
+!!! error TS7023: 'f1' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.
+      return f2();
+    }
+    
+    function f2() {
+             ~~
+!!! error TS7023: 'f2' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.
+      return f1();
+    }
+    
