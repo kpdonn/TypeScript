@@ -8131,6 +8131,9 @@ namespace ts {
                     return anyType;
                 }
             }
+            if (indexType.flags & TypeFlags.Never) {
+                return neverType;
+            }
             if (accessNode) {
                 const indexNode = accessNode.kind === SyntaxKind.ElementAccessExpression ? accessNode.argumentExpression : accessNode.indexType;
                 if (indexType.flags & (TypeFlags.StringLiteral | TypeFlags.NumberLiteral)) {
