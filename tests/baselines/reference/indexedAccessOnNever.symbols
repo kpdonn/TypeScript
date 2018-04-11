@@ -1,0 +1,88 @@
+=== tests/cases/compiler/indexedAccessOnNever.ts ===
+type Example<T extends Record<"a", string>> = T["a"];
+>Example : Symbol(Example, Decl(indexedAccessOnNever.ts, 0, 0))
+>T : Symbol(T, Decl(indexedAccessOnNever.ts, 0, 13))
+>Record : Symbol(Record, Decl(lib.d.ts, --, --))
+>T : Symbol(T, Decl(indexedAccessOnNever.ts, 0, 13))
+
+type Result1 = Example<{ a: "x" } | { a: "y" }>;
+>Result1 : Symbol(Result1, Decl(indexedAccessOnNever.ts, 0, 53))
+>Example : Symbol(Example, Decl(indexedAccessOnNever.ts, 0, 0))
+>a : Symbol(a, Decl(indexedAccessOnNever.ts, 2, 24))
+>a : Symbol(a, Decl(indexedAccessOnNever.ts, 2, 37))
+
+type Result2 = Example<{ a: "x" }>;
+>Result2 : Symbol(Result2, Decl(indexedAccessOnNever.ts, 2, 48))
+>Example : Symbol(Example, Decl(indexedAccessOnNever.ts, 0, 0))
+>a : Symbol(a, Decl(indexedAccessOnNever.ts, 3, 24))
+
+type Result3 = Example<never>; 
+>Result3 : Symbol(Result3, Decl(indexedAccessOnNever.ts, 3, 35))
+>Example : Symbol(Example, Decl(indexedAccessOnNever.ts, 0, 0))
+
+type NeverNever = never[never];
+>NeverNever : Symbol(NeverNever, Decl(indexedAccessOnNever.ts, 4, 30))
+
+type ExampleWithString<
+>ExampleWithString : Symbol(ExampleWithString, Decl(indexedAccessOnNever.ts, 6, 31))
+
+  T extends { [i: string]: string },
+>T : Symbol(T, Decl(indexedAccessOnNever.ts, 8, 23))
+>i : Symbol(i, Decl(indexedAccessOnNever.ts, 9, 15))
+
+  S extends string
+>S : Symbol(S, Decl(indexedAccessOnNever.ts, 9, 36))
+
+> = T[S];
+>T : Symbol(T, Decl(indexedAccessOnNever.ts, 8, 23))
+>S : Symbol(S, Decl(indexedAccessOnNever.ts, 9, 36))
+
+type T1 = ExampleWithString<never, "test">;
+>T1 : Symbol(T1, Decl(indexedAccessOnNever.ts, 11, 9))
+>ExampleWithString : Symbol(ExampleWithString, Decl(indexedAccessOnNever.ts, 6, 31))
+
+type TString = ExampleWithString<never, string>;
+>TString : Symbol(TString, Decl(indexedAccessOnNever.ts, 12, 43))
+>ExampleWithString : Symbol(ExampleWithString, Decl(indexedAccessOnNever.ts, 6, 31))
+
+type TAny = ExampleWithString<never, any>;
+>TAny : Symbol(TAny, Decl(indexedAccessOnNever.ts, 13, 48))
+>ExampleWithString : Symbol(ExampleWithString, Decl(indexedAccessOnNever.ts, 6, 31))
+
+type ExampleWithNumber<
+>ExampleWithNumber : Symbol(ExampleWithNumber, Decl(indexedAccessOnNever.ts, 14, 42))
+
+  T extends { [i: number]: string },
+>T : Symbol(T, Decl(indexedAccessOnNever.ts, 16, 23))
+>i : Symbol(i, Decl(indexedAccessOnNever.ts, 17, 15))
+
+  N extends number
+>N : Symbol(N, Decl(indexedAccessOnNever.ts, 17, 36))
+
+> = T[N];
+>T : Symbol(T, Decl(indexedAccessOnNever.ts, 16, 23))
+>N : Symbol(N, Decl(indexedAccessOnNever.ts, 17, 36))
+
+type T2 = ExampleWithNumber<never, 10>;
+>T2 : Symbol(T2, Decl(indexedAccessOnNever.ts, 19, 9))
+>ExampleWithNumber : Symbol(ExampleWithNumber, Decl(indexedAccessOnNever.ts, 14, 42))
+
+type TNumber = ExampleWithNumber<never, number>;
+>TNumber : Symbol(TNumber, Decl(indexedAccessOnNever.ts, 20, 39))
+>ExampleWithNumber : Symbol(ExampleWithNumber, Decl(indexedAccessOnNever.ts, 14, 42))
+
+declare const sym: unique symbol;
+>sym : Symbol(sym, Decl(indexedAccessOnNever.ts, 23, 13))
+
+type ExampleWithSymbol<T extends { [sym]: string }> = T[typeof sym];
+>ExampleWithSymbol : Symbol(ExampleWithSymbol, Decl(indexedAccessOnNever.ts, 23, 33))
+>T : Symbol(T, Decl(indexedAccessOnNever.ts, 24, 23))
+>[sym] : Symbol([sym], Decl(indexedAccessOnNever.ts, 24, 34))
+>sym : Symbol(sym, Decl(indexedAccessOnNever.ts, 23, 13))
+>T : Symbol(T, Decl(indexedAccessOnNever.ts, 24, 23))
+>sym : Symbol(sym, Decl(indexedAccessOnNever.ts, 23, 13))
+
+type T3 = ExampleWithSymbol<never>;
+>T3 : Symbol(T3, Decl(indexedAccessOnNever.ts, 24, 68))
+>ExampleWithSymbol : Symbol(ExampleWithSymbol, Decl(indexedAccessOnNever.ts, 23, 33))
+

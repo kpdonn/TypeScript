@@ -1,0 +1,88 @@
+=== tests/cases/compiler/indexedAccessOnNever.ts ===
+type Example<T extends Record<"a", string>> = T["a"];
+>Example : T["a"]
+>T : T
+>Record : Record<K, T>
+>T : T
+
+type Result1 = Example<{ a: "x" } | { a: "y" }>;
+>Result1 : "x" | "y"
+>Example : T["a"]
+>a : "x"
+>a : "y"
+
+type Result2 = Example<{ a: "x" }>;
+>Result2 : "x"
+>Example : T["a"]
+>a : "x"
+
+type Result3 = Example<never>; 
+>Result3 : any
+>Example : T["a"]
+
+type NeverNever = never[never];
+>NeverNever : never
+
+type ExampleWithString<
+>ExampleWithString : T[S]
+
+  T extends { [i: string]: string },
+>T : T
+>i : string
+
+  S extends string
+>S : S
+
+> = T[S];
+>T : T
+>S : S
+
+type T1 = ExampleWithString<never, "test">;
+>T1 : any
+>ExampleWithString : T[S]
+
+type TString = ExampleWithString<never, string>;
+>TString : any
+>ExampleWithString : T[S]
+
+type TAny = ExampleWithString<never, any>;
+>TAny : any
+>ExampleWithString : T[S]
+
+type ExampleWithNumber<
+>ExampleWithNumber : T[N]
+
+  T extends { [i: number]: string },
+>T : T
+>i : number
+
+  N extends number
+>N : N
+
+> = T[N];
+>T : T
+>N : N
+
+type T2 = ExampleWithNumber<never, 10>;
+>T2 : any
+>ExampleWithNumber : T[N]
+
+type TNumber = ExampleWithNumber<never, number>;
+>TNumber : any
+>ExampleWithNumber : T[N]
+
+declare const sym: unique symbol;
+>sym : unique symbol
+
+type ExampleWithSymbol<T extends { [sym]: string }> = T[typeof sym];
+>ExampleWithSymbol : T[unique symbol]
+>T : T
+>[sym] : string
+>sym : unique symbol
+>T : T
+>sym : unique symbol
+
+type T3 = ExampleWithSymbol<never>;
+>T3 : any
+>ExampleWithSymbol : T[unique symbol]
+
