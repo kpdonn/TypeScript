@@ -800,6 +800,7 @@ namespace ts {
         kind: SyntaxKind.TypeParameter;
         parent?: DeclarationWithTypeParameters | InferTypeNode;
         name: Identifier;
+        typeParameters?: NodeArray<TypeParameterDeclaration>;
         constraint?: TypeNode;
         default?: TypeNode;
 
@@ -2053,7 +2054,7 @@ namespace ts {
 
     export type ObjectTypeDeclaration = ClassLikeDeclaration | InterfaceDeclaration | TypeLiteralNode;
 
-    export type DeclarationWithTypeParameters = SignatureDeclaration | ClassLikeDeclaration | InterfaceDeclaration | TypeAliasDeclaration | JSDocTemplateTag;
+    export type DeclarationWithTypeParameters = SignatureDeclaration | ClassLikeDeclaration | InterfaceDeclaration | TypeAliasDeclaration | JSDocTemplateTag | TypeParameterDeclaration;
 
     export interface ClassLikeDeclarationBase extends NamedDeclaration, JSDocContainer {
         kind: SyntaxKind.ClassDeclaration | SyntaxKind.ClassExpression;
@@ -3960,6 +3961,12 @@ namespace ts {
         isThisType?: boolean;
         /* @internal */
         resolvedDefaultType?: Type;
+        /* @internal */
+        typeParameters?: TypeParameter[];
+        /* @internal */
+        typeArguments?: TypeParameter[]; // Only set for references
+        /* @internal */
+        genericTarget?: TypeParameter; // This is the original generic type parameter a type parameter reference points to
     }
 
     // Indexed access types (TypeFlags.IndexedAccess)
