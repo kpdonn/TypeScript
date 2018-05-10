@@ -9614,9 +9614,9 @@ namespace ts {
             return type;
         }
 
-        function maybeTypeParameterReference(node: Node) {
+        function maybeTypeParameterReference(node: Node, genericTypeParameter: boolean) {
             return !(node.kind === SyntaxKind.QualifiedName ||
-                node.parent.kind === SyntaxKind.TypeReference && (<TypeReferenceNode>node.parent).typeArguments && node === (<TypeReferenceNode>node.parent).typeName);
+               !genericTypeParameter && node.parent.kind === SyntaxKind.TypeReference && (<TypeReferenceNode>node.parent).typeArguments && node === (<TypeReferenceNode>node.parent).typeName);
         }
 
         function isTypeParameterPossiblyReferenced(tp: TypeParameter, node: Node) {
@@ -9635,7 +9635,7 @@ namespace ts {
                     case SyntaxKind.ThisType:
                         return tp.isThisType;
                     case SyntaxKind.Identifier:
-                        return !tp.isThisType && isPartOfTypeNode(node) && maybeTypeParameterReference(node) &&
+                        return !tp.isThisType && isPartOfTypeNode(node) && maybeTypeParameterReference(node, !!tp.typeParameters) &&
                             getTypeFromTypeNode(<TypeNode>node) === tp;
                     case SyntaxKind.TypeQuery:
                         return true;
