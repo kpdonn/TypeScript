@@ -3670,6 +3670,8 @@ namespace ts {
         ContainsAnyFunctionType = 1 << 26,  // Type is or contains the anyFunctionType
         NonPrimitive            = 1 << 27,  // intrinsic object type
         /* @internal */
+        NakedGenericReference   = 1 << 28,  // indicates an uninstantiated generic type or type parameter reference
+        /* @internal */
         GenericMappedType       = 1 << 29,  // Flag used by maybeTypeOfKind
 
         /* @internal */
@@ -3734,6 +3736,8 @@ namespace ts {
         aliasTypeArguments?: Type[];     // Alias type arguments (if any)
         /* @internal */
         wildcardInstantiation?: Type;    // Instantiation with type parameters mapped to wildcard type
+        /* @internal */
+        nakedGenericReference?: NakedGenericReference;
     }
 
     /* @internal */
@@ -3843,6 +3847,19 @@ namespace ts {
         instantiations: Map<TypeReference>;  // Generic instantiation cache
         /* @internal */
         variances?: Variance[];  // Variance of each type parameter
+    }
+
+    /* @internal */
+    /**
+     * Naked generic references (TypeFlags.NakedGenericReference). When a generic type is passed
+     * to a generic type parameter without being instantiated a NakedGenericReference is created.
+     * The nakedGeneric property contains the uninstantiated generic type, while the targetTypeParameter
+     * property is the generic type parameter that nakedGeneric was passed as an argument to.
+     */
+    export interface NakedGenericReference extends Type {
+        nakedGeneric: GenericType | TypeParameter;
+        targetTypeParameter: TypeParameter;
+        mapper: TypeMapper;
     }
 
     export interface UnionOrIntersectionType extends Type {
@@ -3964,7 +3981,7 @@ namespace ts {
         /* @internal */
         typeParameters?: TypeParameter[];
         /* @internal */
-        typeArguments?: TypeParameter[]; // Only set for references
+        typeArguments?: Type[]; // Only set for references
         /* @internal */
         genericTarget?: TypeParameter; // This is the original generic type parameter a type parameter reference points to
     }

@@ -3179,6 +3179,9 @@ namespace ts {
                 if (type.flags & TypeFlags.Substitution) {
                     return typeToTypeNodeHelper((<SubstitutionType>type).typeVariable, context);
                 }
+                if (type.flags & TypeFlags.NakedGenericReference) {
+                    return typeToTypeNodeHelper((<NakedGenericReference>type).nakedGeneric, context);
+                }
 
                 Debug.fail("Should be unreachable.");
 
@@ -6465,6 +6468,12 @@ namespace ts {
             return getObjectFlags(type) & ObjectFlags.Mapped && isGenericIndexType(getConstraintTypeFromMappedType(<MappedType>type));
         }
 
+        function isUninstantiatedGenericType(type: GenericType | TypeParameter): boolean {
+            return length(type.typeParameters) &&
+                ((type.flags & TypeFlags.TypeParameter && !type.typeArguments && !(<TypeParameter>type).genericTarget) ||
+                (getObjectFlags(type) & ObjectFlags.ClassOrInterface && type.target === type));
+        }
+
         function resolveStructuredTypeMembers(type: StructuredType): ResolvedType {
             if (!(<ResolvedType>type).members) {
                 if (type.flags & TypeFlags.Object) {
@@ -7649,10 +7658,11 @@ namespace ts {
             const type = <InterfaceType>getDeclaredTypeOfSymbol(getMergedSymbol(symbol));
             const typeParameters = type.localTypeParameters;
             if (typeParameters) {
-                const numTypeArguments = length(node.typeArguments);
-                if (numTypeArguments === 0 && isGenericTypeArgument(node)) {
-                    return type;
+                const nakedGenericReference = getNakedGenericReference(node, symbol, type);
+                if (nakedGenericReference) {
+                    return nakedGenericReference;
                 }
+                const numTypeArguments = length(node.typeArguments);
                 const minTypeArgumentCount = getMinTypeArgumentCount(typeParameters);
                 const isJs = isInJavaScriptFile(node);
                 const isJsImplicitAny = !noImplicitAny && isJs;
@@ -7717,40 +7727,63 @@ namespace ts {
                 return getTypeAliasInstantiation(symbol, typeArguments);
             }
             return checkNoTypeArguments(node, symbol) ? type : unknownType;
-            }
+        }
 
         function getTypeFromTypeParameterReference(node: NodeWithTypeArguments, symbol: Symbol, typeArguments: Type[]): Type {
             const type = <TypeParameter>getDeclaredTypeOfSymbol(symbol);
             const typeParameters = type.typeParameters;
             if (typeParameters) {
-                const numTypeArguments = length(typeArguments);
-                if (numTypeArguments === 0 && isGenericTypeArgument(node)) {
-                    return type;
+                const nakedGenericReference = getNakedGenericReference(node, symbol, type);
+                if (nakedGenericReference) {
+                    return nakedGenericReference;
                 }
-                const minTypeArgumentCount = getMinTypeArgumentCount(typeParameters);
-                if (numTypeArguments < minTypeArgumentCount || numTypeArguments > typeParameters.length) {
-                    error(node,
-                        minTypeArgumentCount === typeParameters.length
-                            ? Diagnostics.Generic_type_0_requires_1_type_argument_s
-                            : Diagnostics.Generic_type_0_requires_between_1_and_2_type_arguments,
-                        symbolToString(symbol),
-                        minTypeArgumentCount,
-                        typeParameters.length);
+                if (!checkTypeArgumentArity(node, symbol, typeParameters, length(typeArguments))) {
                     return unknownType;
                 }
-                const id = getTypeListId(typeArguments);
-                const links = getSymbolLinks(symbol);
-                let reference = <TypeParameter>links.instantiations.get(id);
-                if (!reference) {
-                    reference = getTypeParameterReference(type, typeArguments);
-                    links.instantiations.set(id, reference);
-                }
-                return reference;
+                return getTypeParameterReference(type, typeArguments);
             }
             else if (!checkNoTypeArguments(node, symbol)) {
                 return unknownType;
             }
             return getConstrainedTypeVariable(type, node);
+        }
+
+        function checkTypeArgumentArity(node: NodeWithTypeArguments, symbol: Symbol, typeParameters: TypeParameter[], numTypeArguments: number): boolean {
+            const minTypeArgumentCount = getMinTypeArgumentCount(typeParameters);
+            if (numTypeArguments < minTypeArgumentCount || numTypeArguments > length(typeParameters)) {
+                error(node,
+                    minTypeArgumentCount === typeParameters.length
+                        ? Diagnostics.Generic_type_0_requires_1_type_argument_s
+                        : Diagnostics.Generic_type_0_requires_between_1_and_2_type_arguments,
+                    symbolToString(symbol),
+                    minTypeArgumentCount,
+                    typeParameters.length);
+                return false;
+            }
+            return true;
+        }
+
+        function getNakedGenericReference(node: NodeWithTypeArguments, symbol: Symbol, nakedGeneric: TypeParameter | GenericType): Type | undefined {
+            Debug.assert(isUninstantiatedGenericType(nakedGeneric));
+            const parentTypeParameter = tryGetParentGenericTypeParameter(node);
+            if (!parentTypeParameter) {
+                return undefined;
+            }
+            Debug.assert(isUninstantiatedGenericType(parentTypeParameter));
+            if (!checkTypeArgumentArity(node, symbol, nakedGeneric.typeParameters, length(parentTypeParameter.typeParameters))) {
+                return unknownType;
+            }
+
+            let reference;
+            if (!reference) {
+                reference = <NakedGenericReference>createType(TypeFlags.NakedGenericReference);
+                reference.flags |= nakedGeneric.flags & TypeFlags.PropagatingFlags;
+                reference.nakedGeneric = nakedGeneric;
+                reference.targetTypeParameter = parentTypeParameter;
+                const typeArguments = fillMissingTypeArguments(parentTypeParameter.typeParameters.slice(), nakedGeneric.typeParameters, getMinTypeArgumentCount(nakedGeneric.typeParameters), isInJavaScriptFile(node));
+                reference.mapper = createTypeMapper(typeArguments, nakedGeneric.typeParameters);
+            }
+            return reference;
         }
 
         function getTypeParameterReference(genericTypeParameter: TypeParameter, typeArguments: Type[]): TypeParameter {
@@ -9722,6 +9755,11 @@ namespace ts {
                 if (type.flags & TypeFlags.TypeParameter) {
                     if ((<TypeParameter>type).typeParameters && (<TypeParameter>type).genericTarget) {
                         const newType = mapper((<TypeParameter>type).genericTarget);
+                        if (newType.flags & TypeFlags.NakedGenericReference) {
+                            const newMapper = combineTypeMappers((<NakedGenericReference>newType).mapper, mapper);
+                            const actualNewType = instantiateType((<NakedGenericReference>newType).nakedGeneric, newMapper);
+                            return actualNewType;
+                        }
                         if (newType.flags & TypeFlags.TypeParameter && (<TypeParameter>newType).typeParameters) {
                             // Mapper did not instantiate the generic type so just create another reference to it.
                             const newTypeArguments = instantiateTypes((<TypeParameter>type).typeArguments, mapper);
@@ -9780,6 +9818,9 @@ namespace ts {
                 }
                 if (type.flags & TypeFlags.Substitution) {
                     return instantiateType((<SubstitutionType>type).typeVariable, mapper);
+                }
+                if (type.flags & TypeFlags.NakedGenericReference) {
+                    return type;
                 }
             }
             return type;
@@ -21387,7 +21428,8 @@ namespace ts {
                 const symbol = getNodeLinks(node).resolvedSymbol;
                 if (symbol) {
                     return symbol.flags & SymbolFlags.TypeAlias && getSymbolLinks(symbol).typeParameters ||
-                        (getObjectFlags(type) & ObjectFlags.Reference ? (<TypeReference>type).target.localTypeParameters : undefined);
+                        getObjectFlags(type) & ObjectFlags.Reference && (<TypeReference>type).target.localTypeParameters ||
+                        type.flags & TypeFlags.TypeParameter && (<TypeParameter>type).typeParameters;
                 }
             }
             return undefined;
@@ -21424,19 +21466,19 @@ namespace ts {
             return constraint && instantiateType(constraint, createTypeMapper(typeParameters, getEffectiveTypeArguments(typeReferenceNode, typeParameters)));
         }
 
-        function isGenericTypeArgument(node: NodeWithTypeArguments): boolean {
-            if (!isTypeReferenceType(node.parent)) {
-                return false;
+        function tryGetParentGenericTypeParameter(node: NodeWithTypeArguments): TypeParameter | undefined {
+            if (length(node.typeArguments) || !isTypeReferenceType(node.parent)) {
+                return undefined;
             }
             const name = getTypeReferenceName(node.parent);
             const identifier = getFirstIdentifier(name);
             const symbol = resolveEntityName(identifier, SymbolFlags.Type, /*ignoreErrors*/ true);
             const typeParameters = symbol && getLocalTypeParametersOfClassOrInterfaceOrTypeAlias(symbol);
             if (!typeParameters) {
-                return false;
+                return undefined;
             }
             const typeParameter = typeParameters[node.parent.typeArguments.indexOf(node)!];
-            return !!length(typeParameter.typeParameters);
+            return !!length(typeParameter.typeParameters) ? typeParameter : undefined;
         }
 
         function checkTypeQuery(node: TypeQueryNode) {
