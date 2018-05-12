@@ -9504,7 +9504,13 @@ namespace ts {
         function combineTypeMappers(mapper1: TypeMapper, mapper2: TypeMapper): TypeMapper {
             if (!mapper1) return mapper2;
             if (!mapper2) return mapper1;
-            return t => instantiateType(mapper1(t), mapper2);
+            return t => {
+                const mapped1 = mapper1(t);
+                if (mapped1 === t) {
+                    return mapper2(t);
+                }
+                return instantiateType(mapped1, mapper2);
+            };
         }
 
         function createReplacementMapper(source: Type, target: Type, baseMapper: TypeMapper): TypeMapper {
@@ -9752,91 +9758,111 @@ namespace ts {
             return getConditionalType(root, mapper);
         }
 
+        function instantiateGenericTypeParameter(type: TypeParameter, mapper: TypeMapper): Type {
+            if (type.genericTarget) {
+                const newType = mapper(type.genericTarget);
+                if (newType === type.genericTarget) {
+                    return type;
+                }
+                if (newType === type) {
+                    return type;
+                }
+                if (newType.flags & TypeFlags.NakedGenericReference) {
+                    const narrowedNewType = <NakedGenericReference>newType;
+                    const tpMapper = createTypeMapper(type.typeParameters, type.typeArguments);
+                    const newMappers = combineTypeMappers(narrowedNewType.mapper, tpMapper);
+                    return instantiateType(narrowedNewType.nakedGeneric, combineTypeMappers(newMappers, mapper));
+                }
+                if (newType.flags & TypeFlags.TypeParameter && (<TypeParameter>newType).typeParameters && !(<TypeParameter>newType).typeArguments && !(<TypeParameter>newType).genericTarget) {
+                    // Mapper did not instantiate the generic type so just create another reference to it.
+                    const newTypeArguments = instantiateTypes((<TypeParameter>type).typeArguments, mapper);
+                    return getTypeParameterReference(<TypeParameter>newType, newTypeArguments);
+                }
+                if (newType.flags & TypeFlags.TypeParameter) {
+                    return newType;
+                }
+                const orginalNewTypeArguments = (<TypeReference>newType).typeArguments;
+                if (!orginalNewTypeArguments) {
+                    // this means it was instantiated as anonymous type without type arguments.
+                    return newType;
+                }
+                if (length(orginalNewTypeArguments) !== length((<TypeParameter>type).typeArguments)) {
+                    return newType;
+                }
+                const newTypeArguments = instantiateTypes((<TypeParameter>type).typeArguments, mapper);
+                return createTypeReference((<TypeReference>newType).target, newTypeArguments);
+            }
+            else if (!type.typeArguments) {
+                const mapped = mapper(type);
+                if (mapped === type) {
+                    const newTypeArguments = instantiateTypes(type.typeParameters, mapper);
+                    return getTypeParameterReference(type, newTypeArguments);
+                }
+                else {
+                    return mapped;
+                }
+            }
+            return mapper(type);
+        }
+
         function instantiateType(type: Type, mapper: TypeMapper): Type {
-            if (type && mapper && mapper !== identityMapper) {
-                if (type.flags & TypeFlags.TypeParameter) {
-                    const tp = <TypeParameter>type;
-                    if (tp.typeParameters && tp.genericTarget) {
-                        const newType = mapper((<TypeParameter>type).genericTarget);
-                        if (newType.flags & TypeFlags.NakedGenericReference) {
-                            const narrowedNewType = <NakedGenericReference>newType;
-                            const tpMapper = createTypeMapper(tp.typeParameters, tp.typeArguments);
-                            const newMappers = combineTypeMappers(narrowedNewType.mapper, tpMapper);
-                            return instantiateType(narrowedNewType.nakedGeneric, combineTypeMappers(newMappers, mapper));
-                        }
-                        if (newType.flags & TypeFlags.TypeParameter && (<TypeParameter>newType).typeParameters) {
-                            // Mapper did not instantiate the generic type so just create another reference to it.
-                            const newTypeArguments = instantiateTypes((<TypeParameter>type).typeArguments, mapper);
-                            return getTypeParameterReference(<TypeParameter>newType, newTypeArguments);
-                        }
-                        const orginalNewTypeArguments = (<TypeReference>newType).typeArguments;
-                        if (!orginalNewTypeArguments) {
-                            // this means it was instantiated as anonymous type without type arguments.
-                            return newType;
-                        }
-                        if (length(orginalNewTypeArguments) !== length((<TypeParameter>type).typeArguments)) {
-                            return newType;
-                        }
-                        const newTypeArguments = instantiateTypes((<TypeParameter>type).typeArguments, mapper);
-                        return createTypeReference((<TypeReference>newType).target, newTypeArguments);
+            if (!(type && mapper && mapper !== identityMapper)) {
+                return type;
+            }
+            if (type.flags & TypeFlags.TypeParameter) {
+                if ((<TypeParameter>type).typeParameters) {
+                    if ((<TypeParameter>type).beingInstantiated) {
+                        return type;
                     }
-                    else if (tp.typeParameters && !tp.typeArguments) {
-                        const mapped = mapper(tp);
-                        if (mapped === tp) {
-                            const newTypeArguments = instantiateTypes(tp.typeParameters, mapper);
-                            return getTypeParameterReference(tp, newTypeArguments);
-                        }
-                        else {
-                            return mapped;
-                        }
-                    }
-                    else {
-                        return mapper(<TypeParameter>type);
-                    }
+                    (<TypeParameter>type).beingInstantiated = true;
+                    const newType = instantiateGenericTypeParameter(<TypeParameter>type, mapper);
+                    (<TypeParameter>type).beingInstantiated = false;
+                    return newType;
                 }
-                if (type.flags & TypeFlags.Object) {
-                    if ((<ObjectType>type).objectFlags & ObjectFlags.Anonymous) {
-                        // If the anonymous type originates in a declaration of a function, method, class, or
-                        // interface, in an object type literal, or in an object literal expression, we may need
-                        // to instantiate the type because it might reference a type parameter.
-                        return type.symbol && type.symbol.flags & (SymbolFlags.Function | SymbolFlags.Method | SymbolFlags.Class | SymbolFlags.TypeLiteral | SymbolFlags.ObjectLiteral) && type.symbol.declarations ?
-                            getAnonymousTypeInstantiation(<AnonymousType>type, mapper) : type;
-                    }
-                    if ((<ObjectType>type).objectFlags & ObjectFlags.Mapped) {
-                        return getAnonymousTypeInstantiation(<MappedType>type, mapper);
-                    }
-                    if ((<ObjectType>type).objectFlags & ObjectFlags.Reference) {
-                        const typeArguments = (<TypeReference>type).typeArguments;
-                        const newTypeArguments = instantiateTypes(typeArguments, mapper);
-                        return newTypeArguments !== typeArguments ? createTypeReference((<TypeReference>type).target, newTypeArguments) : type;
-                    }
+                return mapper(<TypeParameter>type);
+            }
+            if (type.flags & TypeFlags.Object) {
+                if ((<ObjectType>type).objectFlags & ObjectFlags.Anonymous) {
+                    // If the anonymous type originates in a declaration of a function, method, class, or
+                    // interface, in an object type literal, or in an object literal expression, we may need
+                    // to instantiate the type because it might reference a type parameter.
+                    return type.symbol && type.symbol.flags & (SymbolFlags.Function | SymbolFlags.Method | SymbolFlags.Class | SymbolFlags.TypeLiteral | SymbolFlags.ObjectLiteral) && type.symbol.declarations ?
+                        getAnonymousTypeInstantiation(<AnonymousType>type, mapper) : type;
                 }
-                if (type.flags & TypeFlags.Union && !(type.flags & TypeFlags.Primitive)) {
-                    const types = (<UnionType>type).types;
-                    const newTypes = instantiateTypes(types, mapper);
-                    return newTypes !== types ? getUnionType(newTypes, UnionReduction.Literal, type.aliasSymbol, instantiateTypes(type.aliasTypeArguments, mapper)) : type;
+                if ((<ObjectType>type).objectFlags & ObjectFlags.Mapped) {
+                    return getAnonymousTypeInstantiation(<MappedType>type, mapper);
                 }
-                if (type.flags & TypeFlags.Intersection) {
-                    const types = (<IntersectionType>type).types;
-                    const newTypes = instantiateTypes(types, mapper);
-                    return newTypes !== types ? getIntersectionType(newTypes, type.aliasSymbol, instantiateTypes(type.aliasTypeArguments, mapper)) : type;
+                if ((<ObjectType>type).objectFlags & ObjectFlags.Reference) {
+                    const typeArguments = (<TypeReference>type).typeArguments;
+                    const newTypeArguments = instantiateTypes(typeArguments, mapper);
+                    return newTypeArguments !== typeArguments ? createTypeReference((<TypeReference>type).target, newTypeArguments) : type;
                 }
-                if (type.flags & TypeFlags.Index) {
-                    return getIndexType(instantiateType((<IndexType>type).type, mapper));
-                }
-                if (type.flags & TypeFlags.IndexedAccess) {
-                    return getIndexedAccessType(instantiateType((<IndexedAccessType>type).objectType, mapper), instantiateType((<IndexedAccessType>type).indexType, mapper));
-                }
-                if (type.flags & TypeFlags.Conditional) {
-                    return getConditionalTypeInstantiation(<ConditionalType>type, combineTypeMappers((<ConditionalType>type).mapper, mapper));
-                }
-                if (type.flags & TypeFlags.Substitution) {
-                    return instantiateType((<SubstitutionType>type).typeVariable, mapper);
-                }
-                if (type.flags & TypeFlags.NakedGenericReference) {
-                    const newType = instantiateType((<NakedGenericReference>type).nakedGeneric, mapper);
-                    return (newType === (<NakedGenericReference>type).nakedGeneric) ? type : newType;
-                }
+            }
+            if (type.flags & TypeFlags.Union && !(type.flags & TypeFlags.Primitive)) {
+                const types = (<UnionType>type).types;
+                const newTypes = instantiateTypes(types, mapper);
+                return newTypes !== types ? getUnionType(newTypes, UnionReduction.Literal, type.aliasSymbol, instantiateTypes(type.aliasTypeArguments, mapper)) : type;
+            }
+            if (type.flags & TypeFlags.Intersection) {
+                const types = (<IntersectionType>type).types;
+                const newTypes = instantiateTypes(types, mapper);
+                return newTypes !== types ? getIntersectionType(newTypes, type.aliasSymbol, instantiateTypes(type.aliasTypeArguments, mapper)) : type;
+            }
+            if (type.flags & TypeFlags.Index) {
+                return getIndexType(instantiateType((<IndexType>type).type, mapper));
+            }
+            if (type.flags & TypeFlags.IndexedAccess) {
+                return getIndexedAccessType(instantiateType((<IndexedAccessType>type).objectType, mapper), instantiateType((<IndexedAccessType>type).indexType, mapper));
+            }
+            if (type.flags & TypeFlags.Conditional) {
+                return getConditionalTypeInstantiation(<ConditionalType>type, combineTypeMappers((<ConditionalType>type).mapper, mapper));
+            }
+            if (type.flags & TypeFlags.Substitution) {
+                return instantiateType((<SubstitutionType>type).typeVariable, mapper);
+            }
+            if (type.flags & TypeFlags.NakedGenericReference) {
+                const newType = instantiateType((<NakedGenericReference>type).nakedGeneric, mapper);
+                return (newType === (<NakedGenericReference>type).nakedGeneric) ? type : newType;
             }
             return type;
         }
