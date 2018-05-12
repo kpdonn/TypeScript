@@ -9762,7 +9762,9 @@ namespace ts {
             if (type.genericTarget) {
                 const newType = mapper(type.genericTarget);
                 if (newType === type.genericTarget) {
-                    return type;
+                    const typeArguments = (<TypeParameter>type).typeArguments;
+                    const newTypeArguments = instantiateTypes(typeArguments, mapper);
+                    return newTypeArguments !== typeArguments ? getTypeParameterReference(type.genericTarget, newTypeArguments) : type;
                 }
                 if (newType === type) {
                     return type;
