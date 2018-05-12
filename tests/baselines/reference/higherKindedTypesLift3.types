@@ -55,8 +55,8 @@ declare const myArrayFunctor: StaticFunctor<Array>
 >Array : T[]
 
 const liftedArray = lift(myArrayFunctor);
->liftedArray : LiftedResult<T[]>
->lift(myArrayFunctor) : LiftedResult<T[]>
+>liftedArray : any
+>lift(myArrayFunctor) : any
 >lift : <C>(fToLift: StaticFunctor<C>) => LiftedResult<C>
 >myArrayFunctor : StaticFunctor<T[]>
 
@@ -65,9 +65,9 @@ declare function stringLength(strarg: string): number
 >strarg : string
 
 const liftedStringLength = liftedArray(stringLength);
->liftedStringLength : (a: string[]) => number[]
->liftedArray(stringLength) : (a: string[]) => number[]
->liftedArray : LiftedResult<T[]>
+>liftedStringLength : any
+>liftedArray(stringLength) : any
+>liftedArray : any
 >stringLength : (strarg: string) => number
 
 declare const arrayOfStrings: Array<string>;
@@ -75,20 +75,20 @@ declare const arrayOfStrings: Array<string>;
 >Array : T[]
 
 const result = liftedStringLength(arrayOfStrings);
->result : number[]
->liftedStringLength(arrayOfStrings) : number[]
->liftedStringLength : (a: string[]) => number[]
+>result : any
+>liftedStringLength(arrayOfStrings) : any
+>liftedStringLength : any
 >arrayOfStrings : string[]
 
 const expectedType: Array<number> = result;
 >expectedType : number[]
 >Array : T[]
->result : number[]
+>result : any
 
 const expectError = liftedStringLength(result)
->expectError : number[]
->liftedStringLength(result) : number[]
->liftedStringLength : (a: string[]) => number[]
->result : number[]
+>expectError : any
+>liftedStringLength(result) : any
+>liftedStringLength : any
+>result : any
 
 

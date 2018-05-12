@@ -9863,8 +9863,7 @@ namespace ts {
                 return instantiateType((<SubstitutionType>type).typeVariable, mapper);
             }
             if (type.flags & TypeFlags.NakedGenericReference) {
-                const newType = instantiateType((<NakedGenericReference>type).nakedGeneric, mapper);
-                return (newType === (<NakedGenericReference>type).nakedGeneric) ? type : newType;
+                Debug.assertEqual(mapper(type), type);
             }
             return type;
         }
