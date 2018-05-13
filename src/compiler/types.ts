@@ -3858,8 +3858,8 @@ namespace ts {
      */
     export interface NakedGenericReference extends Type {
         nakedGeneric: GenericType | TypeParameter;
-        targetTypeParameter: TypeParameter;
-        mapper: TypeMapper;
+        mapper?: TypeMapper;
+        original?: Type;
     }
 
     export interface UnionOrIntersectionType extends Type {

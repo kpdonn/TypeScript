@@ -7658,7 +7658,7 @@ namespace ts {
             const type = <InterfaceType>getDeclaredTypeOfSymbol(getMergedSymbol(symbol));
             const typeParameters = type.localTypeParameters;
             if (typeParameters) {
-                const nakedGenericReference = getNakedGenericReference(node, symbol, type);
+                const nakedGenericReference = tryGetNakedGenericReference(node, type);
                 if (nakedGenericReference) {
                     return nakedGenericReference;
                 }
@@ -7733,7 +7733,7 @@ namespace ts {
             const type = <TypeParameter>getDeclaredTypeOfSymbol(symbol);
             const typeParameters = type.typeParameters;
             if (typeParameters) {
-                const nakedGenericReference = getNakedGenericReference(node, symbol, type);
+                const nakedGenericReference = tryGetNakedGenericReference(node, type);
                 if (nakedGenericReference) {
                     return nakedGenericReference;
                 }
@@ -7763,29 +7763,32 @@ namespace ts {
             return true;
         }
 
-        function getNakedGenericReference(node: NodeWithTypeArguments, symbol: Symbol, nakedGeneric: TypeParameter | GenericType): Type | undefined {
+        function createNakedGenericReference(nakedGeneric: TypeParameter | GenericType, original?: Type, mapper?: TypeMapper): Type | undefined {
+            Debug.assert(isUninstantiatedGenericType(nakedGeneric));
+
+            const type = <NakedGenericReference>createType(TypeFlags.NakedGenericReference);
+            type.flags |= nakedGeneric.flags & TypeFlags.PropagatingFlags;
+            type.nakedGeneric = nakedGeneric;
+            type.mapper = mapper;
+            type.original = original;
+
+            return type;
+        }
+
+        function tryGetNakedGenericReference(node: NodeWithTypeArguments, nakedGeneric: TypeParameter | GenericType): Type | undefined {
             Debug.assert(isUninstantiatedGenericType(nakedGeneric));
             const parentTypeParameter = tryGetParentGenericTypeParameter(node);
             if (!parentTypeParameter) {
                 return undefined;
             }
-            Debug.assert(isUninstantiatedGenericType(parentTypeParameter) && symbol === symbol);
-            // if (!checkTypeArgumentArity(node, symbol, nakedGeneric.typeParameters, length(parentTypeParameter.typeParameters))) {
-            //     return unknownType;
-            // }
+            Debug.assert(isUninstantiatedGenericType(parentTypeParameter));
 
-            let reference;
-            if (!reference) {
-                reference = <NakedGenericReference>createType(TypeFlags.NakedGenericReference);
-                reference.flags |= nakedGeneric.flags & TypeFlags.PropagatingFlags;
-                reference.nakedGeneric = nakedGeneric;
-                reference.targetTypeParameter = parentTypeParameter;
-                const typeArguments = fillMissingTypeArguments(parentTypeParameter.typeParameters.slice(), nakedGeneric.typeParameters, getMinTypeArgumentCount(nakedGeneric.typeParameters), isInJavaScriptFile(node));
-                if (length(typeArguments) === length(nakedGeneric.typeParameters)) {
-                    reference.mapper = createTypeMapper(nakedGeneric.typeParameters, typeArguments);
-                }
+            const typeArguments = fillMissingTypeArguments(parentTypeParameter.typeParameters.slice(), nakedGeneric.typeParameters, getMinTypeArgumentCount(nakedGeneric.typeParameters), isInJavaScriptFile(node));
+            let mapper;
+            if (length(typeArguments) === length(nakedGeneric.typeParameters)) {
+                mapper = createTypeMapper(nakedGeneric.typeParameters, typeArguments);
             }
-            return reference;
+            return createNakedGenericReference(nakedGeneric, parentTypeParameter, mapper);
         }
 
         function getTypeParameterReference(genericTypeParameter: TypeParameter, typeArguments: Type[]): TypeParameter {
@@ -9798,7 +9801,7 @@ namespace ts {
                 const mapped = mapper(type);
                 if (mapped === type) {
                     const newTypeArguments = instantiateTypes(type.typeParameters, mapper);
-                    return getTypeParameterReference(type, newTypeArguments);
+                    return newTypeArguments === type.typeParameters ? mapped : getTypeParameterReference(type, newTypeArguments);
                 }
                 else {
                     return mapped;
@@ -9860,6 +9863,9 @@ namespace ts {
                 Debug.assertEqual(mapper(type), type);
                 const newType = instantiateType((<NakedGenericReference>type).nakedGeneric, mapper);
                 if (newType !== (<NakedGenericReference>type).nakedGeneric) {
+                    if (isUninstantiatedGenericType(newType)) {
+                        return createNakedGenericReference(newType, type);
+                    }
                     return newType;
                 }
             }
