@@ -9765,7 +9765,7 @@ namespace ts {
             if (type.genericTarget) {
                 const newType = mapper(type.genericTarget);
                 if (newType === type.genericTarget) {
-                    const typeArguments = (<TypeParameter>type).typeArguments;
+                    const typeArguments = type.typeArguments;
                     const newTypeArguments = instantiateTypes(typeArguments, mapper);
                     return newTypeArguments !== typeArguments ? getTypeParameterReference(type.genericTarget, newTypeArguments) : type;
                 }
@@ -9780,7 +9780,7 @@ namespace ts {
                 }
                 if (newType.flags & TypeFlags.TypeParameter && (<TypeParameter>newType).typeParameters && !(<TypeParameter>newType).typeArguments && !(<TypeParameter>newType).genericTarget) {
                     // Mapper did not instantiate the generic type so just create another reference to it.
-                    const newTypeArguments = instantiateTypes((<TypeParameter>type).typeArguments, mapper);
+                    const newTypeArguments = instantiateTypes(type.typeArguments, mapper);
                     return getTypeParameterReference(<TypeParameter>newType, newTypeArguments);
                 }
                 if (newType.flags & TypeFlags.TypeParameter) {
@@ -9791,10 +9791,10 @@ namespace ts {
                     // this means it was instantiated as anonymous type without type arguments.
                     return newType;
                 }
-                if (length(orginalNewTypeArguments) !== length((<TypeParameter>type).typeArguments)) {
+                if (length(orginalNewTypeArguments) !== length(type.typeArguments)) {
                     return newType;
                 }
-                const newTypeArguments = instantiateTypes((<TypeParameter>type).typeArguments, mapper);
+                const newTypeArguments = instantiateTypes(type.typeArguments, mapper);
                 return createTypeReference((<TypeReference>newType).target, newTypeArguments);
             }
             else if (!type.typeArguments) {
