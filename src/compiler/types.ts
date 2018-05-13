@@ -3984,8 +3984,6 @@ namespace ts {
         typeArguments?: Type[]; // Only set for references
         /* @internal */
         genericTarget?: TypeParameter; // This is the original generic type parameter a type parameter reference points to
-        /* @internal */
-        beingInstantiated?: boolean;
     }
 
     // Indexed access types (TypeFlags.IndexedAccess)

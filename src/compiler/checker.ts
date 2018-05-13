@@ -9813,13 +9813,7 @@ namespace ts {
             }
             if (type.flags & TypeFlags.TypeParameter) {
                 if ((<TypeParameter>type).typeParameters) {
-                    if ((<TypeParameter>type).beingInstantiated) {
-                        return type;
-                    }
-                    (<TypeParameter>type).beingInstantiated = true;
-                    const newType = instantiateGenericTypeParameter(<TypeParameter>type, mapper);
-                    (<TypeParameter>type).beingInstantiated = false;
-                    return newType;
+                    return instantiateGenericTypeParameter(<TypeParameter>type, mapper);
                 }
                 return mapper(<TypeParameter>type);
             }
@@ -9864,6 +9858,10 @@ namespace ts {
             }
             if (type.flags & TypeFlags.NakedGenericReference) {
                 Debug.assertEqual(mapper(type), type);
+                const newType = instantiateType((<NakedGenericReference>type).nakedGeneric, mapper);
+                if (newType !== (<NakedGenericReference>type).nakedGeneric) {
+                    return newType;
+                }
             }
             return type;
         }
@@ -21468,6 +21466,9 @@ namespace ts {
                     if (!typeArguments) {
                         typeArguments = getEffectiveTypeArguments(node, typeParameters);
                         mapper = createTypeMapper(typeParameters, typeArguments);
+                    }
+                    if (typeParameters[i].typeParameters) {
+                        continue;
                     }
                     result = result && checkTypeAssignableTo(
                         typeArguments[i],
