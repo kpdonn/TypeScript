@@ -250,7 +250,7 @@ interface LiftedResult2<
 >LB2 : LB2
 
 declare function lift<
->lift : <C extends ActBound & Bounded<C, ActBound, {}, ActTBound>, ActBound, ActTBound>(fToLift: StaticFunctor<C, ActBound, ActTBound>) => LiftedResult<C, ActBound, ActTBound>
+>lift : <C extends ActBound & Bounded<C, ActBound, ActTBound, ActTBound>, ActBound, ActTBound>(fToLift: StaticFunctor<C, ActBound, ActTBound>) => LiftedResult<C, ActBound, ActTBound>
 
     C<_T extends ActTBound> extends ActBound & Bounded<C, ActBound, _T, ActTBound>,
 >C : C
@@ -310,7 +310,7 @@ declare function stringLength(strarg: StartVal): EndVal
 const liftedStaticMap = lift(staticMap);
 >liftedStaticMap : LiftedResult<Functor<any, any, any>, {}, {}>
 >lift(staticMap) : LiftedResult<Functor<any, any, any>, {}, {}>
->lift : <C extends ActBound & Bounded<C, ActBound, {}, ActTBound>, ActBound, ActTBound>(fToLift: StaticFunctor<C, ActBound, ActTBound>) => LiftedResult<C, ActBound, ActTBound>
+>lift : <C extends ActBound & Bounded<C, ActBound, ActTBound, ActTBound>, ActBound, ActTBound>(fToLift: StaticFunctor<C, ActBound, ActTBound>) => LiftedResult<C, ActBound, ActTBound>
 >staticMap : <C1 extends Functor<C1, T1Bound, T1Bound>, T1Bound, A1, B1>(fa1: C1, fmap1: FMap<A1, B1>) => C1
 
 const liftedStringLength = liftedStaticMap(stringLength);
@@ -347,7 +347,7 @@ declare const declaredStaticFunctor: StaticFunctor<Functor, Functor>
 const liftedDeclaredStaticFunctor = lift(declaredStaticFunctor);
 >liftedDeclaredStaticFunctor : LiftedResult<Functor<CX, AX, AXBound>, Functor<CX, AX, AXBound>, {}>
 >lift(declaredStaticFunctor) : LiftedResult<Functor<CX, AX, AXBound>, Functor<CX, AX, AXBound>, {}>
->lift : <C extends ActBound & Bounded<C, ActBound, {}, ActTBound>, ActBound, ActTBound>(fToLift: StaticFunctor<C, ActBound, ActTBound>) => LiftedResult<C, ActBound, ActTBound>
+>lift : <C extends ActBound & Bounded<C, ActBound, ActTBound, ActTBound>, ActBound, ActTBound>(fToLift: StaticFunctor<C, ActBound, ActTBound>) => LiftedResult<C, ActBound, ActTBound>
 >declaredStaticFunctor : StaticFunctor<Functor<CX, AX, AXBound>, Functor<CX, AX, AXBound>, {}>
 
 const liftedDeclaredStringLength = liftedDeclaredStaticFunctor(stringLength)

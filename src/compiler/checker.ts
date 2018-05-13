@@ -7573,7 +7573,7 @@ namespace ts {
                     let constraint = constraintDeclaration ? getTypeFromTypeNode(constraintDeclaration) :
                         getInferredTypeParameterConstraint(typeParameter) || noConstraintType;
                     if (constraint !== noConstraintType && typeParameter.typeParameters) {
-                        const apparentMapper = createTypeMapper(typeParameter.typeParameters, map(typeParameter.typeParameters, getApparentType));
+                        const apparentMapper = createTypeMapper(typeParameter.typeParameters, map(typeParameter.typeParameters, t => getConstraintOfTypeParameter(t) || emptyObjectType));
                         const argumentMapper = typeParameter.typeArguments ? createTypeMapper(typeParameter.typeParameters, typeParameter.typeArguments) : identityMapper;
                         constraint = instantiateType(constraint, combineTypeMappers(argumentMapper, apparentMapper));
                     }
@@ -9507,13 +9507,7 @@ namespace ts {
         function combineTypeMappers(mapper1: TypeMapper, mapper2: TypeMapper): TypeMapper {
             if (!mapper1) return mapper2;
             if (!mapper2) return mapper1;
-            return t => {
-                const mapped1 = mapper1(t);
-                if (mapped1 === t) {
-                    return mapper2(t);
-                }
-                return instantiateType(mapped1, mapper2);
-            };
+            return t => instantiateType(mapper1(t), mapper2);
         }
 
         function createReplacementMapper(source: Type, target: Type, baseMapper: TypeMapper): TypeMapper {
