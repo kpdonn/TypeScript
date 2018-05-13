@@ -7689,7 +7689,7 @@ namespace ts {
                 return createTypeReference(<GenericType>type, typeArguments);
             }
             return checkNoTypeArguments(node, symbol) ? type : unknownType;
-            }
+        }
 
         function getTypeAliasInstantiation(symbol: Symbol, typeArguments: Type[]): Type {
             const type = getDeclaredTypeOfSymbol(symbol);
@@ -9854,7 +9854,6 @@ namespace ts {
                 return instantiateType((<SubstitutionType>type).typeVariable, mapper);
             }
             if (type.flags & TypeFlags.NakedGenericReference) {
-                Debug.assertEqual(mapper(type), type);
                 const newType = instantiateType((<NakedGenericReference>type).nakedGeneric, mapper);
                 if (newType !== (<NakedGenericReference>type).nakedGeneric) {
                     if (isUninstantiatedGenericType(newType)) {
@@ -12912,6 +12911,12 @@ namespace ts {
 
                 const constraint = getConstraintOfTypeParameter(inference.typeParameter);
                 if (constraint) {
+                    if (inference.typeParameter.typeParameters) {
+                        const wildcardConstraint = instantiateType(constraint, combineTypeMappers(getApparentType, wildcardMapper));
+                        if (context.compareTypes(inferredType, getTypeWithThisArgument(wildcardConstraint, inferredType))) {
+                            return inferredType;
+                        }
+                    }
                     const instantiatedConstraint = instantiateType(constraint, context);
                     if (!context.compareTypes(inferredType, getTypeWithThisArgument(instantiatedConstraint, inferredType))) {
                         inference.inferredType = inferredType = instantiatedConstraint;
