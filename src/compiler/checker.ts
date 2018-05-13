@@ -12546,6 +12546,11 @@ namespace ts {
                     if (source.flags & TypeFlags.ContainsAnyFunctionType || source === silentNeverType) {
                         return;
                     }
+                    if (target.flags & TypeFlags.TypeParameter && (<TypeParameter>target).typeArguments && forEach((<TypeParameter>target).typeArguments, couldContainTypeVariables) && getConstraintOfTypeParameter(<TypeParameter>target)) {
+                        // This is a generic type parameter reference and it might contain other type parameters to infer
+                        // so infer from the constraint of the type parameter (which is where the other type parameters would be if they are referenced)
+                        inferFromTypes(source, getConstraintOfTypeParameter(<TypeParameter>target));
+                    }
                     const inference = getInferenceInfoForType(target);
                     if (inference) {
                         if (!inference.isFixed) {
@@ -12567,13 +12572,8 @@ namespace ts {
                                 inference.topLevel = false;
                             }
                         }
+                        return;
                     }
-                    if (target.flags & TypeFlags.TypeParameter && (<TypeParameter>target).typeArguments && forEach((<TypeParameter>target).typeArguments, couldContainTypeVariables) && getConstraintOfTypeParameter(<TypeParameter>target)) {
-                        // This is a generic type parameter reference and it might contain other type parameters to infer
-                        // so infer from the constraint of the type parameter (which is where the other type parameters would be if they are referenced)
-                        inferFromTypes(source, getConstraintOfTypeParameter(<TypeParameter>target));
-                    }
-                    return;
                 }
                 if (getObjectFlags(source) & ObjectFlags.Reference && getObjectFlags(target) & ObjectFlags.Reference && (<TypeReference>source).target === (<TypeReference>target).target) {
                     // If source and target are references to the same generic type, infer from type arguments
