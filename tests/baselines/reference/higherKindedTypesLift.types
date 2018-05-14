@@ -77,8 +77,8 @@ declare function stringLength(strarg: string): number
 >strarg : string
 
 const liftedStringLength = liftedArray(stringLength);
->liftedStringLength : FMap<T[], T[]>
->liftedArray(stringLength) : FMap<T[], T[]>
+>liftedStringLength : FMap<string[], number[]>
+>liftedArray(stringLength) : FMap<string[], number[]>
 >liftedArray : LiftedResult<T[]>
 >stringLength : (strarg: string) => number
 
@@ -87,20 +87,20 @@ declare const arrayOfStrings: Array<string>;
 >Array : T[]
 
 const result = liftedStringLength(arrayOfStrings);
->result : T[]
->liftedStringLength(arrayOfStrings) : T[]
->liftedStringLength : FMap<T[], T[]>
+>result : number[]
+>liftedStringLength(arrayOfStrings) : number[]
+>liftedStringLength : FMap<string[], number[]>
 >arrayOfStrings : string[]
 
 const expectedType: Array<number> = result;
 >expectedType : number[]
 >Array : T[]
->result : T[]
+>result : number[]
 
 const expectError = liftedStringLength(result)
->expectError : T[]
->liftedStringLength(result) : T[]
->liftedStringLength : FMap<T[], T[]>
->result : T[]
+>expectError : number[]
+>liftedStringLength(result) : number[]
+>liftedStringLength : FMap<string[], number[]>
+>result : number[]
 
 

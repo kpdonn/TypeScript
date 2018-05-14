@@ -3857,9 +3857,15 @@ namespace ts {
      * property is the generic type parameter that nakedGeneric was passed as an argument to.
      */
     export interface NakedGenericReference extends Type {
-        nakedGeneric: GenericType | TypeParameter;
-        mapper?: TypeMapper;
+        nakedGeneric: GenericTypeWithArgumentMapper;
         original?: Type;
+    }
+
+    /* @internal */
+    export interface GenericTypeWithArgumentMapper extends Type {
+        typeParameters: TypeParameter[];
+        argumentMapper?: TypeArgumentMapper;
+        alternateArgumentMapper?: TypeArgumentMapper;
     }
 
     export interface UnionOrIntersectionType extends Type {
@@ -4097,6 +4103,9 @@ namespace ts {
 
     /* @internal */
     export type TypeMapper = (t: TypeParameter) => Type;
+
+    /* @internal */
+    export type TypeArgumentMapper = (t: Type[]) => Type[];
 
     export const enum InferencePriority {
         NakedTypeVariable           = 1 << 0,  // Naked type variable in union or intersection type

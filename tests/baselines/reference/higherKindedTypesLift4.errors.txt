@@ -1,16 +1,14 @@
+tests/cases/compiler/higherKindedTypesLift4.ts(51,87): error TS9999: Type parameters for type 'LRC2Bound' are not compatible with type parameters for type 'Bound'
 tests/cases/compiler/higherKindedTypesLift4.ts(82,30): error TS2345: Argument of type '<C1 extends Functor<C1, T1Bound, T1Bound>, T1Bound, A1 extends T1Bound, B1 extends T1Bound>(fa1: C1, fmap1: FMap<A1, B1>) => C1' is not assignable to parameter of type 'StaticFunctor<Functor<CX, AX, AXBound>, {}, {}>'.
   Types of parameters 'fmap1' and 'fmap2' are incompatible.
     Types of parameters 'fmapfa' and 'fmapfa' are incompatible.
       Type 'AXBound' is not assignable to type 'AS'.
-tests/cases/compiler/higherKindedTypesLift4.ts(92,51): error TS2345: Argument of type 'FunctorFoo<StartVal>' is not assignable to parameter of type 'Functor<CX, AX, AXBound>'.
-  Types of property 'map' are incompatible.
-    Type '<BFoo>(fmapfoo: FMap<StartVal, BFoo>) => FunctorFoo<BFoo>' is not assignable to type '<BX extends AXBound>(fmapx: (fmapxax: AX) => BX) => CX'.
-      Types of parameters 'fmapfoo' and 'fmapx' are incompatible.
-        Types of parameters 'fmapxax' and 'fmapfa' are incompatible.
-          Type 'StartVal' is not assignable to type 'AX'.
+tests/cases/compiler/higherKindedTypesLift4.ts(94,56): error TS2345: Argument of type 'FunctorFoo<EndVal>' is not assignable to parameter of type 'FunctorFoo<StartVal>'.
+  Type 'EndVal' is not assignable to type 'StartVal'.
+    Property 'startVal' is missing in type 'EndVal'.
 
 
-==== tests/cases/compiler/higherKindedTypesLift4.ts (2 errors) ====
+==== tests/cases/compiler/higherKindedTypesLift4.ts (3 errors) ====
     export interface FMap<FA, FB> {
         (fmapfa: FA): FB
     }
@@ -62,6 +60,8 @@ tests/cases/compiler/higherKindedTypesLift4.ts(92,51): error TS2345: Argument of
     
     interface LiftedResult2<
         LC2<_LT extends LA2 | LB2> extends LRC2Bound<LC2, _LT,  LA2 | LB2> & Bounded<LC2, LRC2Bound, _LT, LA2 | LB2>, 
+                                                                                          ~~~~~~~~~
+!!! error TS9999: Type parameters for type 'LRC2Bound' are not compatible with type parameters for type 'Bound'
         LA2,
         LB2,
         LRC2Bound<
@@ -108,13 +108,10 @@ tests/cases/compiler/higherKindedTypesLift4.ts(92,51): error TS2345: Argument of
     const liftedDeclaredStaticFunctor = lift(declaredStaticFunctor);
     const liftedDeclaredStringLength = liftedDeclaredStaticFunctor(stringLength)
     const declaredResult = liftedDeclaredStringLength(fooObj);
-                                                      ~~~~~~
-!!! error TS2345: Argument of type 'FunctorFoo<StartVal>' is not assignable to parameter of type 'Functor<CX, AX, AXBound>'.
-!!! error TS2345:   Types of property 'map' are incompatible.
-!!! error TS2345:     Type '<BFoo>(fmapfoo: FMap<StartVal, BFoo>) => FunctorFoo<BFoo>' is not assignable to type '<BX extends AXBound>(fmapx: (fmapxax: AX) => BX) => CX'.
-!!! error TS2345:       Types of parameters 'fmapfoo' and 'fmapx' are incompatible.
-!!! error TS2345:         Types of parameters 'fmapxax' and 'fmapfa' are incompatible.
-!!! error TS2345:           Type 'StartVal' is not assignable to type 'AX'.
     const expectedTypeDeclared: FunctorFoo<EndVal> = declaredResult;
     const expectErrorDeclared = liftedDeclaredStringLength(declaredResult)
+                                                           ~~~~~~~~~~~~~~
+!!! error TS2345: Argument of type 'FunctorFoo<EndVal>' is not assignable to parameter of type 'FunctorFoo<StartVal>'.
+!!! error TS2345:   Type 'EndVal' is not assignable to type 'StartVal'.
+!!! error TS2345:     Property 'startVal' is missing in type 'EndVal'.
     

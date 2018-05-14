@@ -369,26 +369,26 @@ const liftedDeclaredStaticFunctor = lift(declaredStaticFunctor);
 >declaredStaticFunctor : StaticFunctor<Functor<CX, AX, AXBound>, Functor<CX, AX, AXBound>, {}>
 
 const liftedDeclaredStringLength = liftedDeclaredStaticFunctor(stringLength)
->liftedDeclaredStringLength : LiftedResult2<Functor<CX, AX, AXBound>, StartVal, EndVal, Functor<CX, AX, AXBound>>
->liftedDeclaredStaticFunctor(stringLength) : LiftedResult2<Functor<CX, AX, AXBound>, StartVal, EndVal, Functor<CX, AX, AXBound>>
+>liftedDeclaredStringLength : LiftedResult2<LC, StartVal, EndVal, Functor<CX, AX, AXBound>>
+>liftedDeclaredStaticFunctor(stringLength) : LiftedResult2<LC, StartVal, EndVal, Functor<CX, AX, AXBound>>
 >liftedDeclaredStaticFunctor : LiftedResult<Functor<CX, AX, AXBound>, Functor<CX, AX, AXBound>, {}>
 >stringLength : (strarg: StartVal) => EndVal
 
 const declaredResult = liftedDeclaredStringLength(fooObj);
->declaredResult : any
->liftedDeclaredStringLength(fooObj) : any
->liftedDeclaredStringLength : LiftedResult2<Functor<CX, AX, AXBound>, StartVal, EndVal, Functor<CX, AX, AXBound>>
+>declaredResult : FunctorFoo<EndVal>
+>liftedDeclaredStringLength(fooObj) : FunctorFoo<EndVal>
+>liftedDeclaredStringLength : LiftedResult2<LC, StartVal, EndVal, Functor<CX, AX, AXBound>>
 >fooObj : FunctorFoo<StartVal>
 
 const expectedTypeDeclared: FunctorFoo<EndVal> = declaredResult;
 >expectedTypeDeclared : FunctorFoo<EndVal>
 >FunctorFoo : FunctorFoo<AFoo>
 >EndVal : EndVal
->declaredResult : any
+>declaredResult : FunctorFoo<EndVal>
 
 const expectErrorDeclared = liftedDeclaredStringLength(declaredResult)
 >expectErrorDeclared : any
 >liftedDeclaredStringLength(declaredResult) : any
->liftedDeclaredStringLength : LiftedResult2<Functor<CX, AX, AXBound>, StartVal, EndVal, Functor<CX, AX, AXBound>>
->declaredResult : any
+>liftedDeclaredStringLength : LiftedResult2<LC, StartVal, EndVal, Functor<CX, AX, AXBound>>
+>declaredResult : FunctorFoo<EndVal>
 
