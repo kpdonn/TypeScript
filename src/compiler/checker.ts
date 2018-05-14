@@ -5080,7 +5080,8 @@ namespace ts {
         }
 
         function getTargetType(type: Type): Type {
-            return getObjectFlags(type) & ObjectFlags.Reference ? (<TypeReference>type).target : type;
+            return getObjectFlags(type) & ObjectFlags.Reference ? (<TypeReference>type).target :
+                type.flags & TypeFlags.TypeParameter && (<TypeParameter>type).genericTarget ? (<TypeParameter>type).genericTarget : type;
         }
 
         function hasBaseType(type: Type, checkBase: Type) {
@@ -6819,7 +6820,8 @@ namespace ts {
          * type itself. Note that the apparent type of a union type is the union type itself.
          */
         function getApparentType(type: Type): Type {
-            const t = type.flags & TypeFlags.Instantiable ? getBaseConstraintOfType(type) || emptyObjectType : type;
+            let t = type.flags & TypeFlags.NakedGenericReference ? (<NakedGenericReference>type).nakedGeneric : type;
+            t = t.flags & TypeFlags.Instantiable ? getBaseConstraintOfType(t) || emptyObjectType : t;
             return t.flags & TypeFlags.Intersection ? getApparentTypeOfIntersectionType(<IntersectionType>t) :
                 t.flags & TypeFlags.StringLike ? globalStringType :
                 t.flags & TypeFlags.NumberLike ? globalNumberType :
@@ -9853,8 +9855,8 @@ namespace ts {
             if (type.flags & TypeFlags.Substitution) {
                 return instantiateType((<SubstitutionType>type).typeVariable, mapper);
             }
-            if (type.flags & TypeFlags.NakedGenericReference) {
-                const newType = instantiateType((<NakedGenericReference>type).nakedGeneric, mapper);
+            if (type.flags & TypeFlags.NakedGenericReference && (<NakedGenericReference>type).nakedGeneric.flags & TypeFlags.TypeParameter) {
+                const newType = mapper((<NakedGenericReference>type).nakedGeneric);
                 if (newType !== (<NakedGenericReference>type).nakedGeneric) {
                     if (isUninstantiatedGenericType(newType)) {
                         return createNakedGenericReference(newType, type);
@@ -10478,12 +10480,6 @@ namespace ts {
                 if (target.flags & TypeFlags.IndexedAccess) {
                     target = getSimplifiedType(target);
                 }
-                if (source.flags & TypeFlags.NakedGenericReference) {
-                    source = (<NakedGenericReference>source).nakedGeneric;
-                }
-                if (target.flags & TypeFlags.NakedGenericReference) {
-                    target = (<NakedGenericReference>target).nakedGeneric;
-                }
 
                 // both types are the same - covers 'they are the same primitive type or both are Any' or the same type parameter cases
                 if (source === target) return Ternary.True;
@@ -10647,6 +10643,9 @@ namespace ts {
                 }
                 if (flags & TypeFlags.Substitution) {
                     return isRelatedTo((<SubstitutionType>source).substitute, (<SubstitutionType>target).substitute, /*reportErrors*/ false);
+                }
+                if (flags & TypeFlags.NakedGenericReference) {
+                    return isRelatedTo((<NakedGenericReference>source).nakedGeneric, (<NakedGenericReference>target).nakedGeneric, /*reportErrors*/ false);
                 }
                 return Ternary.False;
             }
@@ -11055,6 +11054,12 @@ namespace ts {
                                 return result;
                             }
                         }
+                    }
+                }
+                else if (source.flags & TypeFlags.NakedGenericReference && target.flags & TypeFlags.NakedGenericReference) {
+                    if (result = isRelatedTo((<NakedGenericReference>source).nakedGeneric, (<NakedGenericReference>target).nakedGeneric, reportErrors)) {
+                        errorInfo = saveErrorInfo;
+                        return result;
                     }
                 }
                 else {
@@ -12906,17 +12911,13 @@ namespace ts {
                 else {
                     inferredType = getTypeFromInference(inference);
                 }
-
+                if (inference.typeParameter.typeParameters) {
+                    inferredType = getTargetType(inferredType);
+                }
                 inference.inferredType = inferredType;
 
                 const constraint = getConstraintOfTypeParameter(inference.typeParameter);
                 if (constraint) {
-                    if (inference.typeParameter.typeParameters) {
-                        const wildcardConstraint = instantiateType(constraint, combineTypeMappers(getApparentType, wildcardMapper));
-                        if (context.compareTypes(inferredType, getTypeWithThisArgument(wildcardConstraint, inferredType))) {
-                            return inferredType;
-                        }
-                    }
                     const instantiatedConstraint = instantiateType(constraint, context);
                     if (!context.compareTypes(inferredType, getTypeWithThisArgument(instantiatedConstraint, inferredType))) {
                         inference.inferredType = inferredType = instantiatedConstraint;

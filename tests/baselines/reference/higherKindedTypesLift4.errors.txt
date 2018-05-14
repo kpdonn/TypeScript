@@ -1,6 +1,7 @@
-tests/cases/compiler/higherKindedTypesLift4.ts(86,40): error TS2345: Argument of type 'FunctorFoo<EndVal>' is not assignable to parameter of type 'FunctorFoo<StartVal>'.
-  Type 'EndVal' is not assignable to type 'StartVal'.
-    Property 'startVal' is missing in type 'EndVal'.
+tests/cases/compiler/higherKindedTypesLift4.ts(82,30): error TS2345: Argument of type '<C1 extends Functor<C1, T1Bound, T1Bound>, T1Bound, A1 extends T1Bound, B1 extends T1Bound>(fa1: C1, fmap1: FMap<A1, B1>) => C1' is not assignable to parameter of type 'StaticFunctor<Functor<CX, AX, AXBound>, {}, {}>'.
+  Types of parameters 'fmap1' and 'fmap2' are incompatible.
+    Types of parameters 'fmapfa' and 'fmapfa' are incompatible.
+      Type 'AXBound' is not assignable to type 'AS'.
 tests/cases/compiler/higherKindedTypesLift4.ts(92,51): error TS2345: Argument of type 'FunctorFoo<StartVal>' is not assignable to parameter of type 'Functor<CX, AX, AXBound>'.
   Types of property 'map' are incompatible.
     Type '<BFoo>(fmapfoo: FMap<StartVal, BFoo>) => FunctorFoo<BFoo>' is not assignable to type '<BX extends AXBound>(fmapx: (fmapxax: AX) => BX) => CX'.
@@ -92,14 +93,15 @@ tests/cases/compiler/higherKindedTypesLift4.ts(92,51): error TS2345: Argument of
     declare function stringLength(strarg: StartVal): EndVal
     
     const liftedStaticMap = lift(staticMap);
+                                 ~~~~~~~~~
+!!! error TS2345: Argument of type '<C1 extends Functor<C1, T1Bound, T1Bound>, T1Bound, A1 extends T1Bound, B1 extends T1Bound>(fa1: C1, fmap1: FMap<A1, B1>) => C1' is not assignable to parameter of type 'StaticFunctor<Functor<CX, AX, AXBound>, {}, {}>'.
+!!! error TS2345:   Types of parameters 'fmap1' and 'fmap2' are incompatible.
+!!! error TS2345:     Types of parameters 'fmapfa' and 'fmapfa' are incompatible.
+!!! error TS2345:       Type 'AXBound' is not assignable to type 'AS'.
     const liftedStringLength = liftedStaticMap(stringLength);
     const result = liftedStringLength(fooObj);
     const expectedType: FunctorFoo<EndVal> = result;
     const expectError = liftedStringLength(result)
-                                           ~~~~~~
-!!! error TS2345: Argument of type 'FunctorFoo<EndVal>' is not assignable to parameter of type 'FunctorFoo<StartVal>'.
-!!! error TS2345:   Type 'EndVal' is not assignable to type 'StartVal'.
-!!! error TS2345:     Property 'startVal' is missing in type 'EndVal'.
     
     
     declare const declaredStaticFunctor: StaticFunctor<Functor, Functor>

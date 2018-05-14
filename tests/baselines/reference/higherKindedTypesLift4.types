@@ -326,34 +326,34 @@ declare function stringLength(strarg: StartVal): EndVal
 >EndVal : EndVal
 
 const liftedStaticMap = lift(staticMap);
->liftedStaticMap : LiftedResult<Functor<any, any, any>, {}, {}>
->lift(staticMap) : LiftedResult<Functor<any, any, any>, {}, {}>
+>liftedStaticMap : any
+>lift(staticMap) : any
 >lift : <C extends ActBound & Bounded<C, ActBound, ActTBound, ActTBound>, ActBound, ActTBound>(fToLift: StaticFunctor<C, ActBound, ActTBound>) => LiftedResult<C, ActBound, ActTBound>
 >staticMap : <C1 extends Functor<C1, T1Bound, T1Bound>, T1Bound, A1 extends T1Bound, B1 extends T1Bound>(fa1: C1, fmap1: FMap<A1, B1>) => C1
 
 const liftedStringLength = liftedStaticMap(stringLength);
->liftedStringLength : LiftedResult2<Functor<any, any, any>, StartVal, EndVal, {}>
->liftedStaticMap(stringLength) : LiftedResult2<Functor<any, any, any>, StartVal, EndVal, {}>
->liftedStaticMap : LiftedResult<Functor<any, any, any>, {}, {}>
+>liftedStringLength : any
+>liftedStaticMap(stringLength) : any
+>liftedStaticMap : any
 >stringLength : (strarg: StartVal) => EndVal
 
 const result = liftedStringLength(fooObj);
->result : FunctorFoo<EndVal>
->liftedStringLength(fooObj) : FunctorFoo<EndVal>
->liftedStringLength : LiftedResult2<Functor<any, any, any>, StartVal, EndVal, {}>
+>result : any
+>liftedStringLength(fooObj) : any
+>liftedStringLength : any
 >fooObj : FunctorFoo<StartVal>
 
 const expectedType: FunctorFoo<EndVal> = result;
 >expectedType : FunctorFoo<EndVal>
 >FunctorFoo : FunctorFoo<AFoo>
 >EndVal : EndVal
->result : FunctorFoo<EndVal>
+>result : any
 
 const expectError = liftedStringLength(result)
 >expectError : any
 >liftedStringLength(result) : any
->liftedStringLength : LiftedResult2<Functor<any, any, any>, StartVal, EndVal, {}>
->result : FunctorFoo<EndVal>
+>liftedStringLength : any
+>result : any
 
 
 declare const declaredStaticFunctor: StaticFunctor<Functor, Functor>
@@ -387,8 +387,8 @@ const expectedTypeDeclared: FunctorFoo<EndVal> = declaredResult;
 >declaredResult : any
 
 const expectErrorDeclared = liftedDeclaredStringLength(declaredResult)
->expectErrorDeclared : FinalC
->liftedDeclaredStringLength(declaredResult) : FinalC
+>expectErrorDeclared : any
+>liftedDeclaredStringLength(declaredResult) : any
 >liftedDeclaredStringLength : LiftedResult2<Functor<CX, AX, AXBound>, StartVal, EndVal, Functor<CX, AX, AXBound>>
 >declaredResult : any
 
