@@ -142,33 +142,33 @@ interface StaticFunctor<
 }
 
 
-declare function staticMap<C1<_T1 extends T1Bound> extends Functor<C1, T1Bound, T1Bound>, T1Bound, A1 extends T1Bound, B1 extends T1Bound>(fa1: C1<A1>, fmap1: FMap<A1, B1>): C1<B1>;
+declare function staticMap<C1<_T1 extends T1Bound> extends Functor<C1, _T1, T1Bound>, T1Bound, A1 extends T1Bound, B1 extends T1Bound>(fa1: C1<A1>, fmap1: FMap<A1, B1>): C1<B1>;
 >staticMap : Symbol(staticMap, Decl(higherKindedTypesLift4.ts, 32, 1))
 >C1 : Symbol(C1, Decl(higherKindedTypesLift4.ts, 35, 27))
 >_T1 : Symbol(_T1, Decl(higherKindedTypesLift4.ts, 35, 30))
->T1Bound : Symbol(T1Bound, Decl(higherKindedTypesLift4.ts, 35, 89))
+>T1Bound : Symbol(T1Bound, Decl(higherKindedTypesLift4.ts, 35, 85))
 >Functor : Symbol(Functor, Decl(higherKindedTypesLift4.ts, 12, 4))
 >C1 : Symbol(C1, Decl(higherKindedTypesLift4.ts, 35, 27))
->T1Bound : Symbol(T1Bound, Decl(higherKindedTypesLift4.ts, 35, 89))
->T1Bound : Symbol(T1Bound, Decl(higherKindedTypesLift4.ts, 35, 89))
->T1Bound : Symbol(T1Bound, Decl(higherKindedTypesLift4.ts, 35, 89))
->A1 : Symbol(A1, Decl(higherKindedTypesLift4.ts, 35, 98))
->T1Bound : Symbol(T1Bound, Decl(higherKindedTypesLift4.ts, 35, 89))
->B1 : Symbol(B1, Decl(higherKindedTypesLift4.ts, 35, 118))
->T1Bound : Symbol(T1Bound, Decl(higherKindedTypesLift4.ts, 35, 89))
->fa1 : Symbol(fa1, Decl(higherKindedTypesLift4.ts, 35, 139))
+>_T1 : Symbol(_T1, Decl(higherKindedTypesLift4.ts, 35, 30))
+>T1Bound : Symbol(T1Bound, Decl(higherKindedTypesLift4.ts, 35, 85))
+>T1Bound : Symbol(T1Bound, Decl(higherKindedTypesLift4.ts, 35, 85))
+>A1 : Symbol(A1, Decl(higherKindedTypesLift4.ts, 35, 94))
+>T1Bound : Symbol(T1Bound, Decl(higherKindedTypesLift4.ts, 35, 85))
+>B1 : Symbol(B1, Decl(higherKindedTypesLift4.ts, 35, 114))
+>T1Bound : Symbol(T1Bound, Decl(higherKindedTypesLift4.ts, 35, 85))
+>fa1 : Symbol(fa1, Decl(higherKindedTypesLift4.ts, 35, 135))
 >C1 : Symbol(C1, Decl(higherKindedTypesLift4.ts, 35, 27))
->A1 : Symbol(A1, Decl(higherKindedTypesLift4.ts, 35, 98))
->fmap1 : Symbol(fmap1, Decl(higherKindedTypesLift4.ts, 35, 151))
+>A1 : Symbol(A1, Decl(higherKindedTypesLift4.ts, 35, 94))
+>fmap1 : Symbol(fmap1, Decl(higherKindedTypesLift4.ts, 35, 147))
 >FMap : Symbol(FMap, Decl(higherKindedTypesLift4.ts, 0, 0))
->A1 : Symbol(A1, Decl(higherKindedTypesLift4.ts, 35, 98))
->B1 : Symbol(B1, Decl(higherKindedTypesLift4.ts, 35, 118))
+>A1 : Symbol(A1, Decl(higherKindedTypesLift4.ts, 35, 94))
+>B1 : Symbol(B1, Decl(higherKindedTypesLift4.ts, 35, 114))
 >C1 : Symbol(C1, Decl(higherKindedTypesLift4.ts, 35, 27))
->B1 : Symbol(B1, Decl(higherKindedTypesLift4.ts, 35, 118))
+>B1 : Symbol(B1, Decl(higherKindedTypesLift4.ts, 35, 114))
 
 
 interface LiftedResult<
->LiftedResult : Symbol(LiftedResult, Decl(higherKindedTypesLift4.ts, 35, 181))
+>LiftedResult : Symbol(LiftedResult, Decl(higherKindedTypesLift4.ts, 35, 177))
 
     LC<_LT extends LRTBound> extends LRCBound<LC, _LT> & Bounded<LC, LRCBound, _LT, LRTBound>,
 >LC : Symbol(LC, Decl(higherKindedTypesLift4.ts, 38, 23))
@@ -294,7 +294,7 @@ declare function lift<
 >C : Symbol(C, Decl(higherKindedTypesLift4.ts, 62, 22))
 >ActBound : Symbol(ActBound, Decl(higherKindedTypesLift4.ts, 63, 83))
 >ActTBound : Symbol(ActTBound, Decl(higherKindedTypesLift4.ts, 64, 13))
->LiftedResult : Symbol(LiftedResult, Decl(higherKindedTypesLift4.ts, 35, 181))
+>LiftedResult : Symbol(LiftedResult, Decl(higherKindedTypesLift4.ts, 35, 177))
 >C : Symbol(C, Decl(higherKindedTypesLift4.ts, 62, 22))
 >ActBound : Symbol(ActBound, Decl(higherKindedTypesLift4.ts, 63, 83))
 >ActTBound : Symbol(ActTBound, Decl(higherKindedTypesLift4.ts, 64, 13))

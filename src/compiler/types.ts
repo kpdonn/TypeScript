@@ -4108,13 +4108,14 @@ namespace ts {
     export type TypeArgumentMapper = (t: Type[]) => Type[];
 
     export const enum InferencePriority {
-        NakedTypeVariable           = 1 << 0,  // Naked type variable in union or intersection type
-        HomomorphicMappedType       = 1 << 1,  // Reverse inference for homomorphic mapped type
-        MappedTypeConstraint        = 1 << 2,  // Reverse inference for mapped type
-        ReturnType                  = 1 << 3,  // Inference made from return type of generic function
-        LiteralKeyof                = 1 << 4,  // Inference made from a string literal to a keyof T
-        NoConstraints               = 1 << 5,  // Don't infer from constraints of instantiable types
-        AlwaysStrict                = 1 << 6,  // Always use strict rules for contravariant inferences
+        NakedTypeVariable               = 1 << 0,  // Naked type variable in union or intersection type
+        HomomorphicMappedType           = 1 << 1,  // Reverse inference for homomorphic mapped type
+        MappedTypeConstraint            = 1 << 2,  // Reverse inference for mapped type
+        GenericTypeParameterConstraint  = 1 << 3,  // Inferred from constraint of a generic type parameter
+        ReturnType                      = 1 << 4,  // Inference made from return type of generic function
+        LiteralKeyof                    = 1 << 5,  // Inference made from a string literal to a keyof T
+        NoConstraints                   = 1 << 6,  // Don't infer from constraints of instantiable types
+        AlwaysStrict                    = 1 << 7,  // Always use strict rules for contravariant inferences
 
         PriorityImpliesCombination  = ReturnType | MappedTypeConstraint | LiteralKeyof,  // These priorities imply that the resulting type should be a combination of all candidates
     }

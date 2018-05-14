@@ -7742,7 +7742,7 @@ namespace ts {
                 if (!checkTypeArgumentArity(node, symbol, typeParameters, length(typeArguments))) {
                     return unknownType;
                 }
-                return getTypeParameterReference(type, typeArguments);
+                return getTypeParameterReference(type, fillMissingTypeArguments(typeArguments, typeParameters, getMinTypeArgumentCount(typeParameters), isInJavaScriptFile(node)));
             }
             else if (!checkNoTypeArguments(node, symbol)) {
                 return unknownType;
@@ -12595,7 +12595,10 @@ namespace ts {
                     if (target.flags & TypeFlags.TypeParameter && (<TypeParameter>target).typeArguments && forEach((<TypeParameter>target).typeArguments, couldContainTypeVariables) && getConstraintOfTypeParameter(<TypeParameter>target)) {
                         // This is a generic type parameter reference and it might contain other type parameters to infer
                         // so infer from the constraint of the type parameter (which is where the other type parameters would be if they are referenced)
+                        const savePriority = priority;
+                        priority |= InferencePriority.GenericTypeParameterConstraint;
                         inferFromTypes(source, getConstraintOfTypeParameter(<TypeParameter>target));
+                        priority = savePriority;
                     }
                     const inference = getInferenceInfoForType(target);
                     if (inference) {

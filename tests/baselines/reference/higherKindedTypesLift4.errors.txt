@@ -44,7 +44,7 @@ tests/cases/compiler/higherKindedTypesLift4.ts(94,56): error TS2345: Argument of
     }
     
     
-    declare function staticMap<C1<_T1 extends T1Bound> extends Functor<C1, T1Bound, T1Bound>, T1Bound, A1 extends T1Bound, B1 extends T1Bound>(fa1: C1<A1>, fmap1: FMap<A1, B1>): C1<B1>;
+    declare function staticMap<C1<_T1 extends T1Bound> extends Functor<C1, _T1, T1Bound>, T1Bound, A1 extends T1Bound, B1 extends T1Bound>(fa1: C1<A1>, fmap1: FMap<A1, B1>): C1<B1>;
     
     
     interface LiftedResult<
