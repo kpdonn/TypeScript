@@ -8,10 +8,9 @@ tests/cases/compiler/higherKindedTypesLift2.ts(105,42): error TS2345: Argument o
     Type 'C' is not assignable to type 'Functor<CX, AS, {}>'.
       Type 'ActBound & Bounded<C, ActBound, AS, {}>' is not assignable to type 'Functor<CX, AS, {}>'.
         Property 'functorMap' is missing in type 'Bounded<C, ActBound, AS, {}>'.
-tests/cases/compiler/higherKindedTypesLift2.ts(109,29): error TS2304: Cannot find name 'liftedDeclaredStringLength'.
 
 
-==== tests/cases/compiler/higherKindedTypesLift2.ts (3 errors) ====
+==== tests/cases/compiler/higherKindedTypesLift2.ts (2 errors) ====
     interface StartVal {
         startVal: string
     }
@@ -132,7 +131,5 @@ tests/cases/compiler/higherKindedTypesLift2.ts(109,29): error TS2304: Cannot fin
     const liftedDeclaredTestFunc = liftedDeclaredStaticFunctor(testFunc)
     const declaredResult = liftedDeclaredTestFunc(fooObj);
     const expectedTypeDeclared: FunctorFoo<EndVal> = declaredResult;
-    const expectErrorDeclared = liftedDeclaredStringLength(declaredResult)
-                                ~~~~~~~~~~~~~~~~~~~~~~~~~~
-!!! error TS2304: Cannot find name 'liftedDeclaredStringLength'.
+    const expectErrorDeclared = liftedDeclaredTestFunc(declaredResult)
     

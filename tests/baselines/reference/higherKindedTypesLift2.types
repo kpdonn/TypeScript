@@ -427,9 +427,9 @@ const expectedTypeDeclared: FunctorFoo<EndVal> = declaredResult;
 >EndVal : EndVal
 >declaredResult : any
 
-const expectErrorDeclared = liftedDeclaredStringLength(declaredResult)
+const expectErrorDeclared = liftedDeclaredTestFunc(declaredResult)
 >expectErrorDeclared : any
->liftedDeclaredStringLength(declaredResult) : any
->liftedDeclaredStringLength : any
+>liftedDeclaredTestFunc(declaredResult) : any
+>liftedDeclaredTestFunc : any
 >declaredResult : any
 

@@ -107,7 +107,7 @@ const liftedDeclaredStaticFunctor = lift(declaredStaticFunctor);
 const liftedDeclaredTestFunc = liftedDeclaredStaticFunctor(testFunc)
 const declaredResult = liftedDeclaredTestFunc(fooObj);
 const expectedTypeDeclared: FunctorFoo<EndVal> = declaredResult;
-const expectErrorDeclared = liftedDeclaredStringLength(declaredResult)
+const expectErrorDeclared = liftedDeclaredTestFunc(declaredResult)
 
 
 //// [higherKindedTypesLift2.js]
@@ -122,4 +122,4 @@ var liftedDeclaredStaticFunctor = lift(declaredStaticFunctor);
 var liftedDeclaredTestFunc = liftedDeclaredStaticFunctor(testFunc);
 var declaredResult = liftedDeclaredTestFunc(fooObj);
 var expectedTypeDeclared = declaredResult;
-var expectErrorDeclared = liftedDeclaredStringLength(declaredResult);
+var expectErrorDeclared = liftedDeclaredTestFunc(declaredResult);

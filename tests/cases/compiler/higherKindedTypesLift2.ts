@@ -108,4 +108,4 @@ const liftedDeclaredStaticFunctor = lift(declaredStaticFunctor);
 const liftedDeclaredTestFunc = liftedDeclaredStaticFunctor(testFunc)
 const declaredResult = liftedDeclaredTestFunc(fooObj);
 const expectedTypeDeclared: FunctorFoo<EndVal> = declaredResult;
-const expectErrorDeclared = liftedDeclaredStringLength(declaredResult)
+const expectErrorDeclared = liftedDeclaredTestFunc(declaredResult)
