@@ -159,7 +159,7 @@ interface StaticFunctor<
 
 
 declare function lift<
->lift : <C extends ActBound & Bounded<C, ActBound, _TB, {}>, ActBound, ActTBound>(fToLift: StaticFunctor<C, ActBound, ActTBound>) => LiftedResult<C, ActBound, ActTBound>
+>lift : <C extends ActBound & Bounded<C, ActBound, any, {}>, ActBound, ActTBound>(fToLift: StaticFunctor<C, ActBound, ActTBound>) => LiftedResult<C, ActBound, ActTBound>
 
     C<_T extends _TB, _TB = {}> extends ActBound<C, _T, _TB> & Bounded<C, ActBound, _T, _TB>,
 >C : C
@@ -312,7 +312,7 @@ interface LiftedResult2<
     }
 
 declare function staticMap<C1<_T1 extends _T1B, _T1B = {}> extends Functor<C1, _T1, _T1B>, T1Bound, A1 extends T1Bound, B1 extends T1Bound>(fa1: C1<A1>, fmap1: FMap<A1, B1>): C1<B1>;
->staticMap : <C1 extends Functor<C1, _T1B, {}>, T1Bound, A1 extends T1Bound, B1 extends T1Bound>(fa1: C1, fmap1: FMap<A1, B1>) => C1
+>staticMap : <C1 extends Functor<C1, any, {}>, T1Bound, A1 extends T1Bound, B1 extends T1Bound>(fa1: C1, fmap1: FMap<A1, B1>) => C1
 >C1 : C1
 >_T1 : _T1
 >_T1B : _T1B
@@ -369,8 +369,8 @@ declare const fooObj: FunctorFoo<StartVal>
 const liftedStaticMap = lift(staticMap);
 >liftedStaticMap : any
 >lift(staticMap) : any
->lift : <C extends ActBound & Bounded<C, ActBound, _TB, {}>, ActBound, ActTBound>(fToLift: StaticFunctor<C, ActBound, ActTBound>) => LiftedResult<C, ActBound, ActTBound>
->staticMap : <C1 extends Functor<C1, _T1B, {}>, T1Bound, A1 extends T1Bound, B1 extends T1Bound>(fa1: C1, fmap1: FMap<A1, B1>) => C1
+>lift : <C extends ActBound & Bounded<C, ActBound, any, {}>, ActBound, ActTBound>(fToLift: StaticFunctor<C, ActBound, ActTBound>) => LiftedResult<C, ActBound, ActTBound>
+>staticMap : <C1 extends Functor<C1, any, {}>, T1Bound, A1 extends T1Bound, B1 extends T1Bound>(fa1: C1, fmap1: FMap<A1, B1>) => C1
 
 const liftedTestFunc = liftedStaticMap(testFunc);
 >liftedTestFunc : any
@@ -406,7 +406,7 @@ declare const declaredStaticFunctor: StaticFunctor<Functor, Functor>
 const liftedDeclaredStaticFunctor = lift(declaredStaticFunctor);
 >liftedDeclaredStaticFunctor : any
 >lift(declaredStaticFunctor) : any
->lift : <C extends ActBound & Bounded<C, ActBound, _TB, {}>, ActBound, ActTBound>(fToLift: StaticFunctor<C, ActBound, ActTBound>) => LiftedResult<C, ActBound, ActTBound>
+>lift : <C extends ActBound & Bounded<C, ActBound, any, {}>, ActBound, ActTBound>(fToLift: StaticFunctor<C, ActBound, ActTBound>) => LiftedResult<C, ActBound, ActTBound>
 >declaredStaticFunctor : StaticFunctor<Functor<CX, AX, AXBound>, Functor<CX, AX, AXBound>, {}>
 
 const liftedDeclaredTestFunc = liftedDeclaredStaticFunctor(testFunc)

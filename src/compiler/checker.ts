@@ -7575,9 +7575,10 @@ namespace ts {
                     let constraint = constraintDeclaration ? getTypeFromTypeNode(constraintDeclaration) :
                         getInferredTypeParameterConstraint(typeParameter) || noConstraintType;
                     if (constraint !== noConstraintType && typeParameter.typeParameters) {
-                        const apparentMapper = createTypeMapper(typeParameter.typeParameters, map(typeParameter.typeParameters, t => getConstraintOfTypeParameter(t) || emptyObjectType));
                         const argumentMapper = typeParameter.typeArguments ? createTypeMapper(typeParameter.typeParameters, typeParameter.typeArguments) : undefined;
-                        constraint = instantiateType(constraint, combineTypeMappers(argumentMapper, apparentMapper));
+                        const constraintMapper = createTypeMapper(typeParameter.typeParameters, map(typeParameter.typeParameters, t => getConstraintOfTypeParameter(t) || emptyObjectType));
+                        const eraser = createTypeEraser(typeParameter.typeParameters);
+                        constraint = instantiateType(constraint, combineTypeMappers(combineTypeMappers(argumentMapper, constraintMapper), eraser));
                     }
                     typeParameter.constraint = constraint;
                 }
@@ -7767,12 +7768,12 @@ namespace ts {
 
         function createGenericReference(genericType: TypeParameter | GenericType): Type | undefined {
             Debug.assert(isUninstantiatedGenericType(genericType));
-
-            const type = <GenericReference>createType(TypeFlags.GenericReference);
-            type.flags |= genericType.flags & TypeFlags.PropagatingFlags;
-            type.target = <GenericTypeWithArgumentMapper>genericType;
-
-            return type;
+            if (!genericType.genericReference) {
+                const genericReference = <GenericReference>createType(TypeFlags.GenericReference);
+                genericReference.target = <GenericTypeWithArgumentMapper>genericType;
+                genericType.genericReference = genericReference;
+            }
+            return genericType.genericReference;
         }
 
         function tryGetGenericReference(node: NodeWithTypeArguments, genericType: TypeParameter | GenericType): Type | undefined {
@@ -9814,9 +9815,6 @@ namespace ts {
                     const newTypeArguments = instantiateTypes(typeArguments, mapper);
                     return newTypeArguments !== typeArguments ? getTypeParameterReference(type.genericTarget, newTypeArguments) : type;
                 }
-                if (newType === type) {
-                    return type;
-                }
                 if (newType.flags & TypeFlags.GenericReference) {
                     const reference = <GenericReference>newType;
                     const argumentMapper = getTypeArgumentMapper(reference.target, type);
@@ -9828,29 +9826,21 @@ namespace ts {
                     Debug.assert(!!(getObjectFlags(reference.target) & ObjectFlags.Reference));
                     return createTypeReference(<GenericType>reference.target, newTypeArguments);
                 }
-                if (newType.flags & TypeFlags.TypeParameter && (<TypeParameter>newType).typeParameters && !(<TypeParameter>newType).typeArguments && !(<TypeParameter>newType).genericTarget) {
-                    // Mapper did not instantiate the generic type so just create another reference to it.
-                    const newTypeArguments = instantiateTypes(type.typeArguments, mapper);
-                    return getTypeParameterReference(<TypeParameter>newType, newTypeArguments);
-                }
-                if (newType.flags & TypeFlags.TypeParameter) {
+                else if (getObjectFlags(newType) & ObjectFlags.Reference) {
+                    if (isUninstantiatedGenericType(newType)) {
+                        const argumentMapper = getTypeArgumentMapper(<GenericTypeWithArgumentMapper>newType, type);
+                        Debug.assert(!!argumentMapper);
+                        const newTypeArguments = instantiateTypes(argumentMapper(type.typeArguments), mapper);
+                        return createTypeReference((<TypeReference>newType).target, newTypeArguments);
+                    }
                     return newType;
                 }
-                const orginalNewTypeArguments = (<TypeReference>newType).typeArguments;
-                if (!orginalNewTypeArguments) {
-                    // this means it was instantiated as anonymous type without type arguments.
-                    return newType;
-                }
-                if (length(orginalNewTypeArguments) !== length(type.typeArguments)) {
-                    return newType;
-                }
-                const newTypeArguments = instantiateTypes(type.typeArguments, mapper);
-                return createTypeReference((<TypeReference>newType).target, newTypeArguments);
+                Debug.assert(!(newType.flags & TypeFlags.TypeParameter && (<TypeParameter>newType).typeParameters));
+                return newType;
             }
             else if (!type.typeArguments) {
                return mapper(type);
             }
-            Debug.fail("Expected to never reach here.");
         }
 
         function instantiateType(type: Type, mapper: TypeMapper): Type {

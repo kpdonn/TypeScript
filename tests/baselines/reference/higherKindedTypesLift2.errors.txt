@@ -1,7 +1,7 @@
-tests/cases/compiler/higherKindedTypesLift2.ts(97,30): error TS2345: Argument of type '<C1 extends Functor<C1, _T1B, {}>, T1Bound, A1 extends T1Bound, B1 extends T1Bound>(fa1: C1, fmap1: FMap<A1, B1>) => C1' is not assignable to parameter of type 'StaticFunctor<C, Functor<CX, AX, AXBound>, {}>'.
+tests/cases/compiler/higherKindedTypesLift2.ts(97,30): error TS2345: Argument of type '<C1 extends Functor<C1, any, {}>, T1Bound, A1 extends T1Bound, B1 extends T1Bound>(fa1: C1, fmap1: FMap<A1, B1>) => C1' is not assignable to parameter of type 'StaticFunctor<C, Functor<CX, AX, AXBound>, {}>'.
   Types of parameters 'fa1' and 'fa2' are incompatible.
-    Type 'C' is not assignable to type 'Functor<C, _T1B, {}>'.
-      Type 'ActBound & Bounded<C, ActBound, AS, {}>' is not assignable to type 'Functor<C, _T1B, {}>'.
+    Type 'C' is not assignable to type 'Functor<C, any, {}>'.
+      Type 'ActBound & Bounded<C, ActBound, AS, {}>' is not assignable to type 'Functor<C, any, {}>'.
         Property 'functorMap' is missing in type 'Bounded<C, ActBound, AS, {}>'.
 tests/cases/compiler/higherKindedTypesLift2.ts(105,42): error TS2345: Argument of type 'StaticFunctor<Functor<CX, AX, AXBound>, Functor<CX, AX, AXBound>, {}>' is not assignable to parameter of type 'StaticFunctor<C, Functor<CX, AX, AXBound>, {}>'.
   Types of parameters 'fa2' and 'fa2' are incompatible.
@@ -110,10 +110,10 @@ tests/cases/compiler/higherKindedTypesLift2.ts(109,29): error TS2304: Cannot fin
     
     const liftedStaticMap = lift(staticMap);
                                  ~~~~~~~~~
-!!! error TS2345: Argument of type '<C1 extends Functor<C1, _T1B, {}>, T1Bound, A1 extends T1Bound, B1 extends T1Bound>(fa1: C1, fmap1: FMap<A1, B1>) => C1' is not assignable to parameter of type 'StaticFunctor<C, Functor<CX, AX, AXBound>, {}>'.
+!!! error TS2345: Argument of type '<C1 extends Functor<C1, any, {}>, T1Bound, A1 extends T1Bound, B1 extends T1Bound>(fa1: C1, fmap1: FMap<A1, B1>) => C1' is not assignable to parameter of type 'StaticFunctor<C, Functor<CX, AX, AXBound>, {}>'.
 !!! error TS2345:   Types of parameters 'fa1' and 'fa2' are incompatible.
-!!! error TS2345:     Type 'C' is not assignable to type 'Functor<C, _T1B, {}>'.
-!!! error TS2345:       Type 'ActBound & Bounded<C, ActBound, AS, {}>' is not assignable to type 'Functor<C, _T1B, {}>'.
+!!! error TS2345:     Type 'C' is not assignable to type 'Functor<C, any, {}>'.
+!!! error TS2345:       Type 'ActBound & Bounded<C, ActBound, AS, {}>' is not assignable to type 'Functor<C, any, {}>'.
 !!! error TS2345:         Property 'functorMap' is missing in type 'Bounded<C, ActBound, AS, {}>'.
     const liftedTestFunc = liftedStaticMap(testFunc);
     const result = liftedTestFunc(fooObj);
