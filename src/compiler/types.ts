@@ -3670,8 +3670,6 @@ namespace ts {
         ContainsAnyFunctionType = 1 << 26,  // Type is or contains the anyFunctionType
         NonPrimitive            = 1 << 27,  // intrinsic object type
         /* @internal */
-        GenericReference   = 1 << 28,  // indicates an uninstantiated generic type or type parameter reference
-        /* @internal */
         GenericMappedType       = 1 << 29,  // Flag used by maybeTypeOfKind
 
         /* @internal */
@@ -3699,7 +3697,7 @@ namespace ts {
         UnionOrIntersection = Union | Intersection,
         StructuredType = Object | Union | Intersection,
         TypeVariable = TypeParameter | IndexedAccess,
-        InstantiableNonPrimitive = TypeVariable | Conditional | Substitution | GenericReference,
+        InstantiableNonPrimitive = TypeVariable | Conditional | Substitution,
         InstantiablePrimitive = Index,
         Instantiable = InstantiableNonPrimitive | InstantiablePrimitive,
         StructuredOrInstantiable = StructuredType | Instantiable,
@@ -3736,8 +3734,6 @@ namespace ts {
         aliasTypeArguments?: Type[];     // Alias type arguments (if any)
         /* @internal */
         wildcardInstantiation?: Type;    // Instantiation with type parameters mapped to wildcard type
-        /* @internal */
-        genericReference?: GenericReference;
     }
 
     /* @internal */
@@ -3850,17 +3846,7 @@ namespace ts {
     }
 
     /* @internal */
-    /**
-     * Generic references (TypeFlags.GenericReference). When a generic type is passed
-     * to a generic type parameter without being instantiated a GenericReference is created.
-     * The target property contains the uninstantiated generic type.
-     */
-    export interface GenericReference extends Type {
-        target: GenericTypeWithArgumentMapper;
-    }
-
-    /* @internal */
-    export interface GenericTypeWithArgumentMapper extends Type {
+    export interface TypeWithTypeArgumentMapper extends Type {
         typeParameters: TypeParameter[];
         argumentMapper?: TypeArgumentMapper;
         alternateArgumentMapper?: TypeArgumentMapper;
