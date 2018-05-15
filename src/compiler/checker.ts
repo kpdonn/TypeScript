@@ -3179,8 +3179,8 @@ namespace ts {
                 if (type.flags & TypeFlags.Substitution) {
                     return typeToTypeNodeHelper((<SubstitutionType>type).typeVariable, context);
                 }
-                if (type.flags & TypeFlags.NakedGenericReference) {
-                    return typeToTypeNodeHelper((<NakedGenericReference>type).nakedGeneric, context);
+                if (type.flags & TypeFlags.GenericReference) {
+                    return typeToTypeNodeHelper((<GenericReference>type).target, context);
                 }
 
                 Debug.fail("Should be unreachable.");
@@ -6820,7 +6820,7 @@ namespace ts {
          * type itself. Note that the apparent type of a union type is the union type itself.
          */
         function getApparentType(type: Type): Type {
-            let t = type.flags & TypeFlags.NakedGenericReference ? (<NakedGenericReference>type).nakedGeneric : type;
+            let t = type.flags & TypeFlags.GenericReference ? (<GenericReference>type).target : type;
             t = t.flags & TypeFlags.Instantiable ? getBaseConstraintOfType(t) || emptyObjectType : t;
             return t.flags & TypeFlags.Intersection ? getApparentTypeOfIntersectionType(<IntersectionType>t) :
                 t.flags & TypeFlags.StringLike ? globalStringType :
@@ -7660,9 +7660,9 @@ namespace ts {
             const type = <InterfaceType>getDeclaredTypeOfSymbol(getMergedSymbol(symbol));
             const typeParameters = type.localTypeParameters;
             if (typeParameters) {
-                const nakedGenericReference = tryGetNakedGenericReference(node, type);
-                if (nakedGenericReference) {
-                    return nakedGenericReference;
+                const genericReference = tryGetGenericReference(node, type);
+                if (genericReference) {
+                    return genericReference;
                 }
                 const numTypeArguments = length(node.typeArguments);
                 const minTypeArgumentCount = getMinTypeArgumentCount(typeParameters);
@@ -7735,9 +7735,9 @@ namespace ts {
             const type = <TypeParameter>getDeclaredTypeOfSymbol(symbol);
             const typeParameters = type.typeParameters;
             if (typeParameters) {
-                const nakedGenericReference = tryGetNakedGenericReference(node, type);
-                if (nakedGenericReference) {
-                    return nakedGenericReference;
+                const genericReference = tryGetGenericReference(node, type);
+                if (genericReference) {
+                    return genericReference;
                 }
                 if (!checkTypeArgumentArity(node, symbol, typeParameters, length(typeArguments))) {
                     return unknownType;
@@ -7765,25 +7765,24 @@ namespace ts {
             return true;
         }
 
-        function createNakedGenericReference(nakedGeneric: TypeParameter | GenericType, original?: Type): Type | undefined {
-            Debug.assert(isUninstantiatedGenericType(nakedGeneric));
+        function createGenericReference(genericType: TypeParameter | GenericType): Type | undefined {
+            Debug.assert(isUninstantiatedGenericType(genericType));
 
-            const type = <NakedGenericReference>createType(TypeFlags.NakedGenericReference);
-            type.flags |= nakedGeneric.flags & TypeFlags.PropagatingFlags;
-            type.nakedGeneric = <GenericTypeWithArgumentMapper>nakedGeneric;
-            type.original = original;
+            const type = <GenericReference>createType(TypeFlags.GenericReference);
+            type.flags |= genericType.flags & TypeFlags.PropagatingFlags;
+            type.target = <GenericTypeWithArgumentMapper>genericType;
 
             return type;
         }
 
-        function tryGetNakedGenericReference(node: NodeWithTypeArguments, nakedGeneric: TypeParameter | GenericType): Type | undefined {
-            Debug.assert(isUninstantiatedGenericType(nakedGeneric));
+        function tryGetGenericReference(node: NodeWithTypeArguments, genericType: TypeParameter | GenericType): Type | undefined {
+            Debug.assert(isUninstantiatedGenericType(genericType));
             const parentTypeParameter = tryGetParentGenericTypeParameter(node);
             if (!parentTypeParameter) {
                 return undefined;
             }
 
-            const mapper = getTypeArgumentMapper(<GenericTypeWithArgumentMapper>nakedGeneric, parentTypeParameter);
+            const mapper = getTypeArgumentMapper(<GenericTypeWithArgumentMapper>genericType, parentTypeParameter);
             if (!mapper) {
                 const message = {
                     key: "TempMessage",
@@ -7791,10 +7790,10 @@ namespace ts {
                     code: 9999,
                     message: "Type parameters for type '{0}' are not compatible with type parameters for type '{1}'"
                 };
-                error(node, message, typeToString(nakedGeneric), typeToString(parentTypeParameter));
+                error(node, message, typeToString(genericType), typeToString(parentTypeParameter));
                 return unknownType;
             }
-            return createNakedGenericReference(nakedGeneric, parentTypeParameter);
+            return createGenericReference(genericType);
         }
 
         function getTypeArgumentMapper(originalSource: GenericTypeWithArgumentMapper, target: TypeParameter): TypeArgumentMapper | undefined {
@@ -7829,13 +7828,13 @@ namespace ts {
         }
 
 
-        function getSelfReferentialTypeParameter(nakedGeneric: TypeParameter | GenericType): TypeParameter | undefined {
-            const typeParameter = nakedGeneric.typeParameters[0];
+        function getSelfReferentialTypeParameter(genericType: TypeParameter | GenericType): TypeParameter | undefined {
+            const typeParameter = genericType.typeParameters[0];
             if (typeParameter.typeParameters) {
                 const constraint = getConstraintOfTypeParameter(typeParameter);
-                if (isReferenceToType(constraint, nakedGeneric)) {
-                    const firstArgument = <NakedGenericReference>(<TypeReference>constraint).typeArguments[0];
-                    if (firstArgument.flags & TypeFlags.NakedGenericReference && firstArgument.nakedGeneric === typeParameter) {
+                if (isReferenceToType(constraint, genericType)) {
+                    const firstArgument = <GenericReference>(<TypeReference>constraint).typeArguments[0];
+                    if (firstArgument.flags & TypeFlags.GenericReference && firstArgument.target === typeParameter) {
                         return typeParameter;
                     }
                 }
@@ -9818,16 +9817,16 @@ namespace ts {
                 if (newType === type) {
                     return type;
                 }
-                if (newType.flags & TypeFlags.NakedGenericReference) {
-                    const reference = <NakedGenericReference>newType;
-                    const argumentMapper = getTypeArgumentMapper(reference.nakedGeneric, type);
+                if (newType.flags & TypeFlags.GenericReference) {
+                    const reference = <GenericReference>newType;
+                    const argumentMapper = getTypeArgumentMapper(reference.target, type);
                     const newTypeArguments = instantiateTypes(argumentMapper(type.typeArguments), mapper);
 
-                    if (reference.nakedGeneric.flags & TypeFlags.TypeParameter) {
-                        return getTypeParameterReference(reference.nakedGeneric, newTypeArguments);
+                    if (reference.target.flags & TypeFlags.TypeParameter) {
+                        return getTypeParameterReference(reference.target, newTypeArguments);
                     }
-                    Debug.assert(!!(getObjectFlags(reference.nakedGeneric) & ObjectFlags.Reference));
-                    return createTypeReference(<GenericType>reference.nakedGeneric, newTypeArguments);
+                    Debug.assert(!!(getObjectFlags(reference.target) & ObjectFlags.Reference));
+                    return createTypeReference(<GenericType>reference.target, newTypeArguments);
                 }
                 if (newType.flags & TypeFlags.TypeParameter && (<TypeParameter>newType).typeParameters && !(<TypeParameter>newType).typeArguments && !(<TypeParameter>newType).genericTarget) {
                     // Mapper did not instantiate the generic type so just create another reference to it.
@@ -9903,11 +9902,11 @@ namespace ts {
             if (type.flags & TypeFlags.Substitution) {
                 return instantiateType((<SubstitutionType>type).typeVariable, mapper);
             }
-            if (type.flags & TypeFlags.NakedGenericReference && (<NakedGenericReference>type).nakedGeneric.flags & TypeFlags.TypeParameter) {
-                const newType = mapper((<NakedGenericReference>type).nakedGeneric);
-                if (newType !== (<NakedGenericReference>type).nakedGeneric) {
+            if (type.flags & TypeFlags.GenericReference && (<GenericReference>type).target.flags & TypeFlags.TypeParameter) {
+                const newType = mapper((<GenericReference>type).target);
+                if (newType !== (<GenericReference>type).target) {
                     if (isUninstantiatedGenericType(newType)) {
-                        return createNakedGenericReference(newType, type);
+                        return createGenericReference(newType);
                     }
                     return type;
                 }
@@ -10692,8 +10691,8 @@ namespace ts {
                 if (flags & TypeFlags.Substitution) {
                     return isRelatedTo((<SubstitutionType>source).substitute, (<SubstitutionType>target).substitute, /*reportErrors*/ false);
                 }
-                if (flags & TypeFlags.NakedGenericReference) {
-                    return isRelatedTo((<NakedGenericReference>source).nakedGeneric, (<NakedGenericReference>target).nakedGeneric, /*reportErrors*/ false);
+                if (flags & TypeFlags.GenericReference) {
+                    return isRelatedTo((<GenericReference>source).target, (<GenericReference>target).target, /*reportErrors*/ false);
                 }
                 return Ternary.False;
             }
@@ -11104,8 +11103,8 @@ namespace ts {
                         }
                     }
                 }
-                else if (source.flags & TypeFlags.NakedGenericReference && target.flags & TypeFlags.NakedGenericReference) {
-                    if (result = isRelatedTo((<NakedGenericReference>source).nakedGeneric, (<NakedGenericReference>target).nakedGeneric, reportErrors)) {
+                else if (source.flags & TypeFlags.GenericReference && target.flags & TypeFlags.GenericReference) {
+                    if (result = isRelatedTo((<GenericReference>source).target, (<GenericReference>target).target, reportErrors)) {
                         errorInfo = saveErrorInfo;
                         return result;
                     }
@@ -12394,7 +12393,7 @@ namespace ts {
         function couldContainTypeVariables(type: Type): boolean {
             const objectFlags = getObjectFlags(type);
             return !!(type.flags & TypeFlags.Instantiable ||
-                type.flags & TypeFlags.NakedGenericReference ||
+                type.flags & TypeFlags.GenericReference ||
                 objectFlags & ObjectFlags.Reference && forEach((<TypeReference>type).typeArguments, couldContainTypeVariables) ||
                 objectFlags & ObjectFlags.Anonymous && type.symbol && type.symbol.flags & (SymbolFlags.Function | SymbolFlags.Method | SymbolFlags.TypeLiteral | SymbolFlags.Class) ||
                 objectFlags & ObjectFlags.Mapped ||
@@ -12516,12 +12515,12 @@ namespace ts {
                 if (!couldContainTypeVariables(target)) {
                     return;
                 }
-                if (source.flags & TypeFlags.NakedGenericReference) {
-                    inferFromTypes((<NakedGenericReference>source).nakedGeneric, target);
+                if (source.flags & TypeFlags.GenericReference) {
+                    inferFromTypes((<GenericReference>source).target, target);
                     return;
                 }
-                if (target.flags & TypeFlags.NakedGenericReference) {
-                    inferFromTypes(source, (<NakedGenericReference>target).nakedGeneric);
+                if (target.flags & TypeFlags.GenericReference) {
+                    inferFromTypes(source, (<GenericReference>target).target);
                     return;
                 }
                 if (source === wildcardType) {

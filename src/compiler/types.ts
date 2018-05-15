@@ -3670,7 +3670,7 @@ namespace ts {
         ContainsAnyFunctionType = 1 << 26,  // Type is or contains the anyFunctionType
         NonPrimitive            = 1 << 27,  // intrinsic object type
         /* @internal */
-        NakedGenericReference   = 1 << 28,  // indicates an uninstantiated generic type or type parameter reference
+        GenericReference   = 1 << 28,  // indicates an uninstantiated generic type or type parameter reference
         /* @internal */
         GenericMappedType       = 1 << 29,  // Flag used by maybeTypeOfKind
 
@@ -3699,7 +3699,7 @@ namespace ts {
         UnionOrIntersection = Union | Intersection,
         StructuredType = Object | Union | Intersection,
         TypeVariable = TypeParameter | IndexedAccess,
-        InstantiableNonPrimitive = TypeVariable | Conditional | Substitution | NakedGenericReference,
+        InstantiableNonPrimitive = TypeVariable | Conditional | Substitution | GenericReference,
         InstantiablePrimitive = Index,
         Instantiable = InstantiableNonPrimitive | InstantiablePrimitive,
         StructuredOrInstantiable = StructuredType | Instantiable,
@@ -3737,7 +3737,7 @@ namespace ts {
         /* @internal */
         wildcardInstantiation?: Type;    // Instantiation with type parameters mapped to wildcard type
         /* @internal */
-        nakedGenericReference?: NakedGenericReference;
+        genericReference?: GenericReference;
     }
 
     /* @internal */
@@ -3851,14 +3851,12 @@ namespace ts {
 
     /* @internal */
     /**
-     * Naked generic references (TypeFlags.NakedGenericReference). When a generic type is passed
-     * to a generic type parameter without being instantiated a NakedGenericReference is created.
-     * The nakedGeneric property contains the uninstantiated generic type, while the targetTypeParameter
-     * property is the generic type parameter that nakedGeneric was passed as an argument to.
+     * Generic references (TypeFlags.GenericReference). When a generic type is passed
+     * to a generic type parameter without being instantiated a GenericReference is created.
+     * The target property contains the uninstantiated generic type.
      */
-    export interface NakedGenericReference extends Type {
-        nakedGeneric: GenericTypeWithArgumentMapper;
-        original?: Type;
+    export interface GenericReference extends Type {
+        target: GenericTypeWithArgumentMapper;
     }
 
     /* @internal */
