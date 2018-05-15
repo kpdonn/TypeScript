@@ -11112,9 +11112,6 @@ namespace ts {
                     const sourceIsPrimitive = !!(source.flags & TypeFlags.Primitive);
                     if (relation !== identityRelation) {
                         source = getApparentType(source);
-                        if (target.flags & TypeFlags.TypeParameter && (<TypeParameter>target).typeParameters) {
-                            target = getApparentType(target);
-                        }
                     }
                     // In a check of the form X = A & B, we will have previously checked if A relates to X or B relates
                     // to X. Failing both of those we want to check if the aggregation of A and B's members structurally

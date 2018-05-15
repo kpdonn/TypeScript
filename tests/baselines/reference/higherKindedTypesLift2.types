@@ -379,8 +379,8 @@ const liftedTestFunc = liftedStaticMap(testFunc);
 >testFunc : (strarg: StartVal) => EndVal
 
 const result = liftedTestFunc(fooObj);
->result : Functor<CX, StartVal | EndVal, {}>
->liftedTestFunc(fooObj) : Functor<CX, StartVal | EndVal, {}>
+>result : any
+>liftedTestFunc(fooObj) : any
 >liftedTestFunc : LiftedResult2<Functor<CX, AX, AXBound>, StartVal, EndVal, Functor<CX, AX, AXBound>>
 >fooObj : FunctorFoo<StartVal>
 
@@ -388,13 +388,13 @@ const expectedType: FunctorFoo<EndVal> = result;
 >expectedType : FunctorFoo<EndVal>
 >FunctorFoo : FunctorFoo<AFoo>
 >EndVal : EndVal
->result : Functor<CX, StartVal | EndVal, {}>
+>result : any
 
 const expectError = liftedTestFunc(result)
->expectError : Functor<CX, StartVal | EndVal, {}>
->liftedTestFunc(result) : Functor<CX, StartVal | EndVal, {}>
+>expectError : any
+>liftedTestFunc(result) : any
 >liftedTestFunc : LiftedResult2<Functor<CX, AX, AXBound>, StartVal, EndVal, Functor<CX, AX, AXBound>>
->result : Functor<CX, StartVal | EndVal, {}>
+>result : any
 
 
 declare const declaredStaticFunctor: StaticFunctor<Functor, Functor>
@@ -416,8 +416,8 @@ const liftedDeclaredTestFunc = liftedDeclaredStaticFunctor(testFunc)
 >testFunc : (strarg: StartVal) => EndVal
 
 const declaredResult = liftedDeclaredTestFunc(fooObj);
->declaredResult : Functor<CX, StartVal | EndVal, {}>
->liftedDeclaredTestFunc(fooObj) : Functor<CX, StartVal | EndVal, {}>
+>declaredResult : any
+>liftedDeclaredTestFunc(fooObj) : any
 >liftedDeclaredTestFunc : LiftedResult2<Functor<CX, AX, AXBound>, StartVal, EndVal, Functor<CX, AX, AXBound>>
 >fooObj : FunctorFoo<StartVal>
 
@@ -425,11 +425,11 @@ const expectedTypeDeclared: FunctorFoo<EndVal> = declaredResult;
 >expectedTypeDeclared : FunctorFoo<EndVal>
 >FunctorFoo : FunctorFoo<AFoo>
 >EndVal : EndVal
->declaredResult : Functor<CX, StartVal | EndVal, {}>
+>declaredResult : any
 
 const expectErrorDeclared = liftedDeclaredTestFunc(declaredResult)
->expectErrorDeclared : Functor<CX, StartVal | EndVal, {}>
->liftedDeclaredTestFunc(declaredResult) : Functor<CX, StartVal | EndVal, {}>
+>expectErrorDeclared : any
+>liftedDeclaredTestFunc(declaredResult) : any
 >liftedDeclaredTestFunc : LiftedResult2<Functor<CX, AX, AXBound>, StartVal, EndVal, Functor<CX, AX, AXBound>>
->declaredResult : Functor<CX, StartVal | EndVal, {}>
+>declaredResult : any
 

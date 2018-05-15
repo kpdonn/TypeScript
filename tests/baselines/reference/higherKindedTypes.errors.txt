@@ -1,10 +1,5 @@
 tests/cases/compiler/higherKindedTypes.ts(37,5): error TS2719: Type 'F' is not assignable to type 'F'. Two different types with this name exist, but they are unrelated.
   Type 'Functor<F, A>' is not assignable to type 'F'.
-    Types of property 'map' are incompatible.
-      Type '<B>(f: (a: A) => B) => F' is not assignable to type '<B>(f: (a: B) => B) => F'.
-        Types of parameters 'f' and 'f' are incompatible.
-          Types of parameters 'a' and 'a' are incompatible.
-            Type 'A' is not assignable to type 'B'.
 
 
 ==== tests/cases/compiler/higherKindedTypes.ts (1 errors) ====
@@ -48,11 +43,6 @@ tests/cases/compiler/higherKindedTypes.ts(37,5): error TS2719: Type 'F' is not a
         ~~~~~~~~~~
 !!! error TS2719: Type 'F' is not assignable to type 'F'. Two different types with this name exist, but they are unrelated.
 !!! error TS2719:   Type 'Functor<F, A>' is not assignable to type 'F'.
-!!! error TS2719:     Types of property 'map' are incompatible.
-!!! error TS2719:       Type '<B>(f: (a: A) => B) => F' is not assignable to type '<B>(f: (a: B) => B) => F'.
-!!! error TS2719:         Types of parameters 'f' and 'f' are incompatible.
-!!! error TS2719:           Types of parameters 'a' and 'a' are incompatible.
-!!! error TS2719:             Type 'A' is not assignable to type 'B'.
     }
     
     const resultX3 = staticMap(initialX, val => val.length);
