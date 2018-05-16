@@ -1,0 +1,70 @@
+tests/cases/compiler/higherKindedTypesThisFunctor.ts(2,34): error TS1005: ';' expected.
+tests/cases/compiler/higherKindedTypesThisFunctor.ts(2,34): error TS7020: Call signature, which lacks return-type annotation, implicitly has an 'any' return type.
+tests/cases/compiler/higherKindedTypesThisFunctor.ts(2,37): error TS1005: '(' expected.
+tests/cases/compiler/higherKindedTypesThisFunctor.ts(6,5): error TS2390: Constructor implementation is missing.
+tests/cases/compiler/higherKindedTypesThisFunctor.ts(6,17): error TS2369: A parameter property is only allowed in a constructor implementation.
+tests/cases/compiler/higherKindedTypesThisFunctor.ts(8,5): error TS2416: Property 'map' in type 'MyArrayFunctor<El>' is not assignable to the same property in base type 'Functor<El>'.
+  Type '<NewEl>(newf: (el: El) => NewEl) => MyArrayFunctor<El>' is not assignable to type '<B>(f: (fa: El) => B) => this'.
+    Type 'MyArrayFunctor<El>' is not assignable to type 'this'.
+tests/cases/compiler/higherKindedTypesThisFunctor.ts(10,9): error TS2322: Type 'MyArrayFunctor<NewEl>' is not assignable to type 'MyArrayFunctor<El>'.
+  Type 'NewEl' is not assignable to type 'El'.
+tests/cases/compiler/higherKindedTypesThisFunctor.ts(34,5): error TS2719: Type 'C' is not assignable to type 'C'. Two different types with this name exist, but they are unrelated.
+  Type 'Functor<OldT>' is not assignable to type 'C'.
+
+
+==== tests/cases/compiler/higherKindedTypesThisFunctor.ts (8 errors) ====
+    export interface Functor<A> {
+        map<B>(f: (fa: A) => B): this<B>;
+                                     ~
+!!! error TS1005: ';' expected.
+                                     ~~~~
+!!! error TS7020: Call signature, which lacks return-type annotation, implicitly has an 'any' return type.
+                                        ~
+!!! error TS1005: '(' expected.
+    }
+    
+    class MyArrayFunctor<El> implements Functor<El> {
+        constructor(private elements: El[]);
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2390: Constructor implementation is missing.
+                    ~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2369: A parameter property is only allowed in a constructor implementation.
+    
+        map<NewEl>(newf: (el: El) => NewEl): MyArrayFunctor<El> {
+        ~~~
+!!! error TS2416: Property 'map' in type 'MyArrayFunctor<El>' is not assignable to the same property in base type 'Functor<El>'.
+!!! error TS2416:   Type '<NewEl>(newf: (el: El) => NewEl) => MyArrayFunctor<El>' is not assignable to type '<B>(f: (fa: El) => B) => this'.
+!!! error TS2416:     Type 'MyArrayFunctor<El>' is not assignable to type 'this'.
+            const newElements = this.elements.map(newf);
+            return new MyArrayFunctor(newElements);
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'MyArrayFunctor<NewEl>' is not assignable to type 'MyArrayFunctor<El>'.
+!!! error TS2322:   Type 'NewEl' is not assignable to type 'El'.
+        }
+    
+        myMethod(): El {
+            return this.elements[0];
+        }
+    }
+    
+    
+    interface Foo {
+        fooProp: string
+    }
+    
+    interface Bar {
+        barProp: string
+    }
+    
+    function fooToBar(fooArg: Foo): Bar {
+        return { barProp: fooArg.fooProp };
+    }
+    
+    
+    function convertAll<C<_T> extends Functor<_T>, OldT, NewT>(container: C<OldT>, convertFunc: (oldArg: OldT) => NewT): C<NewT> {
+        const newContainer = container.map(convertFunc);
+        return newContainer;
+        ~~~~~~~~~~~~~~~~~~~~
+!!! error TS2719: Type 'C' is not assignable to type 'C'. Two different types with this name exist, but they are unrelated.
+!!! error TS2719:   Type 'Functor<OldT>' is not assignable to type 'C'.
+    }

@@ -1,0 +1,123 @@
+=== tests/cases/compiler/higherKindedTypesThisFunctor.ts ===
+export interface Functor<A> {
+>Functor : Functor<A>
+>A : A
+
+    map<B>(f: (fa: A) => B): this<B>;
+>map : <B>(f: (fa: A) => B) => this
+>B : B
+>f : (fa: A) => B
+>fa : A
+>A : A
+>B : B
+>B : B
+}
+
+class MyArrayFunctor<El> implements Functor<El> {
+>MyArrayFunctor : MyArrayFunctor<El>
+>El : El
+>Functor : Functor<A>
+>El : El
+
+    constructor(private elements: El[]);
+>elements : El[]
+>El : El
+
+    map<NewEl>(newf: (el: El) => NewEl): MyArrayFunctor<El> {
+>map : <NewEl>(newf: (el: El) => NewEl) => MyArrayFunctor<El>
+>NewEl : NewEl
+>newf : (el: El) => NewEl
+>el : El
+>El : El
+>NewEl : NewEl
+>MyArrayFunctor : MyArrayFunctor<El>
+>El : El
+
+        const newElements = this.elements.map(newf);
+>newElements : NewEl[]
+>this.elements.map(newf) : NewEl[]
+>this.elements.map : <U>(callbackfn: (value: El, index: number, array: El[]) => U, thisArg?: any) => U[]
+>this.elements : El[]
+>this : this
+>elements : El[]
+>map : <U>(callbackfn: (value: El, index: number, array: El[]) => U, thisArg?: any) => U[]
+>newf : (el: El) => NewEl
+
+        return new MyArrayFunctor(newElements);
+>new MyArrayFunctor(newElements) : MyArrayFunctor<NewEl>
+>MyArrayFunctor : typeof MyArrayFunctor
+>newElements : NewEl[]
+    }
+
+    myMethod(): El {
+>myMethod : () => El
+>El : El
+
+        return this.elements[0];
+>this.elements[0] : El
+>this.elements : El[]
+>this : this
+>elements : El[]
+>0 : 0
+    }
+}
+
+
+interface Foo {
+>Foo : Foo
+
+    fooProp: string
+>fooProp : string
+}
+
+interface Bar {
+>Bar : Bar
+
+    barProp: string
+>barProp : string
+}
+
+function fooToBar(fooArg: Foo): Bar {
+>fooToBar : (fooArg: Foo) => Bar
+>fooArg : Foo
+>Foo : Foo
+>Bar : Bar
+
+    return { barProp: fooArg.fooProp };
+>{ barProp: fooArg.fooProp } : { barProp: string; }
+>barProp : string
+>fooArg.fooProp : string
+>fooArg : Foo
+>fooProp : string
+}
+
+
+function convertAll<C<_T> extends Functor<_T>, OldT, NewT>(container: C<OldT>, convertFunc: (oldArg: OldT) => NewT): C<NewT> {
+>convertAll : <C extends Functor<{}>, OldT, NewT>(container: C, convertFunc: (oldArg: OldT) => NewT) => C
+>C : C
+>_T : _T
+>Functor : Functor<A>
+>_T : _T
+>OldT : OldT
+>NewT : NewT
+>container : C
+>C : C
+>OldT : OldT
+>convertFunc : (oldArg: OldT) => NewT
+>oldArg : OldT
+>OldT : OldT
+>NewT : NewT
+>C : C
+>NewT : NewT
+
+    const newContainer = container.map(convertFunc);
+>newContainer : C
+>container.map(convertFunc) : C
+>container.map : <B>(f: (fa: OldT) => B) => C
+>container : C
+>map : <B>(f: (fa: OldT) => B) => C
+>convertFunc : (oldArg: OldT) => NewT
+
+    return newContainer;
+>newContainer : C
+}

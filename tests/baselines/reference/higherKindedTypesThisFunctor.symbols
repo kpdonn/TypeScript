@@ -1,0 +1,117 @@
+=== tests/cases/compiler/higherKindedTypesThisFunctor.ts ===
+export interface Functor<A> {
+>Functor : Symbol(Functor, Decl(higherKindedTypesThisFunctor.ts, 0, 0))
+>A : Symbol(A, Decl(higherKindedTypesThisFunctor.ts, 0, 25))
+
+    map<B>(f: (fa: A) => B): this<B>;
+>map : Symbol(Functor.map, Decl(higherKindedTypesThisFunctor.ts, 0, 29))
+>B : Symbol(B, Decl(higherKindedTypesThisFunctor.ts, 1, 8))
+>f : Symbol(f, Decl(higherKindedTypesThisFunctor.ts, 1, 11))
+>fa : Symbol(fa, Decl(higherKindedTypesThisFunctor.ts, 1, 15))
+>A : Symbol(A, Decl(higherKindedTypesThisFunctor.ts, 0, 25))
+>B : Symbol(B, Decl(higherKindedTypesThisFunctor.ts, 1, 8))
+>B : Symbol(B, Decl(higherKindedTypesThisFunctor.ts, 1, 34))
+}
+
+class MyArrayFunctor<El> implements Functor<El> {
+>MyArrayFunctor : Symbol(MyArrayFunctor, Decl(higherKindedTypesThisFunctor.ts, 2, 1))
+>El : Symbol(El, Decl(higherKindedTypesThisFunctor.ts, 4, 21))
+>Functor : Symbol(Functor, Decl(higherKindedTypesThisFunctor.ts, 0, 0))
+>El : Symbol(El, Decl(higherKindedTypesThisFunctor.ts, 4, 21))
+
+    constructor(private elements: El[]);
+>elements : Symbol(MyArrayFunctor.elements, Decl(higherKindedTypesThisFunctor.ts, 5, 16))
+>El : Symbol(El, Decl(higherKindedTypesThisFunctor.ts, 4, 21))
+
+    map<NewEl>(newf: (el: El) => NewEl): MyArrayFunctor<El> {
+>map : Symbol(MyArrayFunctor.map, Decl(higherKindedTypesThisFunctor.ts, 5, 40))
+>NewEl : Symbol(NewEl, Decl(higherKindedTypesThisFunctor.ts, 7, 8))
+>newf : Symbol(newf, Decl(higherKindedTypesThisFunctor.ts, 7, 15))
+>el : Symbol(el, Decl(higherKindedTypesThisFunctor.ts, 7, 22))
+>El : Symbol(El, Decl(higherKindedTypesThisFunctor.ts, 4, 21))
+>NewEl : Symbol(NewEl, Decl(higherKindedTypesThisFunctor.ts, 7, 8))
+>MyArrayFunctor : Symbol(MyArrayFunctor, Decl(higherKindedTypesThisFunctor.ts, 2, 1))
+>El : Symbol(El, Decl(higherKindedTypesThisFunctor.ts, 4, 21))
+
+        const newElements = this.elements.map(newf);
+>newElements : Symbol(newElements, Decl(higherKindedTypesThisFunctor.ts, 8, 13))
+>this.elements.map : Symbol(Array.map, Decl(lib.d.ts, --, --))
+>this.elements : Symbol(MyArrayFunctor.elements, Decl(higherKindedTypesThisFunctor.ts, 5, 16))
+>this : Symbol(MyArrayFunctor, Decl(higherKindedTypesThisFunctor.ts, 2, 1))
+>elements : Symbol(MyArrayFunctor.elements, Decl(higherKindedTypesThisFunctor.ts, 5, 16))
+>map : Symbol(Array.map, Decl(lib.d.ts, --, --))
+>newf : Symbol(newf, Decl(higherKindedTypesThisFunctor.ts, 7, 15))
+
+        return new MyArrayFunctor(newElements);
+>MyArrayFunctor : Symbol(MyArrayFunctor, Decl(higherKindedTypesThisFunctor.ts, 2, 1))
+>newElements : Symbol(newElements, Decl(higherKindedTypesThisFunctor.ts, 8, 13))
+    }
+
+    myMethod(): El {
+>myMethod : Symbol(MyArrayFunctor.myMethod, Decl(higherKindedTypesThisFunctor.ts, 10, 5))
+>El : Symbol(El, Decl(higherKindedTypesThisFunctor.ts, 4, 21))
+
+        return this.elements[0];
+>this.elements : Symbol(MyArrayFunctor.elements, Decl(higherKindedTypesThisFunctor.ts, 5, 16))
+>this : Symbol(MyArrayFunctor, Decl(higherKindedTypesThisFunctor.ts, 2, 1))
+>elements : Symbol(MyArrayFunctor.elements, Decl(higherKindedTypesThisFunctor.ts, 5, 16))
+    }
+}
+
+
+interface Foo {
+>Foo : Symbol(Foo, Decl(higherKindedTypesThisFunctor.ts, 15, 1))
+
+    fooProp: string
+>fooProp : Symbol(Foo.fooProp, Decl(higherKindedTypesThisFunctor.ts, 18, 15))
+}
+
+interface Bar {
+>Bar : Symbol(Bar, Decl(higherKindedTypesThisFunctor.ts, 20, 1))
+
+    barProp: string
+>barProp : Symbol(Bar.barProp, Decl(higherKindedTypesThisFunctor.ts, 22, 15))
+}
+
+function fooToBar(fooArg: Foo): Bar {
+>fooToBar : Symbol(fooToBar, Decl(higherKindedTypesThisFunctor.ts, 24, 1))
+>fooArg : Symbol(fooArg, Decl(higherKindedTypesThisFunctor.ts, 26, 18))
+>Foo : Symbol(Foo, Decl(higherKindedTypesThisFunctor.ts, 15, 1))
+>Bar : Symbol(Bar, Decl(higherKindedTypesThisFunctor.ts, 20, 1))
+
+    return { barProp: fooArg.fooProp };
+>barProp : Symbol(barProp, Decl(higherKindedTypesThisFunctor.ts, 27, 12))
+>fooArg.fooProp : Symbol(Foo.fooProp, Decl(higherKindedTypesThisFunctor.ts, 18, 15))
+>fooArg : Symbol(fooArg, Decl(higherKindedTypesThisFunctor.ts, 26, 18))
+>fooProp : Symbol(Foo.fooProp, Decl(higherKindedTypesThisFunctor.ts, 18, 15))
+}
+
+
+function convertAll<C<_T> extends Functor<_T>, OldT, NewT>(container: C<OldT>, convertFunc: (oldArg: OldT) => NewT): C<NewT> {
+>convertAll : Symbol(convertAll, Decl(higherKindedTypesThisFunctor.ts, 28, 1))
+>C : Symbol(C, Decl(higherKindedTypesThisFunctor.ts, 31, 20))
+>_T : Symbol(_T, Decl(higherKindedTypesThisFunctor.ts, 31, 22))
+>Functor : Symbol(Functor, Decl(higherKindedTypesThisFunctor.ts, 0, 0))
+>_T : Symbol(_T, Decl(higherKindedTypesThisFunctor.ts, 31, 22))
+>OldT : Symbol(OldT, Decl(higherKindedTypesThisFunctor.ts, 31, 46))
+>NewT : Symbol(NewT, Decl(higherKindedTypesThisFunctor.ts, 31, 52))
+>container : Symbol(container, Decl(higherKindedTypesThisFunctor.ts, 31, 59))
+>C : Symbol(C, Decl(higherKindedTypesThisFunctor.ts, 31, 20))
+>OldT : Symbol(OldT, Decl(higherKindedTypesThisFunctor.ts, 31, 46))
+>convertFunc : Symbol(convertFunc, Decl(higherKindedTypesThisFunctor.ts, 31, 78))
+>oldArg : Symbol(oldArg, Decl(higherKindedTypesThisFunctor.ts, 31, 93))
+>OldT : Symbol(OldT, Decl(higherKindedTypesThisFunctor.ts, 31, 46))
+>NewT : Symbol(NewT, Decl(higherKindedTypesThisFunctor.ts, 31, 52))
+>C : Symbol(C, Decl(higherKindedTypesThisFunctor.ts, 31, 20))
+>NewT : Symbol(NewT, Decl(higherKindedTypesThisFunctor.ts, 31, 52))
+
+    const newContainer = container.map(convertFunc);
+>newContainer : Symbol(newContainer, Decl(higherKindedTypesThisFunctor.ts, 32, 9))
+>container.map : Symbol(Functor.map, Decl(higherKindedTypesThisFunctor.ts, 0, 29))
+>container : Symbol(container, Decl(higherKindedTypesThisFunctor.ts, 31, 59))
+>map : Symbol(Functor.map, Decl(higherKindedTypesThisFunctor.ts, 0, 29))
+>convertFunc : Symbol(convertFunc, Decl(higherKindedTypesThisFunctor.ts, 31, 78))
+
+    return newContainer;
+>newContainer : Symbol(newContainer, Decl(higherKindedTypesThisFunctor.ts, 32, 9))
+}
