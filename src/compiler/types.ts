@@ -1089,7 +1089,7 @@ namespace ts {
     /* @internal */
     export type LiteralImportTypeNode = ImportTypeNode & { argument: LiteralTypeNode & { literal: StringLiteral } };
 
-    export interface ThisTypeNode extends TypeNode {
+    export interface ThisTypeNode extends NodeWithTypeArguments {
         kind: SyntaxKind.ThisType;
     }
 
@@ -3974,6 +3974,8 @@ namespace ts {
         typeArguments?: Type[]; // Only set for references
         /* @internal */
         genericTarget?: TypeParameter; // This is the original generic type parameter a type parameter reference points to
+        /* @internal */
+        references?: Map<TypeParameter>;  // Generic instantiation cache for generic type parameters
     }
 
     // Indexed access types (TypeFlags.IndexedAccess)

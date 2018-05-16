@@ -5293,7 +5293,7 @@ namespace ts {
                 return type.resolvedBaseTypes = emptyArray;
             }
             const baseTypeNode = getBaseTypeNodeOfClass(type);
-            const typeArgs = typeArgumentsFromTypeReferenceNode(baseTypeNode);
+            const typeArgs = typeArgumentsFromNodeWithTypeArguments(baseTypeNode);
             let baseType: Type;
             const originalBaseType = baseConstructorType && baseConstructorType.symbol ? getDeclaredTypeOfSymbol(baseConstructorType.symbol) : undefined;
             if (baseConstructorType.symbol && baseConstructorType.symbol.flags & SymbolFlags.Class &&
@@ -5441,6 +5441,7 @@ namespace ts {
                     type.thisType = <TypeParameter>createType(TypeFlags.TypeParameter);
                     type.thisType.isThisType = true;
                     type.thisType.symbol = symbol;
+                    type.thisType.typeParameters = localTypeParameters;
                     type.thisType.constraint = type;
                 }
             }
@@ -5588,7 +5589,6 @@ namespace ts {
 
                 const typeParameters = getLocalTypeParametersOfClassOrInterfaceOrTypeAlias(symbol);
                 if (typeParameters) {
-                    links.instantiations = createMap<TypeParameter>(); // important not to add itself as an instantiation here because it is not a type parameter reference
                     type.typeParameters = typeParameters;
                 }
             }
@@ -6070,7 +6070,7 @@ namespace ts {
             }
             const baseTypeNode = getBaseTypeNodeOfClass(classType);
             const isJavaScript = isInJavaScriptFile(baseTypeNode);
-            const typeArguments = typeArgumentsFromTypeReferenceNode(baseTypeNode);
+            const typeArguments = typeArgumentsFromNodeWithTypeArguments(baseTypeNode);
             const typeArgCount = length(typeArguments);
             const result: Signature[] = [];
             for (const baseSig of baseSignatures) {
@@ -7841,18 +7841,20 @@ namespace ts {
             return undefined;
         }
 
-        function getTypeParameterReference(genericTypeParameter: TypeParameter, typeArguments: Type[]): TypeParameter {
-            Debug.assert(genericTypeParameter.genericTarget === undefined && genericTypeParameter.typeParameters && genericTypeParameter.typeParameters.length === typeArguments.length);
+        function getTypeParameterReference(target: TypeParameter, typeArguments: Type[]): TypeParameter {
+            Debug.assert(length(typeArguments) && target.genericTarget === undefined && length(target.typeParameters) === length(typeArguments));
             const id = getTypeListId(typeArguments);
-            const links = getSymbolLinks(genericTypeParameter.symbol);
-            let reference = <TypeParameter>links.instantiations.get(id);
+            if (!target.references) {
+                target.references = createMap();
+            }
+            let reference = target.references.get(id);
             if (!reference) {
                 reference = <TypeParameter>createType(TypeFlags.TypeParameter);
-                reference.symbol = genericTypeParameter.symbol;
-                reference.typeParameters = genericTypeParameter.typeParameters;
+                reference.symbol = target.symbol;
+                reference.typeParameters = target.typeParameters;
                 reference.typeArguments = typeArguments;
-                reference.genericTarget = genericTypeParameter;
-                links.instantiations.set(id, reference);
+                reference.genericTarget = target;
+                target.references.set(id, reference);
             }
             return reference;
         }
@@ -7883,7 +7885,7 @@ namespace ts {
         }
 
         function getTypeReferenceType(node: NodeWithTypeArguments, symbol: Symbol) {
-            const typeArguments = typeArgumentsFromTypeReferenceNode(node); // Do unconditionally so we mark type arguments as referenced.
+            const typeArguments = typeArgumentsFromNodeWithTypeArguments(node); // Do unconditionally so we mark type arguments as referenced.
             if (symbol === unknownSymbol) {
                 return unknownType;
             }
@@ -8074,7 +8076,7 @@ namespace ts {
             return links.resolvedType;
         }
 
-        function typeArgumentsFromTypeReferenceNode(node: NodeWithTypeArguments): Type[] {
+        function typeArgumentsFromNodeWithTypeArguments(node: NodeWithTypeArguments): Type[] {
             return map(node.typeArguments, getTypeFromTypeNode);
         }
 
@@ -9375,13 +9377,25 @@ namespace ts {
             return esSymbolType;
         }
 
-        function getThisType(node: Node): Type {
+        function getThisType(node: ThisExpression | ThisTypeNode): Type {
+            const typeArguments = node.kind === SyntaxKind.ThisType && typeArgumentsFromNodeWithTypeArguments(node);
             const container = getThisContainer(node, /*includeArrowFunctions*/ false);
             const parent = container && container.parent;
             if (parent && (isClassLike(parent) || parent.kind === SyntaxKind.InterfaceDeclaration)) {
                 if (!hasModifier(container, ModifierFlags.Static) &&
                     (container.kind !== SyntaxKind.Constructor || isNodeDescendantOf(node, (<ConstructorDeclaration>container).body))) {
-                    return getDeclaredTypeOfClassOrInterface(getSymbolOfNode(parent)).thisType;
+                    const thisType = getDeclaredTypeOfClassOrInterface(getSymbolOfNode(parent)).thisType;
+                    if (length(typeArguments)) {
+                        if (length(typeArguments) !== length(thisType.typeParameters)) {
+                            error(node,
+                                Diagnostics.Generic_type_0_requires_1_type_argument_s, // TODO (kpdonn): custom error message for "this" type
+                                symbolToString(thisType.symbol),
+                                length(thisType.typeParameters));
+                            return unknownType;
+                        }
+                        return getTypeParameterReference(thisType, typeArguments);
+                    }
+                    return thisType;
                 }
             }
             error(node, Diagnostics.A_this_type_is_available_only_in_a_non_static_member_of_a_class_or_interface);
@@ -24174,7 +24188,7 @@ namespace ts {
             }
         }
 
-        // TODO: Update to handle type parameters with type parameters
+        // TODO (kpdonn): Update to handle type parameters with type parameters
         function areTypeParametersIdentical(declarations: ReadonlyArray<ClassDeclaration | InterfaceDeclaration>, targetParameters: TypeParameter[]) {
             const maxTypeArgumentCount = length(targetParameters);
             const minTypeArgumentCount = getMinTypeArgumentCount(targetParameters);
