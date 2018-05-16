@@ -3845,13 +3845,6 @@ namespace ts {
         variances?: Variance[];  // Variance of each type parameter
     }
 
-    /* @internal */
-    export interface TypeWithTypeArgumentMapper extends Type {
-        typeParameters: TypeParameter[];
-        argumentMapper?: TypeArgumentMapper;
-        alternateArgumentMapper?: TypeArgumentMapper;
-    }
-
     export interface UnionOrIntersectionType extends Type {
         types: Type[];                    // Constituent types
         /* @internal */
@@ -4089,9 +4082,6 @@ namespace ts {
 
     /* @internal */
     export type TypeMapper = (t: TypeParameter) => Type;
-
-    /* @internal */
-    export type TypeArgumentMapper = (t: Type[]) => Type[];
 
     export const enum InferencePriority {
         NakedTypeVariable               = 1 << 0,  // Naked type variable in union or intersection type
