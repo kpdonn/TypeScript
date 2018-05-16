@@ -57,6 +57,7 @@ namespace ts {
 
         const emptySymbols = createSymbolTable();
         const identityMapper: (type: Type) => Type = identity;
+        const noMapperFound: TypeMapper = () => Debug.fail("noMapperFound placeholder should never be called");
 
         const compilerOptions = host.getCompilerOptions();
         const languageVersion = getEmitScriptTarget(compilerOptions);
@@ -479,7 +480,6 @@ namespace ts {
         const potentialThisCollisions: Node[] = [];
         const potentialNewTargetCollisions: Node[] = [];
         const awaitedTypeStack: number[] = [];
-        const markerTypes: Type[] = [];
 
         const diagnostics = createDiagnosticCollection();
         // Suggestion diagnostics must have a file. Keyed by source file name.
@@ -6466,10 +6466,10 @@ namespace ts {
             return getObjectFlags(type) & ObjectFlags.Mapped && isGenericIndexType(getConstraintTypeFromMappedType(<MappedType>type));
         }
 
-        function isUninstantiatedGenericType(type: GenericType | TypeParameter): boolean {
-            return length(type.typeParameters) &&
-                ((type.flags & TypeFlags.TypeParameter && !type.typeArguments && !(<TypeParameter>type).genericTarget) ||
-                (getObjectFlags(type) & ObjectFlags.ClassOrInterface && type.target === type));
+        function isUninstantiatedGenericType(type: Type): type is GenericType | TypeParameter {
+            return length((<GenericType>type).typeParameters) &&
+                ((type.flags & TypeFlags.TypeParameter && !(<GenericType>type).typeArguments && !(<TypeParameter>type).genericTarget) ||
+                (getObjectFlags(type) & ObjectFlags.ClassOrInterface && (<GenericType>type).target === type));
         }
 
         function resolveStructuredTypeMembers(type: StructuredType): ResolvedType {
@@ -7573,7 +7573,9 @@ namespace ts {
                     if (constraint !== noConstraintType && typeParameter.typeParameters) {
                         const parameterMapper = createTypeMapper(typeParameter.typeParameters, typeParameter.typeArguments ? typeParameter.typeArguments :
                             map(typeParameter.typeParameters, t => getConstraintOfTypeParameter(t) || emptyObjectType));
-                        const eraser = createTypeEraser(typeParameter.typeParameters);
+
+                        // only erase if no type arguments provided (matters for findGenericMapperForInferredType)
+                        const eraser = typeParameter.typeArguments ? undefined : createTypeEraser(typeParameter.typeParameters);
                         constraint = instantiateType(constraint, combineTypeMappers(parameterMapper, eraser));
                     }
                     typeParameter.constraint = constraint;
@@ -7769,7 +7771,7 @@ namespace ts {
                 return undefined;
             }
 
-            const mapper = getTypeArgumentMapper(<TypeWithTypeArgumentMapper>genericType, parentTypeParameter);
+            const mapper = getGenericTypeMapperForType(genericType, parentTypeParameter);
             if (!mapper) {
                 const message = {
                     key: "TempMessage",
@@ -7783,49 +7785,68 @@ namespace ts {
             return genericType;
         }
 
-        function getTypeArgumentMapper(originalSource: TypeWithTypeArgumentMapper, target: TypeParameter): TypeArgumentMapper | undefined {
-            if (getTargetType(originalSource) === getTargetType(target)) {
-                return identity;
+        function getGenericTypeMapperForType(source: GenericType | TypeParameter, target: TypeParameter): TypeMapper | undefined {
+            Debug.assert(isUninstantiatedGenericType(source) && isUninstantiatedGenericType(target));
+            if (source === target) {
+                return identityMapper;
             }
-            const minArgs = getMinTypeArgumentCount(originalSource.typeParameters);
-            if (target.typeParameters.length >= minArgs) {
-                if (!originalSource.argumentMapper) {
-                    originalSource.argumentMapper = args => fillMissingTypeArguments(args.slice(0, originalSource.typeParameters.length), originalSource.typeParameters, minArgs, /*isJavaScriptImplicitAny*/ false);
+            if (!source.resolvedGenericMappers) {
+                source.resolvedGenericMappers = createMap();
+            }
+            const targetId = getTypeListId([target]);
+            let genericMapper = source.resolvedGenericMappers.get(targetId);
+            if (!genericMapper) {
+                if (!isGenericTypePossiblyAssignable(source, target)) {
+                    source.resolvedGenericMappers.set(targetId, noMapperFound);
+                    return undefined;
                 }
-                return originalSource.argumentMapper;
-            }
-            else {
-                const alternateSource = getSelfReferentialTypeParameter(originalSource);
-                const alternateMin = getMinTypeArgumentCount(alternateSource.typeParameters);
-                if (alternateSource && target.typeParameters.length >= alternateMin) {
-                    if (!originalSource.alternateArgumentMapper) {
-                        originalSource.alternateArgumentMapper = determineArgumentMapper(alternateSource);
+
+                // first see if it is directly mappable
+                const minArgs = getMinTypeArgumentCount(source.typeParameters);
+                const isJs = target.symbol && isInJavaScriptFile(getDeclarationOfKind(target.symbol, SyntaxKind.TypeParameter));
+                if (target.typeParameters.length >= minArgs) {
+                    const checkTarget = getConstraintFromTypeParameter(getTypeParameterReference(target, target.typeParameters)); // the reference is so type parameters are not erased when getting constraint.
+                    const sourceTypeArguments = fillMissingTypeArguments(target.typeParameters.slice(0, source.typeParameters.length), source.typeParameters, minArgs, isJs);
+                    const checkSource = source.flags & TypeFlags.TypeParameter ? getConstraintFromTypeParameter(getTypeParameterReference(source, sourceTypeArguments)) :
+                        createTypeReference(<GenericType>source, sourceTypeArguments);
+                    if (isTypeAssignableTo(checkSource, checkTarget)) {
+                        genericMapper = createTypeMapper(source.typeParameters, sourceTypeArguments);
+                        source.resolvedGenericMappers.set(targetId, genericMapper);
+                        return genericMapper;
                     }
-                    return originalSource.alternateArgumentMapper;
                 }
+
+                // next see if source has a self referential type parameter that can be used and try that
+                const altSource = getSelfReferentialTypeParameter(source);
+                if (altSource) {
+                    const altMinArgs = getMinTypeArgumentCount(altSource.typeParameters);
+                    if (target.typeParameters.length >= altMinArgs) {
+                        const checkTarget = getConstraintFromTypeParameter(getTypeParameterReference(target, target.typeParameters));
+                        const sourceTypeArguments = fillMissingTypeArguments(target.typeParameters.slice(0, altSource.typeParameters.length), altSource.typeParameters, altMinArgs, isJs);
+                        const checkSource = <TypeReference>getConstraintFromTypeParameter(getTypeParameterReference(altSource, sourceTypeArguments));
+                        Debug.assert(isReferenceToType(checkSource, source));
+                        if (isTypeAssignableTo(checkSource, checkTarget)) {
+                            genericMapper = createTypeMapper(source.typeParameters, checkSource.typeArguments);
+                            source.resolvedGenericMappers.set(targetId, genericMapper);
+                            return genericMapper;
+                        }
+                    }
+                }
+
+                // if have not returned here it means no mapper was found so save placeholder to avoid duplicate work
+                genericMapper = noMapperFound;
+                source.resolvedGenericMappers.set(targetId, noMapperFound);
             }
-            return undefined;
 
-            function determineArgumentMapper(source: TypeParameter): TypeArgumentMapper {
-                Debug.assert(!!source.typeParameters);
-                const markers = getMarkerTypes(source.typeParameters.length);
-                const markerReference = getTypeParameterReference(source, markers);
-                const markedConstraint = <TypeReference>getConstraintFromTypeParameter(markerReference);
-                Debug.assert(isReferenceToType(markedConstraint, originalSource));
-                const resultMap = map(markedConstraint.typeArguments, type => markers.indexOf(type) === -1 ? type : markers.indexOf(type));
-
-                return args => map(resultMap, r => typeof r === "number" ? args[r] || getDefaultFromTypeParameter(source.typeParameters[r]) || Debug.fail("No type argument available") : r);
-            }
-
+            return genericMapper === noMapperFound ? undefined : genericMapper;
         }
 
-        function getMarkerTypes(amount: number): Type[] {
-            while (markerTypes.length < amount) {
-                markerTypes.push(createType(TypeFlags.TypeParameter));
-            }
-            return markerTypes.slice(0, amount);
-        }
 
+        function isGenericTypePossiblyAssignable(source: GenericType | TypeParameter, target: TypeParameter): boolean {
+            const wildcardSource = source.flags & TypeFlags.TypeParameter ? getTypeParameterReference(source, instantiateTypes(source.typeParameters, wildcardMapper)) : getWildcardInstantiation(source);
+            const wildcardTarget = getTypeParameterReference(target, instantiateTypes(target.typeParameters, wildcardMapper));
+            return isTypeAssignableTo(wildcardSource, wildcardTarget);
+        }
 
         function getSelfReferentialTypeParameter(genericType: TypeParameter | GenericType): TypeParameter | undefined {
             const typeParameter = genericType.typeParameters[0];
@@ -9808,31 +9829,21 @@ namespace ts {
         function instantiateGenericTypeParameter(type: TypeParameter, mapper: TypeMapper): Type {
             if (type.genericTarget) {
                 const newType = mapper(type.genericTarget);
-                if (newType === type.genericTarget) {
-                    const typeArguments = type.typeArguments;
-                    const newTypeArguments = instantiateTypes(typeArguments, mapper);
-                    return newTypeArguments !== typeArguments ? getTypeParameterReference(type.genericTarget, newTypeArguments) : type;
+                if (isUninstantiatedGenericType(newType)) {
+                    const genericMapper = getGenericTypeMapperForType(newType, type);
+                    Debug.assert(!!genericMapper, "Always expect to have a generic mapper for uninstantiated generic type");
+                    const newMapper = combineTypeMappers(genericMapper, createTypeMapper(type.genericTarget.typeParameters, type.typeArguments));
+                    const actualNewTypeArguments = instantiateTypes((newType.typeArguments), combineTypeMappers(newMapper, mapper));
+                    return newType.flags & TypeFlags.TypeParameter ? getTypeParameterReference(newType, actualNewTypeArguments) :
+                        createTypeReference(<GenericType>newType, actualNewTypeArguments);
                 }
-                if (newType.flags & TypeFlags.TypeParameter && isUninstantiatedGenericType(newType)) {
-                    const argumentMapper = getTypeArgumentMapper(<TypeWithTypeArgumentMapper>newType, type);
-                    const newTypeArguments = instantiateTypes(argumentMapper(type.typeArguments), mapper);
-                    return getTypeParameterReference(newType, newTypeArguments);
-                }
-                else if (getObjectFlags(newType) & ObjectFlags.Reference) {
-                    if (isUninstantiatedGenericType(newType)) {
-                        const argumentMapper = getTypeArgumentMapper(<TypeWithTypeArgumentMapper>newType, type);
-                        Debug.assert(!!argumentMapper);
-                        const newTypeArguments = instantiateTypes(argumentMapper(type.typeArguments), mapper);
-                        return createTypeReference((<TypeReference>newType).target, newTypeArguments);
-                    }
-                    return newType;
-                }
-                Debug.assert(!(newType.flags & TypeFlags.TypeParameter && (<TypeParameter>newType).typeParameters));
+                Debug.assert(!(newType.flags & TypeFlags.TypeParameter && (<TypeParameter>newType).typeParameters)); // this might be invalid assertion. Just here to see if my assumption is correct.
                 return newType;
             }
             else if (!type.typeArguments) {
                return mapper(type);
             }
+            Debug.fail("Generic type parameter should always have either generic target or no type arguments.");
         }
 
         function instantiateType(type: Type, mapper: TypeMapper): Type {
@@ -12915,6 +12926,15 @@ namespace ts {
                 }
                 if (inference.typeParameter.typeParameters) {
                     inferredType = getTargetType(inferredType);
+                    const mapper = getGenericTypeMapperForType(inferredType, inference.typeParameter);
+                    if (mapper) {
+                        const typeEraser = createTypeEraser(inference.typeParameter.typeParameters);
+                        const baseConstraints = map(inference.typeParameter.typeParameters, tp => instantiateType(getBaseConstraintOfType(tp), typeEraser) || emptyObjectType);
+                        inferredType = instantiateType(inferredType, combineTypeMappers(mapper, createTypeMapper(inference.typeParameter.typeParameters, baseConstraints)));
+                    }
+                    else {
+                        // TODO what to do here?
+                    }
                 }
                 inference.inferredType = inferredType;
 

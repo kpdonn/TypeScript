@@ -3843,13 +3843,8 @@ namespace ts {
         instantiations: Map<TypeReference>;  // Generic instantiation cache
         /* @internal */
         variances?: Variance[];  // Variance of each type parameter
-    }
-
-    /* @internal */
-    export interface TypeWithTypeArgumentMapper extends Type {
-        typeParameters: TypeParameter[];
-        argumentMapper?: TypeArgumentMapper;
-        alternateArgumentMapper?: TypeArgumentMapper;
+        /* @internal */
+        resolvedGenericMappers?: Map<TypeMapper>;
     }
 
     export interface UnionOrIntersectionType extends Type {
@@ -3974,6 +3969,8 @@ namespace ts {
         typeArguments?: Type[]; // Only set for references
         /* @internal */
         genericTarget?: TypeParameter; // This is the original generic type parameter a type parameter reference points to
+        /* @internal */
+        resolvedGenericMappers?: Map<TypeMapper>;
     }
 
     // Indexed access types (TypeFlags.IndexedAccess)
@@ -4087,9 +4084,6 @@ namespace ts {
 
     /* @internal */
     export type TypeMapper = (t: TypeParameter) => Type;
-
-    /* @internal */
-    export type TypeArgumentMapper = (t: Type[]) => Type[];
 
     export const enum InferencePriority {
         NakedTypeVariable               = 1 << 0,  // Naked type variable in union or intersection type
