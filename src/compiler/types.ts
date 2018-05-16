@@ -3971,6 +3971,8 @@ namespace ts {
         genericTarget?: TypeParameter; // This is the original generic type parameter a type parameter reference points to
         /* @internal */
         resolvedGenericMappers?: Map<TypeMapper>;
+        /* @internal */
+        outerTypeParameters?: TypeParameter[]; // only set for generic type parameters
     }
 
     // Indexed access types (TypeFlags.IndexedAccess)

@@ -5590,6 +5590,9 @@ namespace ts {
                 if (typeParameters) {
                     links.instantiations = createMap<TypeParameter>(); // important not to add itself as an instantiation here because getGenericTypeMapperForType needs reference with type arguments.
                     type.typeParameters = typeParameters;
+                    const declaration = getDeclarationOfKind(symbol, SyntaxKind.TypeParameter);
+                    const allOuterTypeParameters = getOuterTypeParameters(declaration);
+                    type.outerTypeParameters = filter(allOuterTypeParameters, tp => tp !== type && isTypeParameterPossiblyReferenced(tp, declaration));
                 }
             }
             return <TypeParameter>links.declaredType;
@@ -7790,6 +7793,9 @@ namespace ts {
             if (!isUninstantiatedGenericType(source)) {
                 return undefined;
             }
+            // handle cloned type parameters
+            source = source.target ? source.target : source;
+            target = target.target ? target.target : target;
             if (source === target) {
                 return identityMapper;
             }
@@ -7809,11 +7815,12 @@ namespace ts {
                 const isJs = target.symbol && isInJavaScriptFile(getDeclarationOfKind(target.symbol, SyntaxKind.TypeParameter));
                 if (target.typeParameters.length >= minArgs) {
                     // the getTypeParameterReference call is so type parameters are not erased when getting constraint.
-                    const targetConstraint = getConstraintFromTypeParameter(getTypeParameterReference(target, target.typeParameters)) || emptyObjectType;
-                    const checkTarget = instantiateType(targetConstraint, makeUnaryTypeMapper(target, source)); // replace target with source in case it references itself
+                    let checkTarget = getConstraintFromTypeParameter(getTypeParameterReference(target, target.typeParameters)) || emptyObjectType;
+                    checkTarget = instantiateType(checkTarget, makeUnaryTypeMapper(target, source)); // replace target with source in case it references itself
                     const sourceTypeArguments = fillMissingTypeArguments(target.typeParameters.slice(0, source.typeParameters.length), source.typeParameters, minArgs, isJs);
                     const checkSource = getObjectFlags(source) & ObjectFlags.Reference ? createTypeReference(<GenericType>source, sourceTypeArguments) :
                         getConstraintFromTypeParameter(getTypeParameterReference(source, sourceTypeArguments)) || emptyObjectType;
+                    checkTarget = inferOuterTypeParameters(target.outerTypeParameters, checkSource, checkTarget);
                     if (isTypeAssignableTo(checkSource, checkTarget)) {
                         genericMapper = createTypeMapper(source.typeParameters, sourceTypeArguments);
                         source.resolvedGenericMappers.set(targetId, genericMapper);
@@ -7826,9 +7833,11 @@ namespace ts {
                 if (altSource) {
                     const altMinArgs = getMinTypeArgumentCount(altSource.typeParameters);
                     if (target.typeParameters.length >= altMinArgs) {
-                        const checkTarget = getConstraintFromTypeParameter(getTypeParameterReference(target, target.typeParameters)) || emptyObjectType;
+                        let checkTarget = getConstraintFromTypeParameter(getTypeParameterReference(target, target.typeParameters)) || emptyObjectType;
+                        checkTarget = instantiateType(checkTarget, makeUnaryTypeMapper(target, altSource)); // replace target with source in case it references itself
                         const sourceTypeArguments = fillMissingTypeArguments(target.typeParameters.slice(0, altSource.typeParameters.length), altSource.typeParameters, altMinArgs, isJs);
                         const checkSource = <TypeReference>getConstraintFromTypeParameter(getTypeParameterReference(altSource, sourceTypeArguments));
+                        checkTarget = inferOuterTypeParameters(target.outerTypeParameters, checkSource, checkTarget);
                         Debug.assert(isReferenceToType(checkSource, source));
                         if (isTypeAssignableTo(checkSource, checkTarget)) {
                             genericMapper = createTypeMapper(source.typeParameters, checkSource.typeArguments);
@@ -7843,6 +7852,16 @@ namespace ts {
             }
 
             return genericMapper === noMapperFound ? undefined : genericMapper;
+        }
+
+        function inferOuterTypeParameters(typeParameters: TypeParameter[], source: GenericType | TypeParameter, target: TypeParameter): TypeParameter {
+            if (length(typeParameters)) {
+                const context = createInferenceContext(typeParameters, /*signature*/ undefined, InferenceFlags.None);
+                inferTypes(context.inferences, source, target);
+                const results = getInferredTypes(context);
+                return instantiateType(target, createTypeMapper(typeParameters, results));
+            }
+            return target;
         }
 
 

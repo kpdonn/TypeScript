@@ -1,3 +1,4 @@
+tests/cases/compiler/higherKindedTypesLift2.ts(32,5): error TS7023: 'functorMap' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.
 tests/cases/compiler/higherKindedTypesLift2.ts(99,31): error TS2345: Argument of type 'FunctorFoo<StartVal>' is not assignable to parameter of type 'Functor<CX, StartVal | EndVal, {}>'.
   Types of property 'functorMap' are incompatible.
     Type '<BFoo>(fmapfoo: FMap<StartVal, BFoo>) => FunctorFoo<BFoo>' is not assignable to type '<BX extends {}>(fmapx: FMap<StartVal | EndVal, BX>) => CX'.
@@ -5,7 +6,7 @@ tests/cases/compiler/higherKindedTypesLift2.ts(99,31): error TS2345: Argument of
 tests/cases/compiler/higherKindedTypesLift2.ts(107,47): error TS2345: Argument of type 'FunctorFoo<StartVal>' is not assignable to parameter of type 'Functor<CX, StartVal | EndVal, {}>'.
 
 
-==== tests/cases/compiler/higherKindedTypesLift2.ts (2 errors) ====
+==== tests/cases/compiler/higherKindedTypesLift2.ts (3 errors) ====
     interface StartVal {
         startVal: string
     }
@@ -38,6 +39,8 @@ tests/cases/compiler/higherKindedTypesLift2.ts(107,47): error TS2345: Argument o
         > 
             extends Bounded<CX, Functor, AX, AXBound> {
         functorMap<BX extends AXBound>(fmapx: FMap<AX, BX>): CX<BX>;
+        ~~~~~~~~~~
+!!! error TS7023: 'functorMap' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.
     }
     
     interface StaticFunctor<
