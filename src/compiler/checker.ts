@@ -7785,6 +7785,7 @@ namespace ts {
                 reference.typeParameters = target.typeParameters;
                 reference.typeArguments = typeArguments;
                 reference.genericTarget = target;
+                reference.isThisType = target.isThisType;
                 target.references.set(id, reference);
             }
             return reference;

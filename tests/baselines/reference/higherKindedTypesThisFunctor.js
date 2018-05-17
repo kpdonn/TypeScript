@@ -6,7 +6,7 @@ export interface Functor<A> {
 class MyArrayFunctor<El> implements Functor<El> {
     constructor(private elements: El[]) {};
 
-    map<NewEl>(newf: (el: El) => NewEl): MyArrayFunctor<El> {
+    map<NewEl>(newf: (el: El) => NewEl): MyArrayFunctor<NewEl> {
         const newElements = this.elements.map(newf);
         return new MyArrayFunctor(newElements);
     }

@@ -4,7 +4,7 @@ export interface Functor<A> {
 >A : A
 
     map<B>(f: (fa: A) => B): this<B>;
->map : <B>(f: (fa: A) => B) => Functor<B>
+>map : <B>(f: (fa: A) => B) => this
 >B : B
 >f : (fa: A) => B
 >fa : A
@@ -23,15 +23,15 @@ class MyArrayFunctor<El> implements Functor<El> {
 >elements : El[]
 >El : El
 
-    map<NewEl>(newf: (el: El) => NewEl): MyArrayFunctor<El> {
->map : <NewEl>(newf: (el: El) => NewEl) => MyArrayFunctor<El>
+    map<NewEl>(newf: (el: El) => NewEl): MyArrayFunctor<NewEl> {
+>map : <NewEl>(newf: (el: El) => NewEl) => MyArrayFunctor<NewEl>
 >NewEl : NewEl
 >newf : (el: El) => NewEl
 >el : El
 >El : El
 >NewEl : NewEl
 >MyArrayFunctor : MyArrayFunctor<El>
->El : El
+>NewEl : NewEl
 
         const newElements = this.elements.map(newf);
 >newElements : NewEl[]

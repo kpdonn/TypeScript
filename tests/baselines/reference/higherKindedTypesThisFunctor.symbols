@@ -23,7 +23,7 @@ class MyArrayFunctor<El> implements Functor<El> {
 >elements : Symbol(MyArrayFunctor.elements, Decl(higherKindedTypesThisFunctor.ts, 5, 16))
 >El : Symbol(El, Decl(higherKindedTypesThisFunctor.ts, 4, 21))
 
-    map<NewEl>(newf: (el: El) => NewEl): MyArrayFunctor<El> {
+    map<NewEl>(newf: (el: El) => NewEl): MyArrayFunctor<NewEl> {
 >map : Symbol(MyArrayFunctor.map, Decl(higherKindedTypesThisFunctor.ts, 5, 43))
 >NewEl : Symbol(NewEl, Decl(higherKindedTypesThisFunctor.ts, 7, 8))
 >newf : Symbol(newf, Decl(higherKindedTypesThisFunctor.ts, 7, 15))
@@ -31,7 +31,7 @@ class MyArrayFunctor<El> implements Functor<El> {
 >El : Symbol(El, Decl(higherKindedTypesThisFunctor.ts, 4, 21))
 >NewEl : Symbol(NewEl, Decl(higherKindedTypesThisFunctor.ts, 7, 8))
 >MyArrayFunctor : Symbol(MyArrayFunctor, Decl(higherKindedTypesThisFunctor.ts, 2, 1))
->El : Symbol(El, Decl(higherKindedTypesThisFunctor.ts, 4, 21))
+>NewEl : Symbol(NewEl, Decl(higherKindedTypesThisFunctor.ts, 7, 8))
 
         const newElements = this.elements.map(newf);
 >newElements : Symbol(newElements, Decl(higherKindedTypesThisFunctor.ts, 8, 13))
