@@ -1,6 +1,6 @@
 tests/cases/compiler/higherKindedTypesThisFunctor.ts(8,5): error TS2416: Property 'map' in type 'MyArrayFunctor<El>' is not assignable to the same property in base type 'Functor<El>'.
-  Type '<NewEl>(newf: (el: El) => NewEl) => MyArrayFunctor<El>' is not assignable to type '<B>(f: (fa: El) => B) => MyArrayFunctor'.
-    Type 'MyArrayFunctor<El>' is not assignable to type 'MyArrayFunctor'.
+  Type '<NewEl>(newf: (el: El) => NewEl) => MyArrayFunctor<El>' is not assignable to type '<B>(f: (fa: El) => B) => MyArrayFunctor<B>'.
+    Type 'MyArrayFunctor<El>' is not assignable to type 'MyArrayFunctor<B>'.
 tests/cases/compiler/higherKindedTypesThisFunctor.ts(10,9): error TS2322: Type 'MyArrayFunctor<NewEl>' is not assignable to type 'MyArrayFunctor<El>'.
   Type 'NewEl' is not assignable to type 'El'.
 
@@ -16,8 +16,8 @@ tests/cases/compiler/higherKindedTypesThisFunctor.ts(10,9): error TS2322: Type '
         map<NewEl>(newf: (el: El) => NewEl): MyArrayFunctor<El> {
         ~~~
 !!! error TS2416: Property 'map' in type 'MyArrayFunctor<El>' is not assignable to the same property in base type 'Functor<El>'.
-!!! error TS2416:   Type '<NewEl>(newf: (el: El) => NewEl) => MyArrayFunctor<El>' is not assignable to type '<B>(f: (fa: El) => B) => MyArrayFunctor'.
-!!! error TS2416:     Type 'MyArrayFunctor<El>' is not assignable to type 'MyArrayFunctor'.
+!!! error TS2416:   Type '<NewEl>(newf: (el: El) => NewEl) => MyArrayFunctor<El>' is not assignable to type '<B>(f: (fa: El) => B) => MyArrayFunctor<B>'.
+!!! error TS2416:     Type 'MyArrayFunctor<El>' is not assignable to type 'MyArrayFunctor<B>'.
             const newElements = this.elements.map(newf);
             return new MyArrayFunctor(newElements);
             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

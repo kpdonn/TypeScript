@@ -3120,17 +3120,18 @@ namespace ts {
                     if (type.flags & TypeFlags.TypeParameter && contains(context.inferTypeParameters, type)) {
                         return createInferTypeNode(typeParameterToDeclarationWithConstraint(type as TypeParameter, context, /*constraintNode*/ undefined));
                     }
+                    const typeArgumentNodes = type.flags & TypeFlags.TypeParameter && mapToTypeNodes((<TypeParameter>type).typeArguments || (<TypeParameter>type).typeParameters, context);
                     if (context.flags & NodeBuilderFlags.GenerateNamesForShadowedTypeParams &&
                         type.flags & TypeFlags.TypeParameter &&
                         length(type.symbol.declarations) &&
                         isTypeParameterDeclaration(type.symbol.declarations[0]) &&
                         typeParameterShadowsNameInScope(type, context) &&
                         !isTypeSymbolAccessible(type.symbol, context.enclosingDeclaration)) {
-                        return createTypeReferenceNode(getGeneratedNameForNode((type.symbol.declarations[0] as TypeParameterDeclaration).name, GeneratedIdentifierFlags.Optimistic | GeneratedIdentifierFlags.ReservedInNestedScopes), /*typeArguments*/ undefined);
+                        return createTypeReferenceNode(getGeneratedNameForNode((type.symbol.declarations[0] as TypeParameterDeclaration).name, GeneratedIdentifierFlags.Optimistic | GeneratedIdentifierFlags.ReservedInNestedScopes), typeArgumentNodes);
                     }
                     const name = type.symbol ? symbolToName(type.symbol, context, SymbolFlags.Type, /*expectsIdentifier*/ false) : createIdentifier("?");
                     // Ignore constraint/default when creating a usage (as opposed to declaration) of a type parameter.
-                    return createTypeReferenceNode(name, /*typeArguments*/ undefined);
+                    return createTypeReferenceNode(name, typeArgumentNodes);
                 }
                 if (!inTypeAlias && type.aliasSymbol && (context.flags & NodeBuilderFlags.UseAliasDefinedOutsideCurrentScope || isTypeSymbolAccessible(type.aliasSymbol, context.enclosingDeclaration))) {
                     const name = symbolToTypeReferenceName(type.aliasSymbol);

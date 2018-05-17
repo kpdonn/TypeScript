@@ -12,28 +12,28 @@ interface FMap<FA, FB> {
 
 
 interface StaticFunctor<CS<_TS>> {
->StaticFunctor : StaticFunctor<CS>
->CS : CS
+>StaticFunctor : StaticFunctor<CS<_TS>>
+>CS : CS<_TS>
 >_TS : _TS
 
     <AS, BS>(csas: CS<AS>, fmapstatic: FMap<AS, BS>): CS<BS>;
 >AS : AS
 >BS : BS
->csas : CS
->CS : CS
+>csas : CS<AS>
+>CS : CS<_TS>
 >AS : AS
 >fmapstatic : FMap<AS, BS>
 >FMap : FMap<FA, FB>
 >AS : AS
 >BS : BS
->CS : CS
+>CS : CS<_TS>
 >BS : BS
 }
 
 
 interface LiftedResult<LC<_LT>> {
->LiftedResult : LiftedResult<LC>
->LC : LC
+>LiftedResult : LiftedResult<LC<_LT>>
+>LC : LC<_LT>
 >_LT : _LT
 
     <LA, LB>(lmap: FMap<LA,LB>): FMap<LC<LA>,LC<LB>>
@@ -44,32 +44,32 @@ interface LiftedResult<LC<_LT>> {
 >LA : LA
 >LB : LB
 >FMap : FMap<FA, FB>
->LC : LC
+>LC : LC<_LT>
 >LA : LA
->LC : LC
+>LC : LC<_LT>
 >LB : LB
 }
 
 declare function lift<C<_T>>(fToLift: StaticFunctor<C>): LiftedResult<C>
->lift : <C>(fToLift: StaticFunctor<C>) => LiftedResult<C>
->C : C
+>lift : <C>(fToLift: StaticFunctor<C<_T>>) => LiftedResult<C<_T>>
+>C : C<_T>
 >_T : _T
->fToLift : StaticFunctor<C>
->StaticFunctor : StaticFunctor<CS>
->C : C
->LiftedResult : LiftedResult<LC>
->C : C
+>fToLift : StaticFunctor<C<_T>>
+>StaticFunctor : StaticFunctor<CS<_TS>>
+>C : C<_T>
+>LiftedResult : LiftedResult<LC<_LT>>
+>C : C<_T>
 
 
 declare const myArrayFunctor: StaticFunctor<Array>
 >myArrayFunctor : StaticFunctor<T[]>
->StaticFunctor : StaticFunctor<CS>
+>StaticFunctor : StaticFunctor<CS<_TS>>
 >Array : T[]
 
 const liftedArray = lift(myArrayFunctor);
 >liftedArray : LiftedResult<T[]>
 >lift(myArrayFunctor) : LiftedResult<T[]>
->lift : <C>(fToLift: StaticFunctor<C>) => LiftedResult<C>
+>lift : <C>(fToLift: StaticFunctor<C<_T>>) => LiftedResult<C<_T>>
 >myArrayFunctor : StaticFunctor<T[]>
 
 declare function stringLength(strarg: string): number
