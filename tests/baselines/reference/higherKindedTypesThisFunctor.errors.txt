@@ -1,5 +1,3 @@
-tests/cases/compiler/higherKindedTypesThisFunctor.ts(6,5): error TS2390: Constructor implementation is missing.
-tests/cases/compiler/higherKindedTypesThisFunctor.ts(6,17): error TS2369: A parameter property is only allowed in a constructor implementation.
 tests/cases/compiler/higherKindedTypesThisFunctor.ts(8,5): error TS2416: Property 'map' in type 'MyArrayFunctor<El>' is not assignable to the same property in base type 'Functor<El>'.
   Type '<NewEl>(newf: (el: El) => NewEl) => MyArrayFunctor<El>' is not assignable to type '<B>(f: (fa: El) => B) => MyArrayFunctor'.
     Type 'MyArrayFunctor<El>' is not assignable to type 'MyArrayFunctor'.
@@ -7,17 +5,13 @@ tests/cases/compiler/higherKindedTypesThisFunctor.ts(10,9): error TS2322: Type '
   Type 'NewEl' is not assignable to type 'El'.
 
 
-==== tests/cases/compiler/higherKindedTypesThisFunctor.ts (4 errors) ====
+==== tests/cases/compiler/higherKindedTypesThisFunctor.ts (2 errors) ====
     export interface Functor<A> {
         map<B>(f: (fa: A) => B): this<B>;
     }
     
     class MyArrayFunctor<El> implements Functor<El> {
-        constructor(private elements: El[]);
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!!! error TS2390: Constructor implementation is missing.
-                    ~~~~~~~~~~~~~~~~~~~~~~
-!!! error TS2369: A parameter property is only allowed in a constructor implementation.
+        constructor(private elements: El[]) {};
     
         map<NewEl>(newf: (el: El) => NewEl): MyArrayFunctor<El> {
         ~~~

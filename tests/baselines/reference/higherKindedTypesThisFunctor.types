@@ -19,7 +19,7 @@ class MyArrayFunctor<El> implements Functor<El> {
 >Functor : Functor<A>
 >El : El
 
-    constructor(private elements: El[]);
+    constructor(private elements: El[]) {};
 >elements : El[]
 >El : El
 

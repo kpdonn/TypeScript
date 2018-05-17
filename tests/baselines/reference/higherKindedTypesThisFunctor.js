@@ -4,7 +4,7 @@ export interface Functor<A> {
 }
 
 class MyArrayFunctor<El> implements Functor<El> {
-    constructor(private elements: El[]);
+    constructor(private elements: El[]) {};
 
     map<NewEl>(newf: (el: El) => NewEl): MyArrayFunctor<El> {
         const newElements = this.elements.map(newf);
@@ -41,8 +41,10 @@ function convertAll<C<_T> extends
 "use strict";
 exports.__esModule = true;
 var MyArrayFunctor = /** @class */ (function () {
-    function MyArrayFunctor() {
+    function MyArrayFunctor(elements) {
+        this.elements = elements;
     }
+    ;
     MyArrayFunctor.prototype.map = function (newf) {
         var newElements = this.elements.map(newf);
         return new MyArrayFunctor(newElements);

@@ -19,12 +19,12 @@ class MyArrayFunctor<El> implements Functor<El> {
 >Functor : Symbol(Functor, Decl(higherKindedTypesThisFunctor.ts, 0, 0))
 >El : Symbol(El, Decl(higherKindedTypesThisFunctor.ts, 4, 21))
 
-    constructor(private elements: El[]);
+    constructor(private elements: El[]) {};
 >elements : Symbol(MyArrayFunctor.elements, Decl(higherKindedTypesThisFunctor.ts, 5, 16))
 >El : Symbol(El, Decl(higherKindedTypesThisFunctor.ts, 4, 21))
 
     map<NewEl>(newf: (el: El) => NewEl): MyArrayFunctor<El> {
->map : Symbol(MyArrayFunctor.map, Decl(higherKindedTypesThisFunctor.ts, 5, 40))
+>map : Symbol(MyArrayFunctor.map, Decl(higherKindedTypesThisFunctor.ts, 5, 43))
 >NewEl : Symbol(NewEl, Decl(higherKindedTypesThisFunctor.ts, 7, 8))
 >newf : Symbol(newf, Decl(higherKindedTypesThisFunctor.ts, 7, 15))
 >el : Symbol(el, Decl(higherKindedTypesThisFunctor.ts, 7, 22))
