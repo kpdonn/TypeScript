@@ -4,7 +4,7 @@ export interface Functor<A> {
 >A : A
 
     map<B>(f: (fa: A) => B): this<B>;
->map : <B>(f: (fa: A) => B) => this
+>map : <B>(f: (fa: A) => B) => Functor<B>
 >B : B
 >f : (fa: A) => B
 >fa : A
@@ -115,13 +115,13 @@ function convertAll<C<_T> extends
 >NewT : NewT
 
     const newContainer = container.map(convertFunc);
->newContainer : C<NewT>
->container.map(convertFunc) : C<NewT>
->container.map : <B>(f: (fa: OldT) => B) => C<B>
+>newContainer : Functor<NewT>
+>container.map(convertFunc) : Functor<NewT>
+>container.map : <B>(f: (fa: OldT) => B) => Functor<B>
 >container : C<OldT>
->map : <B>(f: (fa: OldT) => B) => C<B>
+>map : <B>(f: (fa: OldT) => B) => Functor<B>
 >convertFunc : (oldArg: OldT) => NewT
 
     return newContainer;
->newContainer : C<NewT>
+>newContainer : Functor<NewT>
 }

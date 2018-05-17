@@ -1,0 +1,236 @@
+=== tests/cases/compiler/higherKindedTypesGenericThisExpectedErrors.ts ===
+export class Functor1<A> {
+>Functor1 : Functor1<A>
+>A : A
+
+    map<B>(f: (a: A) => B): this<B> {
+>map : <B>(f: (a: A) => B) => any
+>B : B
+>f : (a: A) => B
+>a : A
+>A : A
+>B : B
+>B : B
+
+        return this;
+>this : this
+    }
+}
+
+
+
+interface ValidFunctor<A> {
+>ValidFunctor : ValidFunctor<A>
+>A : A
+
+    map<B>(f: (a: A) => B): this<B>
+>map : <B>(f: (a: A) => B) => ValidFunctor<B>
+>B : B
+>f : (a: A) => B
+>a : A
+>A : A
+>B : B
+>B : B
+}
+
+class InvalidImplementor<A> implements ValidFunctor<A> {
+>InvalidImplementor : InvalidImplementor<A>
+>A : A
+>ValidFunctor : ValidFunctor<A>
+>A : A
+
+    constructor(private elements: A[]) { };
+>elements : A[]
+>A : A
+
+    map<B>(f: (a: A) => B): this<B> { // should declare return type as InvalidImplementor<B> to not be invalid.
+>map : <B>(f: (a: A) => B) => any
+>B : B
+>f : (a: A) => B
+>a : A
+>A : A
+>B : B
+>B : B
+
+        const newElements = this.elements.map(f);
+>newElements : B[]
+>this.elements.map(f) : B[]
+>this.elements.map : <U>(callbackfn: (value: A, index: number, array: A[]) => U, thisArg?: any) => U[]
+>this.elements : A[]
+>this : this
+>elements : A[]
+>map : <U>(callbackfn: (value: A, index: number, array: A[]) => U, thisArg?: any) => U[]
+>f : (a: A) => B
+
+        return new InvalidImplementor(newElements);
+>new InvalidImplementor(newElements) : InvalidImplementor<B>
+>InvalidImplementor : typeof InvalidImplementor
+>newElements : B[]
+    }
+}
+
+
+class ValidImplementor<A> implements ValidFunctor<A> {
+>ValidImplementor : ValidImplementor<A>
+>A : A
+>ValidFunctor : ValidFunctor<A>
+>A : A
+
+    constructor(private elements: A[]) {};
+>elements : A[]
+>A : A
+
+    map<B>(f: (a: A) => B): ValidImplementor<B> { 
+>map : <B>(f: (a: A) => B) => ValidImplementor<B>
+>B : B
+>f : (a: A) => B
+>a : A
+>A : A
+>B : B
+>ValidImplementor : ValidImplementor<A>
+>B : B
+
+        const newElements = this.elements.map(f);
+>newElements : B[]
+>this.elements.map(f) : B[]
+>this.elements.map : <U>(callbackfn: (value: A, index: number, array: A[]) => U, thisArg?: any) => U[]
+>this.elements : A[]
+>this : this
+>elements : A[]
+>map : <U>(callbackfn: (value: A, index: number, array: A[]) => U, thisArg?: any) => U[]
+>f : (a: A) => B
+
+        return new ValidImplementor(newElements);
+>new ValidImplementor(newElements) : ValidImplementor<B>
+>ValidImplementor : typeof ValidImplementor
+>newElements : B[]
+    }
+}
+
+
+abstract class ValidAbstractFunctor<A> {
+>ValidAbstractFunctor : ValidAbstractFunctor<A>
+>A : A
+
+    abstract map<B>(f: (a: A) => B): this<B>;
+>map : <B>(f: (a: A) => B) => ValidAbstractFunctor<B>
+>B : B
+>f : (a: A) => B
+>a : A
+>A : A
+>B : B
+>B : B
+}
+
+class InvalidExtender<A> extends ValidAbstractFunctor<A> {
+>InvalidExtender : InvalidExtender<A>
+>A : A
+>ValidAbstractFunctor : ValidAbstractFunctor<A>
+>A : A
+
+    constructor(private elements: A[]) { 
+>elements : A[]
+>A : A
+
+        super();
+>super() : void
+>super : typeof ValidAbstractFunctor
+
+    };
+
+    map<B>(f: (a: A) => B): this<B> { // should declare return type as InvalidImplementor<B> to not be invalid.
+>map : <B>(f: (a: A) => B) => any
+>B : B
+>f : (a: A) => B
+>a : A
+>A : A
+>B : B
+>B : B
+
+        const newElements = this.elements.map(f);
+>newElements : B[]
+>this.elements.map(f) : B[]
+>this.elements.map : <U>(callbackfn: (value: A, index: number, array: A[]) => U, thisArg?: any) => U[]
+>this.elements : A[]
+>this : this
+>elements : A[]
+>map : <U>(callbackfn: (value: A, index: number, array: A[]) => U, thisArg?: any) => U[]
+>f : (a: A) => B
+
+        return new InvalidExtender(newElements);
+>new InvalidExtender(newElements) : InvalidExtender<B>
+>InvalidExtender : typeof InvalidExtender
+>newElements : B[]
+    }
+}
+
+
+class ValidExtender<A> extends ValidAbstractFunctor<A> {
+>ValidExtender : ValidExtender<A>
+>A : A
+>ValidAbstractFunctor : ValidAbstractFunctor<A>
+>A : A
+
+    constructor(private elements: A[]) {super()};
+>elements : A[]
+>A : A
+>super() : void
+>super : typeof ValidAbstractFunctor
+
+    map<B>(f: (a: A) => B): ValidExtender<B> { 
+>map : <B>(f: (a: A) => B) => ValidExtender<B>
+>B : B
+>f : (a: A) => B
+>a : A
+>A : A
+>B : B
+>ValidExtender : ValidExtender<A>
+>B : B
+
+        const newElements = this.elements.map(f);
+>newElements : B[]
+>this.elements.map(f) : B[]
+>this.elements.map : <U>(callbackfn: (value: A, index: number, array: A[]) => U, thisArg?: any) => U[]
+>this.elements : A[]
+>this : this
+>elements : A[]
+>map : <U>(callbackfn: (value: A, index: number, array: A[]) => U, thisArg?: any) => U[]
+>f : (a: A) => B
+
+        return new ValidExtender(newElements);
+>new ValidExtender(newElements) : ValidExtender<B>
+>ValidExtender : typeof ValidExtender
+>newElements : B[]
+    }
+}
+
+// invalid because it must redeclare "map" itself even though its parent implemented it
+class InvalidIndirectExtender<A> extends ValidExtender<A> {
+>InvalidIndirectExtender : InvalidIndirectExtender<A>
+>A : A
+>ValidExtender : ValidExtender<A>
+>A : A
+
+    doSomething(): void {
+>doSomething : () => void
+
+        console.log("");
+>console.log("") : void
+>console.log : (message?: any, ...optionalParams: any[]) => void
+>console : Console
+>log : (message?: any, ...optionalParams: any[]) => void
+>"" : ""
+    }
+}
+
+
+
+
+interface GenericThisMustBeInMethod<T> {
+>GenericThisMustBeInMethod : GenericThisMustBeInMethod<T>
+>T : T
+
+    someProp: this<T>
+>someProp : any
+>T : T
+}

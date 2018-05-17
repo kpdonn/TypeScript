@@ -3490,6 +3490,7 @@ namespace ts {
         enumKind?: EnumKind;                // Enum declaration classification
         originatingImport?: ImportDeclaration | ImportCall; // Import declaration which produced the symbol, present if the symbol is marked as uncallable but had call signatures in `resolveESModuleSymbol`
         lateSymbol?: Symbol;                // Late-bound symbol for a computed property
+        mustOverride?: boolean;             // methods originally inherited from a base type that referenced a generic "this" parameter must be overridden in each class that inherits from it.
     }
 
     /* @internal */
@@ -3796,6 +3797,7 @@ namespace ts {
         outerTypeParameters: TypeParameter[];      // Outer type parameters (undefined if none)
         localTypeParameters: TypeParameter[];      // Local type parameters (undefined if none)
         thisType: TypeParameter;                   // The "this" type (undefined if none)
+        genericThisType: TypeParameter;            // The generic "this" type
         /* @internal */
         resolvedBaseConstructorType?: Type;        // Resolved base constructor type of class
         /* @internal */

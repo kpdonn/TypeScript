@@ -1,0 +1,224 @@
+=== tests/cases/compiler/higherKindedTypesGenericThisExpectedErrors.ts ===
+export class Functor1<A> {
+>Functor1 : Symbol(Functor1, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 0, 0))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 0, 22))
+
+    map<B>(f: (a: A) => B): this<B> {
+>map : Symbol(Functor1.map, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 0, 26))
+>B : Symbol(B, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 1, 8))
+>f : Symbol(f, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 1, 11))
+>a : Symbol(a, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 1, 15))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 0, 22))
+>B : Symbol(B, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 1, 8))
+>B : Symbol(B, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 1, 8))
+
+        return this;
+>this : Symbol(Functor1, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 0, 0))
+    }
+}
+
+
+
+interface ValidFunctor<A> {
+>ValidFunctor : Symbol(ValidFunctor, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 4, 1))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 8, 23))
+
+    map<B>(f: (a: A) => B): this<B>
+>map : Symbol(ValidFunctor.map, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 8, 27))
+>B : Symbol(B, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 9, 8))
+>f : Symbol(f, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 9, 11))
+>a : Symbol(a, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 9, 15))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 8, 23))
+>B : Symbol(B, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 9, 8))
+>B : Symbol(B, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 9, 8))
+}
+
+class InvalidImplementor<A> implements ValidFunctor<A> {
+>InvalidImplementor : Symbol(InvalidImplementor, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 10, 1))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 12, 25))
+>ValidFunctor : Symbol(ValidFunctor, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 4, 1))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 12, 25))
+
+    constructor(private elements: A[]) { };
+>elements : Symbol(InvalidImplementor.elements, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 13, 16))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 12, 25))
+
+    map<B>(f: (a: A) => B): this<B> { // should declare return type as InvalidImplementor<B> to not be invalid.
+>map : Symbol(InvalidImplementor.map, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 13, 43))
+>B : Symbol(B, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 15, 8))
+>f : Symbol(f, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 15, 11))
+>a : Symbol(a, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 15, 15))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 12, 25))
+>B : Symbol(B, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 15, 8))
+>B : Symbol(B, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 15, 8))
+
+        const newElements = this.elements.map(f);
+>newElements : Symbol(newElements, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 16, 13))
+>this.elements.map : Symbol(Array.map, Decl(lib.d.ts, --, --))
+>this.elements : Symbol(InvalidImplementor.elements, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 13, 16))
+>this : Symbol(InvalidImplementor, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 10, 1))
+>elements : Symbol(InvalidImplementor.elements, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 13, 16))
+>map : Symbol(Array.map, Decl(lib.d.ts, --, --))
+>f : Symbol(f, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 15, 11))
+
+        return new InvalidImplementor(newElements);
+>InvalidImplementor : Symbol(InvalidImplementor, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 10, 1))
+>newElements : Symbol(newElements, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 16, 13))
+    }
+}
+
+
+class ValidImplementor<A> implements ValidFunctor<A> {
+>ValidImplementor : Symbol(ValidImplementor, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 19, 1))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 22, 23))
+>ValidFunctor : Symbol(ValidFunctor, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 4, 1))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 22, 23))
+
+    constructor(private elements: A[]) {};
+>elements : Symbol(ValidImplementor.elements, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 23, 16))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 22, 23))
+
+    map<B>(f: (a: A) => B): ValidImplementor<B> { 
+>map : Symbol(ValidImplementor.map, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 23, 42))
+>B : Symbol(B, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 25, 8))
+>f : Symbol(f, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 25, 11))
+>a : Symbol(a, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 25, 15))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 22, 23))
+>B : Symbol(B, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 25, 8))
+>ValidImplementor : Symbol(ValidImplementor, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 19, 1))
+>B : Symbol(B, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 25, 8))
+
+        const newElements = this.elements.map(f);
+>newElements : Symbol(newElements, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 26, 13))
+>this.elements.map : Symbol(Array.map, Decl(lib.d.ts, --, --))
+>this.elements : Symbol(ValidImplementor.elements, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 23, 16))
+>this : Symbol(ValidImplementor, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 19, 1))
+>elements : Symbol(ValidImplementor.elements, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 23, 16))
+>map : Symbol(Array.map, Decl(lib.d.ts, --, --))
+>f : Symbol(f, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 25, 11))
+
+        return new ValidImplementor(newElements);
+>ValidImplementor : Symbol(ValidImplementor, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 19, 1))
+>newElements : Symbol(newElements, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 26, 13))
+    }
+}
+
+
+abstract class ValidAbstractFunctor<A> {
+>ValidAbstractFunctor : Symbol(ValidAbstractFunctor, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 29, 1))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 32, 36))
+
+    abstract map<B>(f: (a: A) => B): this<B>;
+>map : Symbol(ValidAbstractFunctor.map, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 32, 40))
+>B : Symbol(B, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 33, 17))
+>f : Symbol(f, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 33, 20))
+>a : Symbol(a, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 33, 24))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 32, 36))
+>B : Symbol(B, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 33, 17))
+>B : Symbol(B, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 33, 17))
+}
+
+class InvalidExtender<A> extends ValidAbstractFunctor<A> {
+>InvalidExtender : Symbol(InvalidExtender, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 34, 1))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 36, 22))
+>ValidAbstractFunctor : Symbol(ValidAbstractFunctor, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 29, 1))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 36, 22))
+
+    constructor(private elements: A[]) { 
+>elements : Symbol(InvalidExtender.elements, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 37, 16))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 36, 22))
+
+        super();
+>super : Symbol(ValidAbstractFunctor, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 29, 1))
+
+    };
+
+    map<B>(f: (a: A) => B): this<B> { // should declare return type as InvalidImplementor<B> to not be invalid.
+>map : Symbol(InvalidExtender.map, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 39, 6))
+>B : Symbol(B, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 41, 8))
+>f : Symbol(f, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 41, 11))
+>a : Symbol(a, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 41, 15))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 36, 22))
+>B : Symbol(B, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 41, 8))
+>B : Symbol(B, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 41, 8))
+
+        const newElements = this.elements.map(f);
+>newElements : Symbol(newElements, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 42, 13))
+>this.elements.map : Symbol(Array.map, Decl(lib.d.ts, --, --))
+>this.elements : Symbol(InvalidExtender.elements, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 37, 16))
+>this : Symbol(InvalidExtender, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 34, 1))
+>elements : Symbol(InvalidExtender.elements, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 37, 16))
+>map : Symbol(Array.map, Decl(lib.d.ts, --, --))
+>f : Symbol(f, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 41, 11))
+
+        return new InvalidExtender(newElements);
+>InvalidExtender : Symbol(InvalidExtender, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 34, 1))
+>newElements : Symbol(newElements, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 42, 13))
+    }
+}
+
+
+class ValidExtender<A> extends ValidAbstractFunctor<A> {
+>ValidExtender : Symbol(ValidExtender, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 45, 1))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 48, 20))
+>ValidAbstractFunctor : Symbol(ValidAbstractFunctor, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 29, 1))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 48, 20))
+
+    constructor(private elements: A[]) {super()};
+>elements : Symbol(ValidExtender.elements, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 49, 16))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 48, 20))
+>super : Symbol(ValidAbstractFunctor, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 29, 1))
+
+    map<B>(f: (a: A) => B): ValidExtender<B> { 
+>map : Symbol(ValidExtender.map, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 49, 49))
+>B : Symbol(B, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 51, 8))
+>f : Symbol(f, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 51, 11))
+>a : Symbol(a, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 51, 15))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 48, 20))
+>B : Symbol(B, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 51, 8))
+>ValidExtender : Symbol(ValidExtender, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 45, 1))
+>B : Symbol(B, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 51, 8))
+
+        const newElements = this.elements.map(f);
+>newElements : Symbol(newElements, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 52, 13))
+>this.elements.map : Symbol(Array.map, Decl(lib.d.ts, --, --))
+>this.elements : Symbol(ValidExtender.elements, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 49, 16))
+>this : Symbol(ValidExtender, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 45, 1))
+>elements : Symbol(ValidExtender.elements, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 49, 16))
+>map : Symbol(Array.map, Decl(lib.d.ts, --, --))
+>f : Symbol(f, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 51, 11))
+
+        return new ValidExtender(newElements);
+>ValidExtender : Symbol(ValidExtender, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 45, 1))
+>newElements : Symbol(newElements, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 52, 13))
+    }
+}
+
+// invalid because it must redeclare "map" itself even though its parent implemented it
+class InvalidIndirectExtender<A> extends ValidExtender<A> {
+>InvalidIndirectExtender : Symbol(InvalidIndirectExtender, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 55, 1))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 58, 30))
+>ValidExtender : Symbol(ValidExtender, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 45, 1))
+>A : Symbol(A, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 58, 30))
+
+    doSomething(): void {
+>doSomething : Symbol(InvalidIndirectExtender.doSomething, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 58, 59))
+
+        console.log("");
+>console.log : Symbol(Console.log, Decl(lib.d.ts, --, --))
+>console : Symbol(console, Decl(lib.d.ts, --, --))
+>log : Symbol(Console.log, Decl(lib.d.ts, --, --))
+    }
+}
+
+
+
+
+interface GenericThisMustBeInMethod<T> {
+>GenericThisMustBeInMethod : Symbol(GenericThisMustBeInMethod, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 62, 1))
+>T : Symbol(T, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 67, 36))
+
+    someProp: this<T>
+>someProp : Symbol(GenericThisMustBeInMethod.someProp, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 67, 40))
+>T : Symbol(T, Decl(higherKindedTypesGenericThisExpectedErrors.ts, 67, 36))
+}

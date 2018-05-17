@@ -5441,8 +5441,12 @@ namespace ts {
                     type.thisType = <TypeParameter>createType(TypeFlags.TypeParameter);
                     type.thisType.isThisType = true;
                     type.thisType.symbol = symbol;
-                    type.thisType.typeParameters = localTypeParameters;
                     type.thisType.constraint = type;
+                    type.genericThisType = <TypeParameter>createType(TypeFlags.TypeParameter);
+                    type.genericThisType.isThisType = true;
+                    type.genericThisType.symbol = symbol;
+                    type.genericThisType.constraint = type;
+                    type.genericThisType.typeParameters = localTypeParameters;
                 }
             }
             return <InterfaceType>links.declaredType;
@@ -7785,7 +7789,6 @@ namespace ts {
                 reference.typeParameters = target.typeParameters;
                 reference.typeArguments = typeArguments;
                 reference.genericTarget = target;
-                reference.isThisType = target.isThisType;
                 target.references.set(id, reference);
             }
             return reference;
@@ -9316,18 +9319,36 @@ namespace ts {
             if (parent && (isClassLike(parent) || parent.kind === SyntaxKind.InterfaceDeclaration)) {
                 if (!hasModifier(container, ModifierFlags.Static) &&
                     (container.kind !== SyntaxKind.Constructor || isNodeDescendantOf(node, (<ConstructorDeclaration>container).body))) {
-                    const thisType = getDeclaredTypeOfClassOrInterface(getSymbolOfNode(parent)).thisType;
+                    const parentType = getDeclaredTypeOfClassOrInterface(getSymbolOfNode(parent));
                     if (length(typeArguments)) {
-                        if (length(typeArguments) !== length(thisType.typeParameters)) {
+                        const genericThisType = parentType.genericThisType;
+                        if (length(typeArguments) !== length(genericThisType.typeParameters)) {
                             error(node,
                                 Diagnostics.Generic_type_0_requires_1_type_argument_s, // TODO (kpdonn): custom error message for "this" type
-                                symbolToString(thisType.symbol),
-                                length(thisType.typeParameters));
+                                symbolToString(genericThisType.symbol),
+                                length(genericThisType.typeParameters));
                             return unknownType;
                         }
-                        return getTypeParameterReference(thisType, typeArguments);
+                        if (isClassLike(parent) && !hasModifier(container, ModifierFlags.Abstract)) {
+                            error(node,
+                                Diagnostics.Generic_type_0_requires_1_type_argument_s, // TODO (kpdonn): custom error message for "this" type
+                                symbolToString(genericThisType.symbol),
+                                "***generic 'this' types can only occur in abstract methods***");
+                            return unknownType;
+                        }
+                        if (!isMethodSignature(container) && !isMethodDeclaration(container)) {
+                            error(node,
+                                Diagnostics.Generic_type_0_requires_1_type_argument_s, // TODO (kpdonn): custom error message for "this" type
+                                symbolToString(genericThisType.symbol),
+                                "***generic 'this' types can only occur in methods***");
+                            return unknownType;
+                        }
+                        getSymbolLinks(getSymbolOfNode(container)).mustOverride = true; // each inheriting class must override this method itself.
+                        return getTypeParameterReference(genericThisType, typeArguments);
                     }
-                    return thisType;
+                    else {
+                        return parentType.thisType;
+                    }
                 }
             }
             error(node, Diagnostics.A_this_type_is_available_only_in_a_non_static_member_of_a_class_or_interface);
@@ -24361,60 +24382,64 @@ namespace ts {
 
                 Debug.assert(!!derived, "derived should point to something, even if it is the base class' declaration.");
 
-                if (derived) {
-                    // In order to resolve whether the inherited method was overridden in the base class or not,
-                    // we compare the Symbols obtained. Since getTargetSymbol returns the symbol on the *uninstantiated*
-                    // type declaration, derived and base resolve to the same symbol even in the case of generic classes.
-                    if (derived === base) {
-                        // derived class inherits base without override/redeclaration
+                // In order to resolve whether the inherited method was overridden in the base class or not,
+                // we compare the Symbols obtained. Since getTargetSymbol returns the symbol on the *uninstantiated*
+                // type declaration, derived and base resolve to the same symbol even in the case of generic classes.
+                if (derived === base) {
+                    // derived class inherits base without override/redeclaration
 
-                        const derivedClassDecl = getClassLikeDeclarationOfSymbol(type.symbol);
+                    const derivedClassDecl = getClassLikeDeclarationOfSymbol(type.symbol);
 
-                        // It is an error to inherit an abstract member without implementing it or being declared abstract.
-                        // If there is no declaration for the derived class (as in the case of class expressions),
-                        // then the class cannot be declared abstract.
-                        if (baseDeclarationFlags & ModifierFlags.Abstract && (!derivedClassDecl || !hasModifier(derivedClassDecl, ModifierFlags.Abstract))) {
-                            if (derivedClassDecl.kind === SyntaxKind.ClassExpression) {
-                                error(derivedClassDecl, Diagnostics.Non_abstract_class_expression_does_not_implement_inherited_abstract_member_0_from_class_1,
-                                    symbolToString(baseProperty), typeToString(baseType));
-                            }
-                            else {
-                                error(derivedClassDecl, Diagnostics.Non_abstract_class_0_does_not_implement_inherited_abstract_member_1_from_class_2,
-                                    typeToString(type), symbolToString(baseProperty), typeToString(baseType));
-                            }
-                        }
-                    }
-                    else {
-                        // derived overrides base.
-                        const derivedDeclarationFlags = getDeclarationModifierFlagsFromSymbol(derived);
-                        if (baseDeclarationFlags & ModifierFlags.Private || derivedDeclarationFlags & ModifierFlags.Private) {
-                            // either base or derived property is private - not override, skip it
-                            continue;
-                        }
-
-                        if (isPrototypeProperty(base) && isPrototypeProperty(derived) || base.flags & SymbolFlags.PropertyOrAccessor && derived.flags & SymbolFlags.PropertyOrAccessor) {
-                            // method is overridden with method or property/accessor is overridden with property/accessor - correct case
-                            continue;
-                        }
-
-                        let errorMessage: DiagnosticMessage;
-                        if (isPrototypeProperty(base)) {
-                            if (derived.flags & SymbolFlags.Accessor) {
-                                errorMessage = Diagnostics.Class_0_defines_instance_member_function_1_but_extended_class_2_defines_it_as_instance_member_accessor;
-                            }
-                            else {
-                                errorMessage = Diagnostics.Class_0_defines_instance_member_function_1_but_extended_class_2_defines_it_as_instance_member_property;
-                            }
-                        }
-                        else if (base.flags & SymbolFlags.Accessor) {
-                            errorMessage = Diagnostics.Class_0_defines_instance_member_accessor_1_but_extended_class_2_defines_it_as_instance_member_function;
+                    // It is an error to inherit an abstract member without implementing it or being declared abstract.
+                    // If there is no declaration for the derived class (as in the case of class expressions),
+                    // then the class cannot be declared abstract.
+                    if (baseDeclarationFlags & ModifierFlags.Abstract && (!derivedClassDecl || !hasModifier(derivedClassDecl, ModifierFlags.Abstract))) {
+                        if (derivedClassDecl.kind === SyntaxKind.ClassExpression) {
+                            error(derivedClassDecl, Diagnostics.Non_abstract_class_expression_does_not_implement_inherited_abstract_member_0_from_class_1,
+                                symbolToString(baseProperty), typeToString(baseType));
                         }
                         else {
-                            errorMessage = Diagnostics.Class_0_defines_instance_member_property_1_but_extended_class_2_defines_it_as_instance_member_function;
+                            error(derivedClassDecl, Diagnostics.Non_abstract_class_0_does_not_implement_inherited_abstract_member_1_from_class_2,
+                                typeToString(type), symbolToString(baseProperty), typeToString(baseType));
                         }
-
-                        error(getNameOfDeclaration(derived.valueDeclaration) || derived.valueDeclaration, errorMessage, typeToString(baseType), symbolToString(base), typeToString(type));
                     }
+
+                    if (getSymbolLinks(base).mustOverride) {
+                        error(derivedClassDecl, Diagnostics.Non_abstract_class_0_does_not_implement_inherited_abstract_member_1_from_class_2,
+                            typeToString(type), symbolToString(baseProperty), typeToString(baseType));
+                    }
+                }
+                else {
+                    getSymbolLinks(derived).mustOverride = getSymbolLinks(base).mustOverride;
+                    // derived overrides base.
+                    const derivedDeclarationFlags = getDeclarationModifierFlagsFromSymbol(derived);
+                    if (baseDeclarationFlags & ModifierFlags.Private || derivedDeclarationFlags & ModifierFlags.Private) {
+                        // either base or derived property is private - not override, skip it
+                        continue;
+                    }
+
+                    if (isPrototypeProperty(base) && isPrototypeProperty(derived) || base.flags & SymbolFlags.PropertyOrAccessor && derived.flags & SymbolFlags.PropertyOrAccessor) {
+                        // method is overridden with method or property/accessor is overridden with property/accessor - correct case
+                        continue;
+                    }
+
+                    let errorMessage: DiagnosticMessage;
+                    if (isPrototypeProperty(base)) {
+                        if (derived.flags & SymbolFlags.Accessor) {
+                            errorMessage = Diagnostics.Class_0_defines_instance_member_function_1_but_extended_class_2_defines_it_as_instance_member_accessor;
+                        }
+                        else {
+                            errorMessage = Diagnostics.Class_0_defines_instance_member_function_1_but_extended_class_2_defines_it_as_instance_member_property;
+                        }
+                    }
+                    else if (base.flags & SymbolFlags.Accessor) {
+                        errorMessage = Diagnostics.Class_0_defines_instance_member_accessor_1_but_extended_class_2_defines_it_as_instance_member_function;
+                    }
+                    else {
+                        errorMessage = Diagnostics.Class_0_defines_instance_member_property_1_but_extended_class_2_defines_it_as_instance_member_function;
+                    }
+
+                    error(getNameOfDeclaration(derived.valueDeclaration) || derived.valueDeclaration, errorMessage, typeToString(baseType), symbolToString(base), typeToString(type));
                 }
             }
         }
