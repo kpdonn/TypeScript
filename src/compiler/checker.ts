@@ -9751,18 +9751,19 @@ namespace ts {
 
         function instantiateGenericTypeParameter(type: TypeParameter, mapper: TypeMapper): Type {
             if (type.genericTarget) {
-                const newType = mapper(type.genericTarget);
+                const newType = getTargetType(mapper(type.genericTarget));
                 if (isUninstantiatedGenericType(newType)) {
-                    const newTypeArguments = instantiateTypes(type.typeArguments, mapper);
+                    Debug.assert(length(type.typeArguments) >= length(newType.typeParameters));
+                    const newTypeArguments = instantiateTypes(type.typeArguments.slice(0, length(newType.typeParameters)), mapper);
                     return newType.flags & TypeFlags.TypeParameter ? getTypeParameterReference(newType, newTypeArguments) :
                         createTypeReference(<GenericType>newType, newTypeArguments);
                 }
-                Debug.assert(!(newType.flags & TypeFlags.TypeParameter && (<TypeParameter>newType).typeParameters)); // this might be invalid assertion. Just here to see if my assumption is correct.
                 return newType;
             }
             else if (!type.typeArguments) {
                return mapper(type);
             }
+            Debug.fail("Expected genericTypeParameter to always have either genericTarget or typeArguments.");
         }
 
         function instantiateType(type: Type, mapper: TypeMapper): Type {

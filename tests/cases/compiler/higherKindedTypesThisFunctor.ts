@@ -32,7 +32,9 @@ function fooToBar(fooArg: Foo): Bar {
 }
 
 
-function convertAll<C<_T> extends Functor<_T>, OldT, NewT>(container: C<OldT>, convertFunc: (oldArg: OldT) => NewT): C<NewT> {
+function convertAll<C<_T> extends
+    Functor<_T>, OldT, NewT>
+(container: C<OldT>, convertFunc: (oldArg: OldT) => NewT): C<NewT> {
     const newContainer = container.map(convertFunc);
     return newContainer;
 }
