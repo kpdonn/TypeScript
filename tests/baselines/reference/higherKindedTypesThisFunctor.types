@@ -115,13 +115,13 @@ function convertAll<C<_T> extends
 >NewT : NewT
 
     const newContainer = container.map(convertFunc);
->newContainer : Functor<NewT>
->container.map(convertFunc) : Functor<NewT>
->container.map : <B>(f: (fa: OldT) => B) => Functor<B>
+>newContainer : C<OldT>
+>container.map(convertFunc) : C<OldT>
+>container.map : <B>(f: (fa: OldT) => B) => C<OldT>
 >container : C<OldT>
->map : <B>(f: (fa: OldT) => B) => Functor<B>
+>map : <B>(f: (fa: OldT) => B) => C<OldT>
 >convertFunc : (oldArg: OldT) => NewT
 
     return newContainer;
->newContainer : Functor<NewT>
+>newContainer : C<OldT>
 }

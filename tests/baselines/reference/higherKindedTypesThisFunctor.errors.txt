@@ -1,10 +1,8 @@
-tests/cases/compiler/higherKindedTypesThisFunctor.ts(8,5): error TS2416: Property 'map' in type 'MyArrayFunctor<El>' is not assignable to the same property in base type 'Functor<El>'.
-  Type '<NewEl>(newf: (el: El) => NewEl) => MyArrayFunctor<NewEl>' is not assignable to type '<B>(f: (fa: El) => B) => Functor<B>'.
-    Type 'MyArrayFunctor<B>' is not assignable to type 'Functor<B>'.
-tests/cases/compiler/higherKindedTypesThisFunctor.ts(36,5): error TS2322: Type 'Functor<NewT>' is not assignable to type 'C<NewT>'.
+tests/cases/compiler/higherKindedTypesThisFunctor.ts(36,5): error TS2322: Type 'C<OldT>' is not assignable to type 'C<NewT>'.
+  Type 'Functor<OldT>' is not assignable to type 'C<NewT>'.
 
 
-==== tests/cases/compiler/higherKindedTypesThisFunctor.ts (2 errors) ====
+==== tests/cases/compiler/higherKindedTypesThisFunctor.ts (1 errors) ====
     export interface Functor<A> {
         map<B>(f: (fa: A) => B): this<B>;
     }
@@ -13,10 +11,6 @@ tests/cases/compiler/higherKindedTypesThisFunctor.ts(36,5): error TS2322: Type '
         constructor(private elements: El[]) {};
     
         map<NewEl>(newf: (el: El) => NewEl): MyArrayFunctor<NewEl> {
-        ~~~
-!!! error TS2416: Property 'map' in type 'MyArrayFunctor<El>' is not assignable to the same property in base type 'Functor<El>'.
-!!! error TS2416:   Type '<NewEl>(newf: (el: El) => NewEl) => MyArrayFunctor<NewEl>' is not assignable to type '<B>(f: (fa: El) => B) => Functor<B>'.
-!!! error TS2416:     Type 'MyArrayFunctor<B>' is not assignable to type 'Functor<B>'.
             const newElements = this.elements.map(newf);
             return new MyArrayFunctor(newElements);
         }
@@ -46,5 +40,6 @@ tests/cases/compiler/higherKindedTypesThisFunctor.ts(36,5): error TS2322: Type '
         const newContainer = container.map(convertFunc);
         return newContainer;
         ~~~~~~~~~~~~~~~~~~~~
-!!! error TS2322: Type 'Functor<NewT>' is not assignable to type 'C<NewT>'.
+!!! error TS2322: Type 'C<OldT>' is not assignable to type 'C<NewT>'.
+!!! error TS2322:   Type 'Functor<OldT>' is not assignable to type 'C<NewT>'.
     }

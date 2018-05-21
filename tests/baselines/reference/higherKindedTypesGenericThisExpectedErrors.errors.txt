@@ -1,17 +1,11 @@
 tests/cases/compiler/higherKindedTypesGenericThisExpectedErrors.ts(2,29): error TS2314: Generic type 'Functor1' requires ***generic 'this' types can only occur in abstract methods*** type argument(s).
 tests/cases/compiler/higherKindedTypesGenericThisExpectedErrors.ts(16,29): error TS2314: Generic type 'InvalidImplementor' requires ***generic 'this' types can only occur in abstract methods*** type argument(s).
-tests/cases/compiler/higherKindedTypesGenericThisExpectedErrors.ts(26,5): error TS2416: Property 'map' in type 'ValidImplementor<A>' is not assignable to the same property in base type 'ValidFunctor<A>'.
-  Type '<B>(f: (a: A) => B) => ValidImplementor<B>' is not assignable to type '<B>(f: (a: A) => B) => ValidFunctor<B>'.
-    Type 'ValidImplementor<B>' is not assignable to type 'ValidFunctor<B>'.
 tests/cases/compiler/higherKindedTypesGenericThisExpectedErrors.ts(42,29): error TS2314: Generic type 'InvalidExtender' requires ***generic 'this' types can only occur in abstract methods*** type argument(s).
-tests/cases/compiler/higherKindedTypesGenericThisExpectedErrors.ts(52,5): error TS2416: Property 'map' in type 'ValidExtender<A>' is not assignable to the same property in base type 'ValidAbstractFunctor<A>'.
-  Type '<B>(f: (a: A) => B) => ValidExtender<B>' is not assignable to type '<B>(f: (a: A) => B) => ValidAbstractFunctor<B>'.
-    Type 'ValidExtender<B>' is not assignable to type 'ValidAbstractFunctor<B>'.
 tests/cases/compiler/higherKindedTypesGenericThisExpectedErrors.ts(59,7): error TS2515: Non-abstract class 'InvalidIndirectExtender<A>' does not implement inherited abstract member 'map' from class 'ValidExtender<A>'.
 tests/cases/compiler/higherKindedTypesGenericThisExpectedErrors.ts(69,15): error TS2314: Generic type 'GenericThisMustBeInMethod' requires ***generic 'this' types can only occur in methods*** type argument(s).
 
 
-==== tests/cases/compiler/higherKindedTypesGenericThisExpectedErrors.ts (7 errors) ====
+==== tests/cases/compiler/higherKindedTypesGenericThisExpectedErrors.ts (5 errors) ====
     export class Functor1<A> {
         map<B>(f: (a: A) => B): this<B> {
                                 ~~~~~~~
@@ -42,10 +36,6 @@ tests/cases/compiler/higherKindedTypesGenericThisExpectedErrors.ts(69,15): error
         constructor(private elements: A[]) {};
     
         map<B>(f: (a: A) => B): ValidImplementor<B> { 
-        ~~~
-!!! error TS2416: Property 'map' in type 'ValidImplementor<A>' is not assignable to the same property in base type 'ValidFunctor<A>'.
-!!! error TS2416:   Type '<B>(f: (a: A) => B) => ValidImplementor<B>' is not assignable to type '<B>(f: (a: A) => B) => ValidFunctor<B>'.
-!!! error TS2416:     Type 'ValidImplementor<B>' is not assignable to type 'ValidFunctor<B>'.
             const newElements = this.elements.map(f);
             return new ValidImplementor(newElements);
         }
@@ -74,10 +64,6 @@ tests/cases/compiler/higherKindedTypesGenericThisExpectedErrors.ts(69,15): error
         constructor(private elements: A[]) {super()};
     
         map<B>(f: (a: A) => B): ValidExtender<B> { 
-        ~~~
-!!! error TS2416: Property 'map' in type 'ValidExtender<A>' is not assignable to the same property in base type 'ValidAbstractFunctor<A>'.
-!!! error TS2416:   Type '<B>(f: (a: A) => B) => ValidExtender<B>' is not assignable to type '<B>(f: (a: A) => B) => ValidAbstractFunctor<B>'.
-!!! error TS2416:     Type 'ValidExtender<B>' is not assignable to type 'ValidAbstractFunctor<B>'.
             const newElements = this.elements.map(f);
             return new ValidExtender(newElements);
         }

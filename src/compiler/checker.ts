@@ -5142,7 +5142,10 @@ namespace ts {
                         const thisType = includeThisTypes &&
                             (node.kind === SyntaxKind.ClassDeclaration || node.kind === SyntaxKind.ClassExpression || node.kind === SyntaxKind.InterfaceDeclaration) &&
                             getDeclaredTypeOfClassOrInterface(getSymbolOfNode(node)).thisType;
-                        return thisType ? append(outerAndOwnTypeParameters, thisType) : outerAndOwnTypeParameters;
+                        const genericThisType = includeThisTypes &&
+                            (node.kind === SyntaxKind.ClassDeclaration || node.kind === SyntaxKind.ClassExpression || node.kind === SyntaxKind.InterfaceDeclaration) &&
+                            getDeclaredTypeOfClassOrInterface(getSymbolOfNode(node)).genericThisType;
+                        return thisType || genericThisType ? append(append(outerAndOwnTypeParameters, thisType), genericThisType) : outerAndOwnTypeParameters;
                 }
             }
         }
@@ -5962,22 +5965,22 @@ namespace ts {
             return symbol;
         }
 
-        function getTypeWithThisArgument(type: Type, thisArgument?: Type, needApparentType?: boolean): Type {
+        function getTypeWithThisArgument(type: Type, thisArgument?: Type, genericThisType?: Type, needApparentType?: boolean): Type {
             if (getObjectFlags(type) & ObjectFlags.Reference) {
                 const target = (<TypeReference>type).target;
                 const typeArguments = (<TypeReference>type).typeArguments;
-                if (length(target.typeParameters) === length(typeArguments)) {
-                    const ref = createTypeReference(target, concatenate(typeArguments, [thisArgument || target.thisType]));
+                if (length(target.typeParameters) === length(typeArguments) && !(<TypeReference>type).thisTypeArgument) {
+                    const ref = createTypeReference(target, typeArguments, thisArgument || target.thisType, genericThisType || target.genericThisType);
                     return needApparentType ? getApparentType(ref) : ref;
                 }
             }
             else if (type.flags & TypeFlags.Intersection) {
-                return getIntersectionType(map((<IntersectionType>type).types, t => getTypeWithThisArgument(t, thisArgument, needApparentType)));
+                return getIntersectionType(map((<IntersectionType>type).types, t => getTypeWithThisArgument(t, thisArgument, genericThisType, needApparentType)));
             }
             return needApparentType ? getApparentType(type) : type;
         }
 
-        function resolveObjectTypeMembers(type: ObjectType, source: InterfaceTypeWithDeclaredMembers, typeParameters: TypeParameter[], typeArguments: Type[]) {
+        function resolveObjectTypeMembers(type: ObjectType, source: InterfaceTypeWithDeclaredMembers, typeParameters: TypeParameter[], typeArguments: Type[], thisArgument?: Type, genericThisArgument?: Type) {
             let mapper: TypeMapper;
             let members: SymbolTable;
             let callSignatures: Signature[];
@@ -6006,9 +6009,8 @@ namespace ts {
                     members = createSymbolTable(source.declaredProperties);
                 }
                 setStructuredTypeMembers(type, members, callSignatures, constructSignatures, stringIndexInfo, numberIndexInfo);
-                const thisArgument = lastOrUndefined(typeArguments);
                 for (const baseType of baseTypes) {
-                    const instantiatedBaseType = thisArgument ? getTypeWithThisArgument(instantiateType(baseType, mapper), thisArgument) : baseType;
+                    const instantiatedBaseType = thisArgument ? getTypeWithThisArgument(instantiateType(baseType, mapper), thisArgument, genericThisArgument) : baseType;
                     addInheritedMembers(members, getPropertiesOfType(instantiatedBaseType));
                     callSignatures = concatenate(callSignatures, getSignaturesOfType(instantiatedBaseType, SignatureKind.Call));
                     constructSignatures = concatenate(constructSignatures, getSignaturesOfType(instantiatedBaseType, SignatureKind.Construct));
@@ -6029,10 +6031,9 @@ namespace ts {
 
         function resolveTypeReferenceMembers(type: TypeReference): void {
             const source = resolveDeclaredMembers(type.target);
-            const typeParameters = concatenate(source.typeParameters, [source.thisType]);
-            const typeArguments = type.typeArguments && type.typeArguments.length === typeParameters.length ?
-                type.typeArguments : concatenate(type.typeArguments, [type]);
-            resolveObjectTypeMembers(type, source, typeParameters, typeArguments);
+            const typeParameters = concatenate(source.typeParameters, [source.thisType, source.genericThisType]);
+            const typeArguments = concatenate(type.typeArguments, [type.thisTypeArgument || type, type.genericThisArgument || type]);
+            resolveObjectTypeMembers(type, source, typeParameters, typeArguments, type.thisTypeArgument || type, type.genericThisArgument || type);
         }
 
         function createSignature(
@@ -6704,7 +6705,7 @@ namespace ts {
             let circular: boolean;
             if (!type.resolvedBaseConstraint) {
                 const constraint = getBaseConstraint(type);
-                type.resolvedBaseConstraint = circular ? circularConstraintType : getTypeWithThisArgument(constraint || noConstraintType, type);
+                type.resolvedBaseConstraint = circular ? circularConstraintType : getTypeWithThisArgument(constraint || noConstraintType, type, type);
             }
             return type.resolvedBaseConstraint;
 
@@ -6765,7 +6766,7 @@ namespace ts {
         }
 
         function getApparentTypeOfIntersectionType(type: IntersectionType) {
-            return type.resolvedApparentType || (type.resolvedApparentType = getTypeWithThisArgument(type, type, /*apparentType*/ true));
+            return type.resolvedApparentType || (type.resolvedApparentType = getTypeWithThisArgument(type, type, type, /*apparentType*/ true));
         }
 
         function getResolvedTypeParameterDefault(typeParameter: TypeParameter): Type | undefined {
@@ -7628,15 +7629,19 @@ namespace ts {
             return result & TypeFlags.PropagatingFlags;
         }
 
-        function createTypeReference(target: GenericType, typeArguments: Type[]): TypeReference {
-            const id = getTypeListId(typeArguments);
+        function createTypeReference(target: GenericType, typeArguments: Type[], thisType?: Type, genericThisType?: Type): TypeReference {
+            let idList = thisType ? concatenate(typeArguments, [thisType]) : typeArguments;
+            idList = genericThisType ? concatenate(idList, [genericThisType]) : idList;
+            const id = getTypeListId(idList);
             let type = target.instantiations.get(id);
             if (!type) {
                 type = <TypeReference>createObjectType(ObjectFlags.Reference, target.symbol);
                 target.instantiations.set(id, type);
-                type.flags |= typeArguments ? getPropagatingFlagsOfTypes(typeArguments, /*excludeKinds*/ 0) : 0;
+                type.flags |= typeArguments ? getPropagatingFlagsOfTypes(idList, /*excludeKinds*/ 0) : 0;
                 type.target = target;
                 type.typeArguments = typeArguments;
+                type.thisTypeArgument = thisType;
+                type.genericThisArgument = genericThisType;
             }
             return type;
         }
@@ -7647,6 +7652,8 @@ namespace ts {
             type.objectFlags = source.objectFlags;
             type.target = source.target;
             type.typeArguments = source.typeArguments;
+            type.thisTypeArgument = source.thisTypeArgument;
+            type.genericThisArgument = source.genericThisArgument;
             return type;
         }
 
@@ -9774,14 +9781,23 @@ namespace ts {
 
         function instantiateGenericTypeParameter(type: TypeParameter, mapper: TypeMapper): Type {
             if (type.genericTarget) {
-                const newType = getTargetType(mapper(type.genericTarget));
+                const newType = mapper(type.genericTarget);
                 if (isUninstantiatedGenericType(newType)) {
                     Debug.assert(length(type.typeArguments) >= length(newType.typeParameters));
                     const newTypeArguments = instantiateTypes(type.typeArguments.slice(0, length(newType.typeParameters)), mapper);
                     return newType.flags & TypeFlags.TypeParameter ? getTypeParameterReference(newType, newTypeArguments) :
                         createTypeReference(<GenericType>newType, newTypeArguments);
                 }
-                return newType;
+                else if ((<TypeReference>newType).typeArguments) {
+                    const originalNewTypeArguments = (<TypeReference>newType).typeArguments;
+                    const newMapper = createTypeMapper(type.typeParameters, type.typeArguments);
+                    const replacedNewTypeArguments = instantiateTypes(originalNewTypeArguments, combineTypeMappers(newMapper, mapper));
+                    return newType.flags & TypeFlags.TypeParameter ? getTypeParameterReference((<TypeParameter>newType).genericTarget, replacedNewTypeArguments) :
+                        createTypeReference((<TypeReference>newType).target, replacedNewTypeArguments);
+                }
+                else {
+                    return newType;
+                }
             }
             else if (!type.typeArguments) {
                return mapper(type);
@@ -9812,8 +9828,12 @@ namespace ts {
                 }
                 if ((<ObjectType>type).objectFlags & ObjectFlags.Reference) {
                     const typeArguments = (<TypeReference>type).typeArguments;
+                    const thisType = (<TypeReference>type).thisTypeArgument;
+                    const genericThis = (<TypeReference>type).genericThisArgument;
                     const newTypeArguments = instantiateTypes(typeArguments, mapper);
-                    return newTypeArguments !== typeArguments ? createTypeReference((<TypeReference>type).target, newTypeArguments) : type;
+                    const newThisType = instantiateType(thisType, mapper);
+                    const newGenericThis = instantiateType(genericThis, mapper);
+                    return createTypeReference((<TypeReference>type).target, newTypeArguments, newThisType, newGenericThis);
                 }
             }
             if (type.flags & TypeFlags.Union && !(type.flags & TypeFlags.Primitive)) {
@@ -12875,7 +12895,7 @@ namespace ts {
                 const constraint = getConstraintOfTypeParameter(inference.typeParameter);
                 if (constraint) {
                     const instantiatedConstraint = instantiateType(constraint, context);
-                    if (!context.compareTypes(inferredType, getTypeWithThisArgument(instantiatedConstraint, inferredType))) {
+                    if (!context.compareTypes(inferredType, getTypeWithThisArgument(instantiatedConstraint, inferredType, inferredType))) {
                         inference.inferredType = inferredType = instantiatedConstraint;
                     }
                 }
@@ -14900,7 +14920,7 @@ namespace ts {
 
             return nodeCheckFlag === NodeCheckFlags.SuperStatic
                 ? getBaseConstructorTypeOfClass(classType)
-                : getTypeWithThisArgument(baseClassType, classType.thisType);
+                : getTypeWithThisArgument(baseClassType, classType.thisType, classType.genericThisType);
 
             function isLegalUsageOfSuperExpression(container: Node): boolean {
                 if (!container) {
@@ -17822,7 +17842,7 @@ namespace ts {
                 const typeArgument = typeArgumentTypes[i];
                 if (!checkTypeAssignableTo(
                     typeArgument,
-                    getTypeWithThisArgument(instantiateType(constraint, mapper), typeArgument),
+                    getTypeWithThisArgument(instantiateType(constraint, mapper), typeArgument, typeArgument),
                     reportErrors ? typeArgumentNodes[i] : undefined,
                     typeArgumentHeadMessage,
                     errorInfo)) {
@@ -20853,7 +20873,7 @@ namespace ts {
             const constraintType = getConstraintOfTypeParameter(typeParameter);
             const defaultType = getDefaultFromTypeParameter(typeParameter);
             if (constraintType && defaultType) {
-                checkTypeAssignableTo(defaultType, getTypeWithThisArgument(constraintType, defaultType), node.default, Diagnostics.Type_0_does_not_satisfy_the_constraint_1);
+                checkTypeAssignableTo(defaultType, getTypeWithThisArgument(constraintType, defaultType, defaultType), node.default, Diagnostics.Type_0_does_not_satisfy_the_constraint_1);
             }
             if (produceDiagnostics) {
                 checkTypeNameIsReserved(node.name, Diagnostics.Type_parameter_name_cannot_be_0);
@@ -24239,7 +24259,9 @@ namespace ts {
                             }
                         }
                     }
-                    const baseWithThis = getTypeWithThisArgument(baseType, type.thisType);
+                    const genericThisType = (<TypeReference>baseType).typeArguments &&
+                        instantiateType(type, createTypeMapper((<TypeReference>baseType).typeArguments, (<InterfaceType>getTargetType(baseType)).localTypeParameters));
+                    const baseWithThis = getTypeWithThisArgument(baseType, type.thisType, genericThisType);
                     if (!checkTypeAssignableTo(typeWithThis, baseWithThis, /*errorNode*/ undefined)) {
                         issueMemberSpecificError(node, typeWithThis, baseWithThis, Diagnostics.Class_0_incorrectly_extends_base_class_1);
                     }
@@ -24277,7 +24299,9 @@ namespace ts {
                                 const genericDiag = t.symbol && t.symbol.flags & SymbolFlags.Class ?
                                     Diagnostics.Class_0_incorrectly_implements_class_1_Did_you_mean_to_extend_1_and_inherit_its_members_as_a_subclass :
                                     Diagnostics.Class_0_incorrectly_implements_interface_1;
-                                const baseWithThis = getTypeWithThisArgument(t, type.thisType);
+                                const genericThisType = (<TypeReference>t).typeArguments &&
+                                    instantiateType(type, createTypeMapper((<TypeReference>t).typeArguments, (<InterfaceType>getTargetType(t)).localTypeParameters));
+                                const baseWithThis = getTypeWithThisArgument(t, type.thisType, genericThisType);
                                 if (!checkTypeAssignableTo(typeWithThis, baseWithThis, /*errorNode*/ undefined)) {
                                     issueMemberSpecificError(node, typeWithThis, baseWithThis, genericDiag);
                                 }
@@ -24456,7 +24480,7 @@ namespace ts {
             let ok = true;
 
             for (const base of baseTypes) {
-                const properties = getPropertiesOfType(getTypeWithThisArgument(base, type.thisType));
+                const properties = getPropertiesOfType(getTypeWithThisArgument(base, type.thisType, type.genericThisType));
                 for (const prop of properties) {
                     const existing = seen.get(prop.escapedName);
                     if (!existing) {
@@ -24535,7 +24559,7 @@ namespace ts {
                     // run subsequent checks only if first set succeeded
                     if (checkInheritedPropertiesAreIdentical(type, node.name)) {
                         for (const baseType of getBaseTypes(type)) {
-                            checkTypeAssignableTo(typeWithThis, getTypeWithThisArgument(baseType, type.thisType), node.name, Diagnostics.Interface_0_incorrectly_extends_interface_1);
+                            checkTypeAssignableTo(typeWithThis, getTypeWithThisArgument(baseType, type.thisType, type.genericThisType), node.name, Diagnostics.Interface_0_incorrectly_extends_interface_1);
                         }
                         checkIndexConstraints(type);
                     }
@@ -26146,7 +26170,7 @@ namespace ts {
                 if (typeFromTypeNode && isExpressionWithTypeArgumentsInClassImplementsClause(node)) {
                     const containingClass = getContainingClass(node);
                     const classType = getTypeOfNode(containingClass) as InterfaceType;
-                    typeFromTypeNode = getTypeWithThisArgument(typeFromTypeNode, classType.thisType);
+                    typeFromTypeNode = getTypeWithThisArgument(typeFromTypeNode, classType.thisType, classType.genericThisType);
                 }
 
                 return typeFromTypeNode;
@@ -26162,7 +26186,7 @@ namespace ts {
                 const classNode = getContainingClass(node);
                 const classType = getDeclaredTypeOfSymbol(getSymbolOfNode(classNode)) as InterfaceType;
                 const baseType = getBaseTypes(classType)[0];
-                return baseType && getTypeWithThisArgument(baseType, classType.thisType);
+                return baseType && getTypeWithThisArgument(baseType, classType.thisType, classType.genericThisType);
             }
 
             if (isTypeDeclaration(node)) {

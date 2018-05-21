@@ -3828,6 +3828,8 @@ namespace ts {
     export interface TypeReference extends ObjectType {
         target: GenericType;    // Type reference target
         typeArguments?: Type[];  // Type reference type arguments (undefined if none)
+        thisTypeArgument?: Type;
+        genericThisArgument?: Type;
     }
 
     /* @internal */
