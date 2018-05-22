@@ -22,7 +22,7 @@ interface StaticFunctor<CS<_TS>> {
 
 
 interface LiftedResult<LRC<_LT>> {
-    <LRA, LRB>(lrmap: (lra: LRA) => LRB): (lrclra: LRC<LRA>) => LC<LRB>
+    <LRA, LRB>(lrmap: (lra: LRA) => LRB): (lrclra: LRC<LRA>) => LRC<LRB>
 }
 
 function lift<C<_T>>(fToLift: StaticFunctor<C>): LiftedResult<C> {
@@ -41,7 +41,7 @@ function stringLength(strarg: string): number {
 
 const liftedStringLength = liftedFunctor(stringLength);
 
-const functorXString = new FunctorX("myFunctorX");
+const functorXString = new FunctorX(["myFunctorX"]);
 
 const result = liftedStringLength(functorXString);
 const expectedType: FunctorX<number> = result;
@@ -78,7 +78,7 @@ function stringLength(strarg) {
     return strarg.length;
 }
 var liftedStringLength = liftedFunctor(stringLength);
-var functorXString = new FunctorX("myFunctorX");
+var functorXString = new FunctorX(["myFunctorX"]);
 var result = liftedStringLength(functorXString);
 var expectedType = result;
 var expectError = liftedStringLength(result);

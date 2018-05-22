@@ -95,7 +95,7 @@ interface LiftedResult<LRC<_LT>> {
 >LRC : Symbol(LRC, Decl(higherKindedTypesLift.ts, 22, 23))
 >_LT : Symbol(_LT, Decl(higherKindedTypesLift.ts, 22, 27))
 
-    <LRA, LRB>(lrmap: (lra: LRA) => LRB): (lrclra: LRC<LRA>) => LC<LRB>
+    <LRA, LRB>(lrmap: (lra: LRA) => LRB): (lrclra: LRC<LRA>) => LRC<LRB>
 >LRA : Symbol(LRA, Decl(higherKindedTypesLift.ts, 23, 5))
 >LRB : Symbol(LRB, Decl(higherKindedTypesLift.ts, 23, 9))
 >lrmap : Symbol(lrmap, Decl(higherKindedTypesLift.ts, 23, 15))
@@ -105,6 +105,7 @@ interface LiftedResult<LRC<_LT>> {
 >lrclra : Symbol(lrclra, Decl(higherKindedTypesLift.ts, 23, 43))
 >LRC : Symbol(LRC, Decl(higherKindedTypesLift.ts, 22, 23))
 >LRA : Symbol(LRA, Decl(higherKindedTypesLift.ts, 23, 5))
+>LRC : Symbol(LRC, Decl(higherKindedTypesLift.ts, 22, 23))
 >LRB : Symbol(LRB, Decl(higherKindedTypesLift.ts, 23, 9))
 }
 
@@ -172,7 +173,7 @@ const liftedStringLength = liftedFunctor(stringLength);
 >liftedFunctor : Symbol(liftedFunctor, Decl(higherKindedTypesLift.ts, 34, 5))
 >stringLength : Symbol(stringLength, Decl(higherKindedTypesLift.ts, 34, 38))
 
-const functorXString = new FunctorX("myFunctorX");
+const functorXString = new FunctorX(["myFunctorX"]);
 >functorXString : Symbol(functorXString, Decl(higherKindedTypesLift.ts, 42, 5))
 >FunctorX : Symbol(FunctorX, Decl(higherKindedTypesLift.ts, 2, 1))
 

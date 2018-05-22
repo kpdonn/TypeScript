@@ -1,5 +1,11 @@
-tests/cases/compiler/higherKindedTypesLift.ts(24,65): error TS2304: Cannot find name 'LC'.
-tests/cases/compiler/higherKindedTypesLift.ts(43,37): error TS2345: Argument of type '"myFunctorX"' is not assignable to parameter of type '{}[]'.
+tests/cases/compiler/higherKindedTypesLift.ts(45,35): error TS2345: Argument of type 'FunctorX<string>' is not assignable to parameter of type 'C1<_T1>'.
+  Types of property 'map' are incompatible.
+    Type '<B>(f: (a: string) => B) => FunctorX<B>' is not assignable to type '<B>(f: (a: _T1) => B) => C1<_T1>'.
+      Types of parameters 'f' and 'f' are incompatible.
+        Types of parameters 'a' and 'a' are incompatible.
+          Type 'string' is not assignable to type '_T1'.
+tests/cases/compiler/higherKindedTypesLift.ts(46,7): error TS2322: Type 'C1<_T1>' is not assignable to type 'FunctorX<number>'.
+  Property 'elements' is missing in type 'C1<_T1>'.
 
 
 ==== tests/cases/compiler/higherKindedTypesLift.ts (2 errors) ====
@@ -26,9 +32,7 @@ tests/cases/compiler/higherKindedTypesLift.ts(43,37): error TS2345: Argument of 
     
     
     interface LiftedResult<LRC<_LT>> {
-        <LRA, LRB>(lrmap: (lra: LRA) => LRB): (lrclra: LRC<LRA>) => LC<LRB>
-                                                                    ~~
-!!! error TS2304: Cannot find name 'LC'.
+        <LRA, LRB>(lrmap: (lra: LRA) => LRB): (lrclra: LRC<LRA>) => LRC<LRB>
     }
     
     function lift<C<_T>>(fToLift: StaticFunctor<C>): LiftedResult<C> {
@@ -47,12 +51,20 @@ tests/cases/compiler/higherKindedTypesLift.ts(43,37): error TS2345: Argument of 
     
     const liftedStringLength = liftedFunctor(stringLength);
     
-    const functorXString = new FunctorX("myFunctorX");
-                                        ~~~~~~~~~~~~
-!!! error TS2345: Argument of type '"myFunctorX"' is not assignable to parameter of type '{}[]'.
+    const functorXString = new FunctorX(["myFunctorX"]);
     
     const result = liftedStringLength(functorXString);
+                                      ~~~~~~~~~~~~~~
+!!! error TS2345: Argument of type 'FunctorX<string>' is not assignable to parameter of type 'C1<_T1>'.
+!!! error TS2345:   Types of property 'map' are incompatible.
+!!! error TS2345:     Type '<B>(f: (a: string) => B) => FunctorX<B>' is not assignable to type '<B>(f: (a: _T1) => B) => C1<_T1>'.
+!!! error TS2345:       Types of parameters 'f' and 'f' are incompatible.
+!!! error TS2345:         Types of parameters 'a' and 'a' are incompatible.
+!!! error TS2345:           Type 'string' is not assignable to type '_T1'.
     const expectedType: FunctorX<number> = result;
+          ~~~~~~~~~~~~
+!!! error TS2322: Type 'C1<_T1>' is not assignable to type 'FunctorX<number>'.
+!!! error TS2322:   Property 'elements' is missing in type 'C1<_T1>'.
     
     const expectError = liftedStringLength(result)
     

@@ -100,7 +100,7 @@ interface LiftedResult<LRC<_LT>> {
 >LRC : LRC<_LT>
 >_LT : _LT
 
-    <LRA, LRB>(lrmap: (lra: LRA) => LRB): (lrclra: LRC<LRA>) => LC<LRB>
+    <LRA, LRB>(lrmap: (lra: LRA) => LRB): (lrclra: LRC<LRA>) => LRC<LRB>
 >LRA : LRA
 >LRB : LRB
 >lrmap : (lra: LRA) => LRB
@@ -110,7 +110,7 @@ interface LiftedResult<LRC<_LT>> {
 >lrclra : LRC<LRA>
 >LRC : LRC<_LT>
 >LRA : LRA
->LC : No type information available!
+>LRC : LRC<_LT>
 >LRB : LRB
 }
 
@@ -179,32 +179,33 @@ function stringLength(strarg: string): number {
 }
 
 const liftedStringLength = liftedFunctor(stringLength);
->liftedStringLength : (lrclra: C1<_T1>) => any
->liftedFunctor(stringLength) : (lrclra: C1<_T1>) => any
+>liftedStringLength : (lrclra: C1<_T1>) => C1<_T1>
+>liftedFunctor(stringLength) : (lrclra: C1<_T1>) => C1<_T1>
 >liftedFunctor : LiftedResult<C1<_T1>>
 >stringLength : (strarg: string) => number
 
-const functorXString = new FunctorX("myFunctorX");
->functorXString : any
->new FunctorX("myFunctorX") : any
+const functorXString = new FunctorX(["myFunctorX"]);
+>functorXString : FunctorX<string>
+>new FunctorX(["myFunctorX"]) : FunctorX<string>
 >FunctorX : typeof FunctorX
+>["myFunctorX"] : string[]
 >"myFunctorX" : "myFunctorX"
 
 const result = liftedStringLength(functorXString);
->result : any
->liftedStringLength(functorXString) : any
->liftedStringLength : (lrclra: C1<_T1>) => any
->functorXString : any
+>result : C1<_T1>
+>liftedStringLength(functorXString) : C1<_T1>
+>liftedStringLength : (lrclra: C1<_T1>) => C1<_T1>
+>functorXString : FunctorX<string>
 
 const expectedType: FunctorX<number> = result;
 >expectedType : FunctorX<number>
 >FunctorX : FunctorX<A>
->result : any
+>result : C1<_T1>
 
 const expectError = liftedStringLength(result)
->expectError : any
->liftedStringLength(result) : any
->liftedStringLength : (lrclra: C1<_T1>) => any
->result : any
+>expectError : C1<_T1>
+>liftedStringLength(result) : C1<_T1>
+>liftedStringLength : (lrclra: C1<_T1>) => C1<_T1>
+>result : C1<_T1>
 
 
