@@ -5293,7 +5293,7 @@ namespace ts {
                 return type.resolvedBaseTypes = emptyArray;
             }
             const baseTypeNode = getBaseTypeNodeOfClass(type);
-            const typeArgs = typeArgumentsFromNodeWithTypeArguments(baseTypeNode);
+            const typeArgs = typeArgumentsFromTypeReferenceNode(baseTypeNode);
             let baseType: Type;
             const originalBaseType = baseConstructorType && baseConstructorType.symbol ? getDeclaredTypeOfSymbol(baseConstructorType.symbol) : undefined;
             if (baseConstructorType.symbol && baseConstructorType.symbol.flags & SymbolFlags.Class &&
@@ -6070,7 +6070,7 @@ namespace ts {
             }
             const baseTypeNode = getBaseTypeNodeOfClass(classType);
             const isJavaScript = isInJavaScriptFile(baseTypeNode);
-            const typeArguments = typeArgumentsFromNodeWithTypeArguments(baseTypeNode);
+            const typeArguments = typeArgumentsFromTypeReferenceNode(baseTypeNode);
             const typeArgCount = length(typeArguments);
             const result: Signature[] = [];
             for (const baseSig of baseSignatures) {
@@ -7816,7 +7816,7 @@ namespace ts {
         }
 
         function getTypeReferenceType(node: NodeWithTypeArguments, symbol: Symbol) {
-            const typeArguments = typeArgumentsFromNodeWithTypeArguments(node); // Do unconditionally so we mark type arguments as referenced.
+            const typeArguments = typeArgumentsFromTypeReferenceNode(node); // Do unconditionally so we mark type arguments as referenced.
             if (symbol === unknownSymbol) {
                 return unknownType;
             }
@@ -8007,7 +8007,7 @@ namespace ts {
             return links.resolvedType;
         }
 
-        function typeArgumentsFromNodeWithTypeArguments(node: NodeWithTypeArguments): Type[] {
+        function typeArgumentsFromTypeReferenceNode(node: NodeWithTypeArguments): Type[] {
             return map(node.typeArguments, getTypeFromTypeNode);
         }
 
@@ -9309,24 +9309,12 @@ namespace ts {
         }
 
         function getThisType(node: ThisExpression | ThisTypeNode): Type {
-            const typeArguments = node.kind === SyntaxKind.ThisType && typeArgumentsFromNodeWithTypeArguments(node);
             const container = getThisContainer(node, /*includeArrowFunctions*/ false);
             const parent = container && container.parent;
             if (parent && (isClassLike(parent) || parent.kind === SyntaxKind.InterfaceDeclaration)) {
                 if (!hasModifier(container, ModifierFlags.Static) &&
                     (container.kind !== SyntaxKind.Constructor || isNodeDescendantOf(node, (<ConstructorDeclaration>container).body))) {
-                    const thisType = getDeclaredTypeOfClassOrInterface(getSymbolOfNode(parent)).thisType;
-                    if (length(typeArguments)) {
-                        if (length(typeArguments) !== length(thisType.typeParameters)) {
-                            error(node,
-                                Diagnostics.Generic_type_0_requires_1_type_argument_s, // TODO (kpdonn): custom error message for "this" type
-                                symbolToString(thisType.symbol),
-                                length(thisType.typeParameters));
-                            return unknownType;
-                        }
-                        return getTypeParameterReference(thisType, typeArguments);
-                    }
-                    return thisType;
+                    return getDeclaredTypeOfClassOrInterface(getSymbolOfNode(parent)).thisType;
                 }
             }
             error(node, Diagnostics.A_this_type_is_available_only_in_a_non_static_member_of_a_class_or_interface);

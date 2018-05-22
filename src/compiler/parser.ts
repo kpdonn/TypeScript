@@ -166,8 +166,6 @@ namespace ts {
             case SyntaxKind.TypeReference:
                 return visitNode(cbNode, (<TypeReferenceNode>node).typeName) ||
                     visitNodes(cbNode, cbNodes, (<TypeReferenceNode>node).typeArguments);
-            case SyntaxKind.ThisType:
-                return visitNodes(cbNode, cbNodes, (<ThisTypeNode>node).typeArguments);
             case SyntaxKind.TypePredicate:
                 return visitNode(cbNode, (<TypePredicateNode>node).parameterName) ||
                     visitNode(cbNode, (<TypePredicateNode>node).type);
@@ -2257,7 +2255,6 @@ namespace ts {
         function parseThisTypeNode(): ThisTypeNode {
             const node = createNode(SyntaxKind.ThisType) as ThisTypeNode;
             nextToken();
-            node.typeArguments = tryParseTypeArguments();
             return finishNode(node);
         }
 
