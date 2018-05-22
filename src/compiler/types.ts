@@ -3974,6 +3974,8 @@ namespace ts {
         /* @internal */
         outerTypeParameters?: TypeParameter[]; // only set for generic type parameters
         /* @internal */
+        localTypeParameters?: TypeParameter[]; // only set for generic type parameters
+        /* @internal */
         resolvedApparentType?: Type;
     }
 

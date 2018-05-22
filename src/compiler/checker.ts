@@ -5592,7 +5592,8 @@ namespace ts {
                     type.typeParameters = typeParameters;
                     const declaration = <TypeParameterDeclaration>getDeclarationOfKind(symbol, SyntaxKind.TypeParameter);
                     const outerTypeParameters = getOuterTypeParameters(declaration);
-                    type.outerTypeParameters = filter(outerTypeParameters, tp => isTypeParameterPossiblyReferenced(tp, declaration.constraint));
+                    type.outerTypeParameters = filter(outerTypeParameters, tp => tp !== type && isTypeParameterPossiblyReferenced(tp, declaration.constraint));
+                    type.localTypeParameters = typeParameters;
                 }
             }
             return <TypeParameter>links.declaredType;
@@ -6472,7 +6473,7 @@ namespace ts {
         function isUninstantiatedGenericType(type: Type): type is GenericType | TypeParameter {
             return length((<GenericType>type).typeParameters) &&
                 ((type.flags & TypeFlags.TypeParameter && !(<GenericType>type).typeArguments && !(<TypeParameter>type).genericTarget) ||
-                (getObjectFlags(type) & ObjectFlags.ClassOrInterface && (<GenericType>type).target === type));
+                (getObjectFlags(type) & (ObjectFlags.ClassOrInterface | ObjectFlags.GenericTypeParameter) && (<GenericType>type).target === type));
         }
 
         function resolveStructuredTypeMembers(type: StructuredType): ResolvedType {
@@ -7606,7 +7607,7 @@ namespace ts {
                     const constraintDeclaration = getConstraintDeclaration(typeParameter);
                     const constraint = constraintDeclaration ? getTypeFromTypeNode(constraintDeclaration) :
                         getInferredTypeParameterConstraint(typeParameter) || noConstraintType;
-                    if (constraint !== noConstraintType && constraint.flags & (TypeFlags.Object | TypeFlags.Intersection)) {
+                    if (constraint !== noConstraintType && constraint.flags & (TypeFlags.Object | TypeFlags.Intersection | TypeFlags.TypeParameter)) {
                         typeParameter.resolvedApparentType = createApparentGenericTypeParameter(typeParameter, <BaseType>constraint);
                     }
                     else {
@@ -8203,7 +8204,7 @@ namespace ts {
             return createTypeFromGenericGlobalType(globalArrayType, [elementType]);
         }
 
-        function createApparentGenericTypeParameter(tp: TypeParameter, constraint: BaseType): GenericType {
+        function createApparentGenericTypeParameter(tp: TypeParameter, constraint: BaseType | TypeParameter): GenericType {
             const type = <GenericType & InterfaceTypeWithDeclaredMembers>createObjectType(ObjectFlags.GenericTypeParameter | ObjectFlags.Reference);
             type.outerTypeParameters = tp.outerTypeParameters;
             type.localTypeParameters = tp.typeParameters;
@@ -8215,7 +8216,7 @@ namespace ts {
             type.thisType = <TypeParameter>createType(TypeFlags.TypeParameter);
             type.thisType.isThisType = true;
             type.thisType.constraint = type;
-            type.resolvedBaseTypes = [<BaseType>instantiateType(constraint, makeUnaryTypeMapper(tp, type))];
+            type.resolvedBaseTypes = [<BaseType>constraint];
             type.symbol = tp.symbol;
             type.declaredProperties = emptyArray;
             type.declaredCallSignatures = emptyArray;
@@ -9797,17 +9798,24 @@ namespace ts {
             if (type.genericTarget) {
                 const newType = mapper(type.genericTarget);
                 if (isUninstantiatedGenericType(newType)) {
-                    Debug.assert(length(type.typeArguments) >= length(newType.typeParameters));
-                    const newTypeArguments = instantiateTypes(type.typeArguments.slice(0, length(newType.typeParameters)), mapper);
+                    Debug.assert(length(type.typeArguments) >= length(newType.localTypeParameters));
+                    const localTypeParameterMapper = createTypeMapper(newType.localTypeParameters, type.typeArguments.slice(0, length(newType.localTypeParameters)));
+                    const newTypeArguments = instantiateTypes(newType.typeParameters, combineTypeMappers(localTypeParameterMapper, mapper));
                     return newType.flags & TypeFlags.TypeParameter ? getTypeParameterReference(newType, newTypeArguments) :
                         createTypeReference(<GenericType>newType, newTypeArguments);
+                }
+                else if ((<TypeReference>newType).typeArguments) {
+                    Debug.assertEqual(length((<GenericType>getTargetType(newType)).localTypeParameters), length(type.typeArguments), "Type argument length unexpectedly different");
+                    const newTypeArguments = instantiateTypes((<TypeReference>newType).typeArguments, combineTypeMappers(createTypeMapper(type.typeParameters, type.typeArguments), mapper));
+                    return getTargetType(newType).flags & TypeFlags.TypeParameter ? getTypeParameterReference(getTargetType(newType), newTypeArguments) :
+                        createTypeReference(<GenericType>getTargetType(newType), newTypeArguments);
                 }
                 return newType;
             }
             else if (!type.typeArguments) {
-               return mapper(type);
+                return mapper(type);
             }
-            Debug.fail("Expected genericTypeParameter to always have either genericTarget or typeArguments.");
+            Debug.fail("Expected genericTypeParameter to always have either genericTarget or no typeArguments.");
         }
 
         function instantiateType(type: Type, mapper: TypeMapper): Type {
@@ -12889,12 +12897,16 @@ namespace ts {
                 else {
                     inferredType = getTypeFromInference(inference);
                 }
+                let constraint;
                 if (inference.typeParameter.typeParameters) {
                     inferredType = getTargetType(inferredType);
+                    constraint = getApparentTypeFromGenericTypeParameter(inference.typeParameter);
+                }
+                else {
+                    constraint = getConstraintOfTypeParameter(inference.typeParameter);
                 }
                 inference.inferredType = inferredType;
 
-                const constraint = getConstraintOfTypeParameter(inference.typeParameter);
                 if (constraint) {
                     const instantiatedConstraint = instantiateType(constraint, context);
                     if (!context.compareTypes(inferredType, getTypeWithThisArgument(instantiatedConstraint, inferredType))) {

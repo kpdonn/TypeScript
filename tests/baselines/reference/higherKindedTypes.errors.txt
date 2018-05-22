@@ -1,8 +1,22 @@
 tests/cases/compiler/higherKindedTypes.ts(37,5): error TS2322: Type 'F<A>' is not assignable to type 'F<B>'.
   Type 'F<A>' is not assignable to type 'F<B>'.
+tests/cases/compiler/higherKindedTypes.ts(40,28): error TS2345: Argument of type 'FunctorX<string>' is not assignable to parameter of type 'F<string>'.
+  Types of property 'map' are incompatible.
+    Type '<B>(f: (a: string) => B) => FunctorX<B>' is not assignable to type '<B>(f: (a: string) => B) => F<B>'.
+      Type 'FunctorX<B>' is not assignable to type 'F<B>'.
+tests/cases/compiler/higherKindedTypes.ts(40,38): error TS7006: Parameter 'val' implicitly has an 'any' type.
+tests/cases/compiler/higherKindedTypes.ts(43,28): error TS2345: Argument of type 'FunctorY<string>' is not assignable to parameter of type 'F<string>'.
+  Types of property 'map' are incompatible.
+    Type '<B>(f: (a: string) => B) => FunctorY<B>' is not assignable to type '<B>(f: (a: string) => B) => F<B>'.
+      Type 'FunctorY<B>' is not assignable to type 'F<B>'.
+tests/cases/compiler/higherKindedTypes.ts(43,38): error TS7006: Parameter 'val' implicitly has an 'any' type.
+tests/cases/compiler/higherKindedTypes.ts(46,28): error TS2345: Argument of type 'FunctorX<string>' is not assignable to parameter of type 'F<string>'.
+tests/cases/compiler/higherKindedTypes.ts(46,38): error TS7006: Parameter 'val' implicitly has an 'any' type.
+tests/cases/compiler/higherKindedTypes.ts(49,28): error TS2345: Argument of type 'FunctorY<string>' is not assignable to parameter of type 'F<string>'.
+tests/cases/compiler/higherKindedTypes.ts(49,38): error TS7006: Parameter 'val' implicitly has an 'any' type.
 
 
-==== tests/cases/compiler/higherKindedTypes.ts (1 errors) ====
+==== tests/cases/compiler/higherKindedTypes.ts (9 errors) ====
     interface Functor<A, Container<_T>> {
         map<B>(f: (a: A) => B): Container<B>;
     }
@@ -46,14 +60,36 @@ tests/cases/compiler/higherKindedTypes.ts(37,5): error TS2322: Type 'F<A>' is no
     }
     
     const resultX3 = staticMap(initialX, val => val.length);
+                               ~~~~~~~~
+!!! error TS2345: Argument of type 'FunctorX<string>' is not assignable to parameter of type 'F<string>'.
+!!! error TS2345:   Types of property 'map' are incompatible.
+!!! error TS2345:     Type '<B>(f: (a: string) => B) => FunctorX<B>' is not assignable to type '<B>(f: (a: string) => B) => F<B>'.
+!!! error TS2345:       Type 'FunctorX<B>' is not assignable to type 'F<B>'.
+                                         ~~~
+!!! error TS7006: Parameter 'val' implicitly has an 'any' type.
     const expectX3: FunctorX<number> = resultX3;
     
     const resultY3 = staticMap(initialY, val => val.length);
+                               ~~~~~~~~
+!!! error TS2345: Argument of type 'FunctorY<string>' is not assignable to parameter of type 'F<string>'.
+!!! error TS2345:   Types of property 'map' are incompatible.
+!!! error TS2345:     Type '<B>(f: (a: string) => B) => FunctorY<B>' is not assignable to type '<B>(f: (a: string) => B) => F<B>'.
+!!! error TS2345:       Type 'FunctorY<B>' is not assignable to type 'F<B>'.
+                                         ~~~
+!!! error TS7006: Parameter 'val' implicitly has an 'any' type.
     const expectY3: FunctorY<number> = resultY3;
     
     const resultX4 = staticMap(initialX, val => [val]);
+                               ~~~~~~~~
+!!! error TS2345: Argument of type 'FunctorX<string>' is not assignable to parameter of type 'F<string>'.
+                                         ~~~
+!!! error TS7006: Parameter 'val' implicitly has an 'any' type.
     const expectX4: FunctorX<string[]> = resultX4;
     
     const resultY4 = staticMap(initialY, val => [val]);
+                               ~~~~~~~~
+!!! error TS2345: Argument of type 'FunctorY<string>' is not assignable to parameter of type 'F<string>'.
+                                         ~~~
+!!! error TS7006: Parameter 'val' implicitly has an 'any' type.
     const expectY4: FunctorY<string[]> = resultY4;
     

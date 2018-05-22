@@ -179,8 +179,8 @@ function stringLength(strarg: string): number {
 }
 
 const liftedStringLength = liftedFunctor(stringLength);
->liftedStringLength : (lrclra: C1<_T1>) => C1<_T1>
->liftedFunctor(stringLength) : (lrclra: C1<_T1>) => C1<_T1>
+>liftedStringLength : (lrclra: C1<string>) => C1<number>
+>liftedFunctor(stringLength) : (lrclra: C1<string>) => C1<number>
 >liftedFunctor : LiftedResult<C1<_T1>>
 >stringLength : (strarg: string) => number
 
@@ -192,20 +192,20 @@ const functorXString = new FunctorX(["myFunctorX"]);
 >"myFunctorX" : "myFunctorX"
 
 const result = liftedStringLength(functorXString);
->result : C1<_T1>
->liftedStringLength(functorXString) : C1<_T1>
->liftedStringLength : (lrclra: C1<_T1>) => C1<_T1>
+>result : C1<number>
+>liftedStringLength(functorXString) : C1<number>
+>liftedStringLength : (lrclra: C1<string>) => C1<number>
 >functorXString : FunctorX<string>
 
 const expectedType: FunctorX<number> = result;
 >expectedType : FunctorX<number>
 >FunctorX : FunctorX<A>
->result : C1<_T1>
+>result : C1<number>
 
 const expectError = liftedStringLength(result)
->expectError : C1<_T1>
->liftedStringLength(result) : C1<_T1>
->liftedStringLength : (lrclra: C1<_T1>) => C1<_T1>
->result : C1<_T1>
+>expectError : C1<number>
+>liftedStringLength(result) : C1<number>
+>liftedStringLength : (lrclra: C1<string>) => C1<number>
+>result : C1<number>
 
 
