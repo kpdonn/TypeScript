@@ -182,7 +182,9 @@ const resultX3 = staticMap(initialX, val => val.length);
 >staticMap : Symbol(staticMap, Decl(higherKindedTypes.ts, 27, 46))
 >initialX : Symbol(initialX, Decl(higherKindedTypes.ts, 14, 13))
 >val : Symbol(val, Decl(higherKindedTypes.ts, 39, 36))
+>val.length : Symbol(String.length, Decl(lib.d.ts, --, --))
 >val : Symbol(val, Decl(higherKindedTypes.ts, 39, 36))
+>length : Symbol(String.length, Decl(lib.d.ts, --, --))
 
 const expectX3: FunctorX<number> = resultX3;
 >expectX3 : Symbol(expectX3, Decl(higherKindedTypes.ts, 40, 5))
@@ -194,7 +196,9 @@ const resultY3 = staticMap(initialY, val => val.length);
 >staticMap : Symbol(staticMap, Decl(higherKindedTypes.ts, 27, 46))
 >initialY : Symbol(initialY, Decl(higherKindedTypes.ts, 15, 13))
 >val : Symbol(val, Decl(higherKindedTypes.ts, 42, 36))
+>val.length : Symbol(String.length, Decl(lib.d.ts, --, --))
 >val : Symbol(val, Decl(higherKindedTypes.ts, 42, 36))
+>length : Symbol(String.length, Decl(lib.d.ts, --, --))
 
 const expectY3: FunctorY<number> = resultY3;
 >expectY3 : Symbol(expectY3, Decl(higherKindedTypes.ts, 43, 5))

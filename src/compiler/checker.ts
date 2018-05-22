@@ -8208,7 +8208,7 @@ namespace ts {
             const type = <GenericType & InterfaceTypeWithDeclaredMembers>createObjectType(ObjectFlags.GenericTypeParameter | ObjectFlags.Reference);
             type.outerTypeParameters = tp.outerTypeParameters;
             type.localTypeParameters = tp.typeParameters;
-            type.typeParameters = concatenate(tp.outerTypeParameters, tp.typeParameters);
+            type.typeParameters = concatenate(type.outerTypeParameters, type.localTypeParameters);
             type.instantiations = createMap<TypeReference>();
             type.instantiations.set(getTypeListId(type.typeParameters), <GenericType>type);
             type.target = <GenericType>type;
@@ -8216,7 +8216,8 @@ namespace ts {
             type.thisType = <TypeParameter>createType(TypeFlags.TypeParameter);
             type.thisType.isThisType = true;
             type.thisType.constraint = type;
-            type.resolvedBaseTypes = [<BaseType>constraint];
+            const instantiatedConstraint = instantiateType(constraint, makeUnaryTypeMapper(tp, type));
+            type.resolvedBaseTypes = [<BaseType>instantiatedConstraint];
             type.symbol = tp.symbol;
             type.declaredProperties = emptyArray;
             type.declaredCallSignatures = emptyArray;
@@ -9561,6 +9562,8 @@ namespace ts {
             const result = <TypeParameter>createType(TypeFlags.TypeParameter);
             result.symbol = typeParameter.symbol;
             result.typeParameters = typeParameter.typeParameters;
+            result.outerTypeParameters = typeParameter.outerTypeParameters;
+            result.localTypeParameters = typeParameter.localTypeParameters;
             result.typeArguments = typeParameter.typeArguments;
             result.genericTarget = typeParameter.genericTarget;
             result.target = typeParameter;
@@ -9805,8 +9808,8 @@ namespace ts {
                         createTypeReference(<GenericType>newType, newTypeArguments);
                 }
                 else if ((<TypeReference>newType).typeArguments) {
-                    Debug.assertEqual(length((<GenericType>getTargetType(newType)).localTypeParameters), length(type.typeArguments), "Type argument length unexpectedly different");
-                    const newTypeArguments = instantiateTypes((<TypeReference>newType).typeArguments, combineTypeMappers(createTypeMapper(type.typeParameters, type.typeArguments), mapper));
+                    Debug.assertEqual(length((<GenericType>getTargetType(newType)).typeParameters), length(type.typeArguments), "Type argument length unexpectedly different");
+                    const newTypeArguments = instantiateTypes(type.typeArguments, mapper);
                     return getTargetType(newType).flags & TypeFlags.TypeParameter ? getTypeParameterReference(getTargetType(newType), newTypeArguments) :
                         createTypeReference(<GenericType>getTargetType(newType), newTypeArguments);
                 }
@@ -12900,7 +12903,11 @@ namespace ts {
                 let constraint;
                 if (inference.typeParameter.typeParameters) {
                     inferredType = getTargetType(inferredType);
+
                     constraint = getApparentTypeFromGenericTypeParameter(inference.typeParameter);
+                    if ((<GenericType>inferredType).typeParameters) {
+                        constraint = instantiateType(constraint, createTypeMapper(inference.typeParameter.typeParameters, (<GenericType>inferredType).typeParameters));
+                    }
                 }
                 else {
                     constraint = getConstraintOfTypeParameter(inference.typeParameter);
