@@ -95,17 +95,21 @@ interface LiftedResult<LRC<_LT>> {
 >LRC : Symbol(LRC, Decl(higherKindedTypesLift.ts, 22, 23))
 >_LT : Symbol(_LT, Decl(higherKindedTypesLift.ts, 22, 27))
 
-    <LRA, LRB>(lrmap: (lra: LRA) => LRB): (lrclra: LRC<LRA>) => LRC<LRB>
+    <LRA, LRB>(lrmap: (lra: LRA) => LRB): <NC<_NT> extends LRC<_NT>>(lrclra: NC<LRA>) => NC<LRB>
 >LRA : Symbol(LRA, Decl(higherKindedTypesLift.ts, 23, 5))
 >LRB : Symbol(LRB, Decl(higherKindedTypesLift.ts, 23, 9))
 >lrmap : Symbol(lrmap, Decl(higherKindedTypesLift.ts, 23, 15))
 >lra : Symbol(lra, Decl(higherKindedTypesLift.ts, 23, 23))
 >LRA : Symbol(LRA, Decl(higherKindedTypesLift.ts, 23, 5))
 >LRB : Symbol(LRB, Decl(higherKindedTypesLift.ts, 23, 9))
->lrclra : Symbol(lrclra, Decl(higherKindedTypesLift.ts, 23, 43))
+>NC : Symbol(NC, Decl(higherKindedTypesLift.ts, 23, 43))
+>_NT : Symbol(_NT, Decl(higherKindedTypesLift.ts, 23, 46))
 >LRC : Symbol(LRC, Decl(higherKindedTypesLift.ts, 22, 23))
+>_NT : Symbol(_NT, Decl(higherKindedTypesLift.ts, 23, 46))
+>lrclra : Symbol(lrclra, Decl(higherKindedTypesLift.ts, 23, 69))
+>NC : Symbol(NC, Decl(higherKindedTypesLift.ts, 23, 43))
 >LRA : Symbol(LRA, Decl(higherKindedTypesLift.ts, 23, 5))
->LRC : Symbol(LRC, Decl(higherKindedTypesLift.ts, 22, 23))
+>NC : Symbol(NC, Decl(higherKindedTypesLift.ts, 23, 43))
 >LRB : Symbol(LRB, Decl(higherKindedTypesLift.ts, 23, 9))
 }
 

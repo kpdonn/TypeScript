@@ -1,6 +1,6 @@
-tests/cases/compiler/higherKindedTypesLift.ts(46,7): error TS2322: Type 'C1<number>' is not assignable to type 'FunctorX<number>'.
-  Property 'elements' is missing in type 'C1<number>'.
-tests/cases/compiler/higherKindedTypesLift.ts(48,40): error TS2345: Argument of type 'C1<number>' is not assignable to parameter of type 'C1<string>'.
+tests/cases/compiler/higherKindedTypesLift.ts(28,35): error TS2345: Argument of type 'NC<LRA>' is not assignable to parameter of type 'C<LRA>'.
+  Type 'NC<LRA>' is not assignable to type 'C<LRA>'.
+tests/cases/compiler/higherKindedTypesLift.ts(48,40): error TS2345: Argument of type 'FunctorX<number>' is not assignable to parameter of type 'FunctorX<string>'.
   Type 'number' is not assignable to type 'string'.
 
 
@@ -28,11 +28,14 @@ tests/cases/compiler/higherKindedTypesLift.ts(48,40): error TS2345: Argument of 
     
     
     interface LiftedResult<LRC<_LT>> {
-        <LRA, LRB>(lrmap: (lra: LRA) => LRB): (lrclra: LRC<LRA>) => LRC<LRB>
+        <LRA, LRB>(lrmap: (lra: LRA) => LRB): <NC<_NT> extends LRC<_NT>>(lrclra: NC<LRA>) => NC<LRB>
     }
     
     function lift<C<_T>>(fToLift: StaticFunctor<C>): LiftedResult<C> {
         return lmap => lca => fToLift(lca, lmap);
+                                      ~~~
+!!! error TS2345: Argument of type 'NC<LRA>' is not assignable to parameter of type 'C<LRA>'.
+!!! error TS2345:   Type 'NC<LRA>' is not assignable to type 'C<LRA>'.
     }
     
     function staticMap<C1<_T1> extends Functor<_T1, C1>, A1, B1>(fa1: C1<A1>, fmap1: (a1: A1) => B1): C1<B1> {
@@ -51,13 +54,10 @@ tests/cases/compiler/higherKindedTypesLift.ts(48,40): error TS2345: Argument of 
     
     const result = liftedStringLength(functorXString);
     const expectedType: FunctorX<number> = result;
-          ~~~~~~~~~~~~
-!!! error TS2322: Type 'C1<number>' is not assignable to type 'FunctorX<number>'.
-!!! error TS2322:   Property 'elements' is missing in type 'C1<number>'.
     
     const expectError = liftedStringLength(result)
                                            ~~~~~~
-!!! error TS2345: Argument of type 'C1<number>' is not assignable to parameter of type 'C1<string>'.
+!!! error TS2345: Argument of type 'FunctorX<number>' is not assignable to parameter of type 'FunctorX<string>'.
 !!! error TS2345:   Type 'number' is not assignable to type 'string'.
     
     

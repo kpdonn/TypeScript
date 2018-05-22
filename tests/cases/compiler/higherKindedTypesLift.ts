@@ -23,7 +23,7 @@ interface StaticFunctor<CS<_TS>> {
 
 
 interface LiftedResult<LRC<_LT>> {
-    <LRA, LRB>(lrmap: (lra: LRA) => LRB): (lrclra: LRC<LRA>) => LRC<LRB>
+    <LRA, LRB>(lrmap: (lra: LRA) => LRB): <NC<_NT> extends LRC<_NT>>(lrclra: NC<LRA>) => NC<LRB>
 }
 
 function lift<C<_T>>(fToLift: StaticFunctor<C>): LiftedResult<C> {
