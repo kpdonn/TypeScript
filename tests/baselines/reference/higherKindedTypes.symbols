@@ -1,27 +1,27 @@
 === tests/cases/compiler/higherKindedTypes.ts ===
-interface Functor<Container<_T>, A> {
+interface Functor<A, Container<_T>> {
 >Functor : Symbol(Functor, Decl(higherKindedTypes.ts, 0, 0))
->Container : Symbol(Container, Decl(higherKindedTypes.ts, 0, 18))
->_T : Symbol(_T, Decl(higherKindedTypes.ts, 0, 28))
->A : Symbol(A, Decl(higherKindedTypes.ts, 0, 32))
+>A : Symbol(A, Decl(higherKindedTypes.ts, 0, 18))
+>Container : Symbol(Container, Decl(higherKindedTypes.ts, 0, 20))
+>_T : Symbol(_T, Decl(higherKindedTypes.ts, 0, 31))
 
     map<B>(f: (a: A) => B): Container<B>;
 >map : Symbol(Functor.map, Decl(higherKindedTypes.ts, 0, 37))
 >B : Symbol(B, Decl(higherKindedTypes.ts, 1, 8))
 >f : Symbol(f, Decl(higherKindedTypes.ts, 1, 11))
 >a : Symbol(a, Decl(higherKindedTypes.ts, 1, 15))
->A : Symbol(A, Decl(higherKindedTypes.ts, 0, 32))
+>A : Symbol(A, Decl(higherKindedTypes.ts, 0, 18))
 >B : Symbol(B, Decl(higherKindedTypes.ts, 1, 8))
->Container : Symbol(Container, Decl(higherKindedTypes.ts, 0, 18))
+>Container : Symbol(Container, Decl(higherKindedTypes.ts, 0, 20))
 >B : Symbol(B, Decl(higherKindedTypes.ts, 1, 8))
 }
 
-interface FunctorX<A> extends Functor<FunctorX, A> {
+interface FunctorX<A> extends Functor<A, FunctorX> {
 >FunctorX : Symbol(FunctorX, Decl(higherKindedTypes.ts, 2, 1))
 >A : Symbol(A, Decl(higherKindedTypes.ts, 4, 19))
 >Functor : Symbol(Functor, Decl(higherKindedTypes.ts, 0, 0))
->FunctorX : Symbol(FunctorX, Decl(higherKindedTypes.ts, 2, 1))
 >A : Symbol(A, Decl(higherKindedTypes.ts, 4, 19))
+>FunctorX : Symbol(FunctorX, Decl(higherKindedTypes.ts, 2, 1))
 
     map<B>(f: (a: A) => B): FunctorX<B>;
 >map : Symbol(FunctorX.map, Decl(higherKindedTypes.ts, 4, 52))
@@ -37,12 +37,12 @@ interface FunctorX<A> extends Functor<FunctorX, A> {
 >xVal : Symbol(FunctorX.xVal, Decl(higherKindedTypes.ts, 5, 40))
 }
 
-interface FunctorY<A> extends Functor<FunctorY, A> {
+interface FunctorY<A> extends Functor<A, FunctorY> {
 >FunctorY : Symbol(FunctorY, Decl(higherKindedTypes.ts, 7, 1))
 >A : Symbol(A, Decl(higherKindedTypes.ts, 9, 19))
 >Functor : Symbol(Functor, Decl(higherKindedTypes.ts, 0, 0))
->FunctorY : Symbol(FunctorY, Decl(higherKindedTypes.ts, 7, 1))
 >A : Symbol(A, Decl(higherKindedTypes.ts, 9, 19))
+>FunctorY : Symbol(FunctorY, Decl(higherKindedTypes.ts, 7, 1))
 
     map<B>(f: (a: A) => B): FunctorY<B>;
 >map : Symbol(FunctorY.map, Decl(higherKindedTypes.ts, 9, 52))
@@ -124,13 +124,13 @@ const expectY2: FunctorY<string[]> = resultY2;
 >resultY2 : Symbol(resultY2, Decl(higherKindedTypes.ts, 26, 5))
     
 
-function staticMap<F<_T> extends Functor<F, _T>, A, B>(fa: F<A>, f: (a: A) => B): F<B> {
+function staticMap<F<_T> extends Functor<_T, F>, A, B>(fa: F<A>, f: (a: A) => B): F<B> {
 >staticMap : Symbol(staticMap, Decl(higherKindedTypes.ts, 27, 46))
 >F : Symbol(F, Decl(higherKindedTypes.ts, 30, 19))
 >_T : Symbol(_T, Decl(higherKindedTypes.ts, 30, 21))
 >Functor : Symbol(Functor, Decl(higherKindedTypes.ts, 0, 0))
->F : Symbol(F, Decl(higherKindedTypes.ts, 30, 19))
 >_T : Symbol(_T, Decl(higherKindedTypes.ts, 30, 21))
+>F : Symbol(F, Decl(higherKindedTypes.ts, 30, 19))
 >A : Symbol(A, Decl(higherKindedTypes.ts, 30, 48))
 >B : Symbol(B, Decl(higherKindedTypes.ts, 30, 51))
 >fa : Symbol(fa, Decl(higherKindedTypes.ts, 30, 55))
@@ -154,13 +154,13 @@ function staticMap<F<_T> extends Functor<F, _T>, A, B>(fa: F<A>, f: (a: A) => B)
 >result : Symbol(result, Decl(higherKindedTypes.ts, 31, 9))
 }
 
-function staticMapBadImplementation<F<_T> extends Functor<F, _T>, A, B>(fa: F<A>, f: (a: A) => B): F<B> {
+function staticMapBadImplementation<F<_T> extends Functor<_T, F>, A, B>(fa: F<A>, f: (a: A) => B): F<B> {
 >staticMapBadImplementation : Symbol(staticMapBadImplementation, Decl(higherKindedTypes.ts, 33, 1))
 >F : Symbol(F, Decl(higherKindedTypes.ts, 35, 36))
 >_T : Symbol(_T, Decl(higherKindedTypes.ts, 35, 38))
 >Functor : Symbol(Functor, Decl(higherKindedTypes.ts, 0, 0))
->F : Symbol(F, Decl(higherKindedTypes.ts, 35, 36))
 >_T : Symbol(_T, Decl(higherKindedTypes.ts, 35, 38))
+>F : Symbol(F, Decl(higherKindedTypes.ts, 35, 36))
 >A : Symbol(A, Decl(higherKindedTypes.ts, 35, 65))
 >B : Symbol(B, Decl(higherKindedTypes.ts, 35, 68))
 >fa : Symbol(fa, Decl(higherKindedTypes.ts, 35, 72))

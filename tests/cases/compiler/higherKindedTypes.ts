@@ -2,16 +2,16 @@
 
 
 
-interface Functor<Container<_T>, A> {
+interface Functor<A, Container<_T>> {
     map<B>(f: (a: A) => B): Container<B>;
 }
 
-interface FunctorX<A> extends Functor<FunctorX, A> {
+interface FunctorX<A> extends Functor<A, FunctorX> {
     map<B>(f: (a: A) => B): FunctorX<B>;
     xVal: string;
 }
 
-interface FunctorY<A> extends Functor<FunctorY, A> {
+interface FunctorY<A> extends Functor<A, FunctorY> {
     map<B>(f: (a: A) => B): FunctorY<B>;
     yVal: A;
 }
@@ -32,12 +32,12 @@ const resultY2 = initialY.map(val => [val]);
 const expectY2: FunctorY<string[]> = resultY2;
     
 
-function staticMap<F<_T> extends Functor<F, _T>, A, B>(fa: F<A>, f: (a: A) => B): F<B> {
+function staticMap<F<_T> extends Functor<_T, F>, A, B>(fa: F<A>, f: (a: A) => B): F<B> {
     const result = fa.map(f);
     return result;
 }
 
-function staticMapBadImplementation<F<_T> extends Functor<F, _T>, A, B>(fa: F<A>, f: (a: A) => B): F<B> {
+function staticMapBadImplementation<F<_T> extends Functor<_T, F>, A, B>(fa: F<A>, f: (a: A) => B): F<B> {
     return fa;
 }
 
