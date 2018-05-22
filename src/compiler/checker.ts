@@ -5590,7 +5590,9 @@ namespace ts {
                 const typeParameters = getLocalTypeParametersOfClassOrInterfaceOrTypeAlias(symbol);
                 if (typeParameters) {
                     type.typeParameters = typeParameters;
-                    type.outerTypeParameters = getOuterTypeParameters(getDeclarationOfKind(symbol, SyntaxKind.TypeParameter));
+                    const declaration = <TypeParameterDeclaration>getDeclarationOfKind(symbol, SyntaxKind.TypeParameter);
+                    const outerTypeParameters = getOuterTypeParameters(declaration);
+                    type.outerTypeParameters = filter(outerTypeParameters, tp => isTypeParameterPossiblyReferenced(tp, declaration.constraint));
                 }
             }
             return <TypeParameter>links.declaredType;
@@ -12887,7 +12889,9 @@ namespace ts {
                 else {
                     inferredType = getTypeFromInference(inference);
                 }
-
+                if (inference.typeParameter.typeParameters) {
+                    inferredType = getTargetType(inferredType);
+                }
                 inference.inferredType = inferredType;
 
                 const constraint = getConstraintOfTypeParameter(inference.typeParameter);
