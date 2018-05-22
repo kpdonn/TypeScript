@@ -5590,6 +5590,7 @@ namespace ts {
                 const typeParameters = getLocalTypeParametersOfClassOrInterfaceOrTypeAlias(symbol);
                 if (typeParameters) {
                     type.typeParameters = typeParameters;
+                    type.outerTypeParameters = getOuterTypeParameters(getDeclarationOfKind(symbol, SyntaxKind.TypeParameter));
                 }
             }
             return <TypeParameter>links.declaredType;
@@ -7561,6 +7562,9 @@ namespace ts {
         }
 
         function getConstraintFromTypeParameter(typeParameter: TypeParameter): Type {
+            if (typeParameter.typeParameters) {
+                return getConstraintFromGenericTypeParameter(typeParameter);
+            }
             if (!typeParameter.constraint) {
                 if (typeParameter.target) {
                     const targetConstraint = getConstraintOfTypeParameter(typeParameter.target);
@@ -7568,18 +7572,47 @@ namespace ts {
                 }
                 else {
                     const constraintDeclaration = getConstraintDeclaration(typeParameter);
-                    let constraint = constraintDeclaration ? getTypeFromTypeNode(constraintDeclaration) :
+                    typeParameter.constraint = constraintDeclaration ? getTypeFromTypeNode(constraintDeclaration) :
                         getInferredTypeParameterConstraint(typeParameter) || noConstraintType;
-                    if (constraint !== noConstraintType && typeParameter.typeParameters) {
-                        const parameterMapper = createTypeMapper(typeParameter.typeParameters, typeParameter.typeArguments ? typeParameter.typeArguments :
-                            map(typeParameter.typeParameters, t => getConstraintOfTypeParameter(t) || emptyObjectType));
-                        const eraser = createTypeEraser(typeParameter.typeParameters);
-                        constraint = instantiateType(constraint, combineTypeMappers(parameterMapper, eraser));
-                    }
-                    typeParameter.constraint = constraint;
                 }
             }
             return typeParameter.constraint === noConstraintType ? undefined : typeParameter.constraint;
+        }
+
+        function getConstraintFromGenericTypeParameter(typeParameter: TypeParameter): Type {
+            if (!typeParameter.constraint) {
+                const apparentType = getApparentTypeFromGenericTypeParameter(typeParameter);
+                if (apparentType === noConstraintType) {
+                    typeParameter.constraint = noConstraintType;
+                    return undefined;
+                }
+                const parameterMapper = createTypeMapper(typeParameter.typeParameters, typeParameter.typeArguments ? typeParameter.typeArguments :
+                    map(typeParameter.typeParameters, t => getConstraintOfTypeParameter(t) || emptyObjectType));
+                const eraser = createTypeEraser(typeParameter.typeParameters);
+                typeParameter.constraint = instantiateType(apparentType, combineTypeMappers(parameterMapper, eraser));
+            }
+            return typeParameter.constraint === noConstraintType ? undefined : typeParameter.constraint;
+        }
+
+        function getApparentTypeFromGenericTypeParameter(typeParameter: TypeParameter): Type {
+            if (!typeParameter.resolvedApparentType) {
+                if (typeParameter.target) {
+                    const targetConstraint = getApparentTypeFromGenericTypeParameter(typeParameter.target);
+                    typeParameter.resolvedApparentType = targetConstraint ? instantiateType(targetConstraint, typeParameter.mapper) : noConstraintType;
+                }
+                else {
+                    const constraintDeclaration = getConstraintDeclaration(typeParameter);
+                    const constraint = constraintDeclaration ? getTypeFromTypeNode(constraintDeclaration) :
+                        getInferredTypeParameterConstraint(typeParameter) || noConstraintType;
+                    if (constraint !== noConstraintType && constraint.flags & (TypeFlags.Object | TypeFlags.Intersection)) {
+                        typeParameter.resolvedApparentType = createApparentGenericTypeParameter(typeParameter, <BaseType>constraint);
+                    }
+                    else {
+                        typeParameter.resolvedApparentType = noConstraintType;
+                    }
+                }
+            }
+            return typeParameter.resolvedApparentType;
         }
 
         function getParentSymbolOfTypeParameter(typeParameter: TypeParameter): Symbol {
@@ -8166,6 +8199,26 @@ namespace ts {
 
         function createArrayType(elementType: Type): ObjectType {
             return createTypeFromGenericGlobalType(globalArrayType, [elementType]);
+        }
+
+        function createApparentGenericTypeParameter(tp: TypeParameter, constraint: BaseType): GenericType {
+            const type = <GenericType & InterfaceTypeWithDeclaredMembers>createObjectType(ObjectFlags.GenericTypeParameter | ObjectFlags.Reference);
+            type.outerTypeParameters = tp.outerTypeParameters;
+            type.localTypeParameters = tp.typeParameters;
+            type.typeParameters = concatenate(tp.outerTypeParameters, tp.typeParameters);
+            type.instantiations = createMap<TypeReference>();
+            type.instantiations.set(getTypeListId(type.typeParameters), <GenericType>type);
+            type.target = <GenericType>type;
+            type.typeArguments = type.typeParameters;
+            type.thisType = <TypeParameter>createType(TypeFlags.TypeParameter);
+            type.thisType.isThisType = true;
+            type.thisType.constraint = type;
+            type.resolvedBaseTypes = [<BaseType>instantiateType(constraint, makeUnaryTypeMapper(tp, type))];
+            type.symbol = tp.symbol;
+            type.declaredProperties = emptyArray;
+            type.declaredCallSignatures = emptyArray;
+            type.declaredConstructSignatures = emptyArray;
+            return type;
         }
 
         function getTypeFromArrayTypeNode(node: ArrayTypeNode): Type {
@@ -9740,7 +9793,7 @@ namespace ts {
 
         function instantiateGenericTypeParameter(type: TypeParameter, mapper: TypeMapper): Type {
             if (type.genericTarget) {
-                const newType = getTargetType(mapper(type.genericTarget));
+                const newType = mapper(type.genericTarget);
                 if (isUninstantiatedGenericType(newType)) {
                     Debug.assert(length(type.typeArguments) >= length(newType.typeParameters));
                     const newTypeArguments = instantiateTypes(type.typeArguments.slice(0, length(newType.typeParameters)), mapper);
@@ -9927,6 +9980,7 @@ namespace ts {
         // T occurs directly or indirectly in an 'extends' clause of S.
         // Note that this check ignores type parameters and only considers the
         // inheritance hierarchy.
+        // TODO (kpdonn): determine what changes if any needed for generic type parameters
         function isTypeDerivedFrom(source: Type, target: Type): boolean {
             return source.flags & TypeFlags.Union ? every((<UnionType>source).types, t => isTypeDerivedFrom(t, target)) :
                 target.flags & TypeFlags.Union ? some((<UnionType>target).types, t => isTypeDerivedFrom(source, t)) :
@@ -12833,9 +12887,7 @@ namespace ts {
                 else {
                     inferredType = getTypeFromInference(inference);
                 }
-                if (inference.typeParameter.typeParameters) {
-                    inferredType = getTargetType(inferredType);
-                }
+
                 inference.inferredType = inferredType;
 
                 const constraint = getConstraintOfTypeParameter(inference.typeParameter);

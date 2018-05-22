@@ -3782,6 +3782,8 @@ namespace ts {
         ReverseMapped    = 1 << 11, // Object contains a property from a reverse-mapped type
         JsxAttributes    = 1 << 12, // Jsx attributes type
         MarkerType       = 1 << 13, // Marker type used for variance probing
+        GenericTypeParameter = 1 << 14, // Apparent type of generic type parameter
+
         ClassOrInterface = Class | Interface
     }
 
@@ -3969,6 +3971,10 @@ namespace ts {
         genericTarget?: TypeParameter; // This is the original generic type parameter a type parameter reference points to
         /* @internal */
         references?: Map<TypeParameter>;  // Generic instantiation cache for generic type parameters
+        /* @internal */
+        outerTypeParameters?: TypeParameter[]; // only set for generic type parameters
+        /* @internal */
+        resolvedApparentType?: Type;
     }
 
     // Indexed access types (TypeFlags.IndexedAccess)

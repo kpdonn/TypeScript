@@ -1,13 +1,77 @@
 === tests/cases/compiler/higherKindedTypesLift.ts ===
-interface FMap<FA, FB> {
->FMap : FMap<FA, FB>
->FA : FA
->FB : FB
+export interface Functor<A, Container<_T>> {
+>Functor : Functor<A, Container<_T>>
+>A : A
+>Container : Container<_T>
+>_T : _T
 
-    (fmapfa: FA): FB
->fmapfa : FA
->FA : FA
->FB : FB
+    map<B>(f: (a: A) => B): Container<B>;
+>map : <B>(f: (a: A) => B) => Container<B>
+>B : B
+>f : (a: A) => B
+>a : A
+>A : A
+>B : B
+>Container : Container<_T>
+>B : B
+}
+
+class FunctorX<A> implements Functor<A, FunctorX> {
+>FunctorX : FunctorX<A>
+>A : A
+>Functor : Functor<A, Container<_T>>
+>A : A
+>FunctorX : FunctorX<A>
+
+    constructor(private elements: A[]) {}
+>elements : A[]
+>A : A
+
+    map<B>(f: (a: A) => B): FunctorX<B> {
+>map : <B>(f: (a: A) => B) => FunctorX<B>
+>B : B
+>f : (a: A) => B
+>a : A
+>A : A
+>B : B
+>FunctorX : FunctorX<A>
+>B : B
+
+        const mappedElements = this.elements.map(f);
+>mappedElements : B[]
+>this.elements.map(f) : B[]
+>this.elements.map : <U>(callbackfn: (value: A, index: number, array: A[]) => U, thisArg?: any) => U[]
+>this.elements : A[]
+>this : this
+>elements : A[]
+>map : <U>(callbackfn: (value: A, index: number, array: A[]) => U, thisArg?: any) => U[]
+>f : (a: A) => B
+
+        return new FunctorX(mappedElements);
+>new FunctorX(mappedElements) : FunctorX<B>
+>FunctorX : typeof FunctorX
+>mappedElements : B[]
+    }
+
+    firstVal(): A | undefined {
+>firstVal : () => A | undefined
+>A : A
+
+        return this.elements.length ? this.elements[0] : undefined;
+>this.elements.length ? this.elements[0] : undefined : A | undefined
+>this.elements.length : number
+>this.elements : A[]
+>this : this
+>elements : A[]
+>length : number
+>this.elements[0] : A
+>this.elements : A[]
+>this : this
+>elements : A[]
+>0 : 0
+>undefined : undefined
+
+    };
 }
 
 
@@ -16,14 +80,14 @@ interface StaticFunctor<CS<_TS>> {
 >CS : CS<_TS>
 >_TS : _TS
 
-    <AS, BS>(csas: CS<AS>, fmapstatic: FMap<AS, BS>): CS<BS>;
+    <AS, BS>(csas: CS<AS>, fmapstatic: (as: AS) => BS): CS<BS>;
 >AS : AS
 >BS : BS
 >csas : CS<AS>
 >CS : CS<_TS>
 >AS : AS
->fmapstatic : FMap<AS, BS>
->FMap : FMap<FA, FB>
+>fmapstatic : (as: AS) => BS
+>as : AS
 >AS : AS
 >BS : BS
 >CS : CS<_TS>
@@ -31,76 +95,116 @@ interface StaticFunctor<CS<_TS>> {
 }
 
 
-interface LiftedResult<LC<_LT>> {
->LiftedResult : LiftedResult<LC<_LT>>
->LC : LC<_LT>
+interface LiftedResult<LRC<_LT>> {
+>LiftedResult : LiftedResult<LRC<_LT>>
+>LRC : LRC<_LT>
 >_LT : _LT
 
-    <LA, LB>(lmap: FMap<LA,LB>): FMap<LC<LA>,LC<LB>>
->LA : LA
->LB : LB
->lmap : FMap<LA, LB>
->FMap : FMap<FA, FB>
->LA : LA
->LB : LB
->FMap : FMap<FA, FB>
->LC : LC<_LT>
->LA : LA
->LC : LC<_LT>
->LB : LB
+    <LRA, LRB>(lrmap: (lra: LRA) => LRB): (lrclra: LRC<LRA>) => LC<LRB>
+>LRA : LRA
+>LRB : LRB
+>lrmap : (lra: LRA) => LRB
+>lra : LRA
+>LRA : LRA
+>LRB : LRB
+>lrclra : LRC<LRA>
+>LRC : LRC<_LT>
+>LRA : LRA
+>LC : No type information available!
+>LRB : LRB
 }
 
-declare function lift<C<_T>>(fToLift: StaticFunctor<C>): LiftedResult<C>
+function lift<C<_T>>(fToLift: StaticFunctor<C>): LiftedResult<C> {
 >lift : <C>(fToLift: StaticFunctor<C<_T>>) => LiftedResult<C<_T>>
 >C : C<_T>
 >_T : _T
 >fToLift : StaticFunctor<C<_T>>
 >StaticFunctor : StaticFunctor<CS<_TS>>
 >C : C<_T>
->LiftedResult : LiftedResult<LC<_LT>>
+>LiftedResult : LiftedResult<LRC<_LT>>
 >C : C<_T>
 
+    return lmap => lca => fToLift(lca, lmap);
+>lmap => lca => fToLift(lca, lmap) : <LRA, LRB>(lmap: (lra: LRA) => LRB) => (lca: C<LRA>) => C<LRB>
+>lmap : (lra: LRA) => LRB
+>lca => fToLift(lca, lmap) : (lca: C<LRA>) => C<LRB>
+>lca : C<LRA>
+>fToLift(lca, lmap) : C<LRB>
+>fToLift : StaticFunctor<C<_T>>
+>lca : C<LRA>
+>lmap : (lra: LRA) => LRB
+}
 
-declare const myArrayFunctor: StaticFunctor<Array>
->myArrayFunctor : StaticFunctor<T[]>
->StaticFunctor : StaticFunctor<CS<_TS>>
->Array : T[]
+function staticMap<C1<_T1> extends Functor<_T1, C1>, A1, B1>(fa1: C1<A1>, fmap1: (a1: A1) => B1): C1<B1> {
+>staticMap : <C1 extends C1<{}>, A1, B1>(fa1: C1<A1>, fmap1: (a1: A1) => B1) => C1<B1>
+>C1 : C1<_T1>
+>_T1 : _T1
+>Functor : Functor<A, Container<_T>>
+>_T1 : _T1
+>C1 : C1<_T1>
+>A1 : A1
+>B1 : B1
+>fa1 : C1<A1>
+>C1 : C1<_T1>
+>A1 : A1
+>fmap1 : (a1: A1) => B1
+>a1 : A1
+>A1 : A1
+>B1 : B1
+>C1 : C1<_T1>
+>B1 : B1
 
-const liftedArray = lift(myArrayFunctor);
->liftedArray : LiftedResult<T[]>
->lift(myArrayFunctor) : LiftedResult<T[]>
+    return fa1.map(fmap1);
+>fa1.map(fmap1) : C1<B1>
+>fa1.map : <B>(f: (a: A1) => B) => C1<B>
+>fa1 : C1<A1>
+>map : <B>(f: (a: A1) => B) => C1<B>
+>fmap1 : (a1: A1) => B1
+}
+
+const liftedFunctor = lift(staticMap);
+>liftedFunctor : LiftedResult<staticMap<any, any, any>.C1<{}>>
+>lift(staticMap) : LiftedResult<staticMap<any, any, any>.C1<{}>>
 >lift : <C>(fToLift: StaticFunctor<C<_T>>) => LiftedResult<C<_T>>
->myArrayFunctor : StaticFunctor<T[]>
+>staticMap : <C1 extends C1<{}>, A1, B1>(fa1: C1<A1>, fmap1: (a1: A1) => B1) => C1<B1>
 
-declare function stringLength(strarg: string): number
+function stringLength(strarg: string): number {
 >stringLength : (strarg: string) => number
 >strarg : string
 
-const liftedStringLength = liftedArray(stringLength);
->liftedStringLength : FMap<string[], number[]>
->liftedArray(stringLength) : FMap<string[], number[]>
->liftedArray : LiftedResult<T[]>
+    return strarg.length;
+>strarg.length : number
+>strarg : string
+>length : number
+}
+
+const liftedStringLength = liftedFunctor(stringLength);
+>liftedStringLength : (lrclra: staticMap<any, any, any>.C1<{}>) => any
+>liftedFunctor(stringLength) : (lrclra: staticMap<any, any, any>.C1<{}>) => any
+>liftedFunctor : LiftedResult<staticMap<any, any, any>.C1<{}>>
 >stringLength : (strarg: string) => number
 
-declare const arrayOfStrings: Array<string>;
->arrayOfStrings : string[]
->Array : T[]
+const functorXString = new FunctorX("myFunctorX");
+>functorXString : any
+>new FunctorX("myFunctorX") : any
+>FunctorX : typeof FunctorX
+>"myFunctorX" : "myFunctorX"
 
-const result = liftedStringLength(arrayOfStrings);
->result : number[]
->liftedStringLength(arrayOfStrings) : number[]
->liftedStringLength : FMap<string[], number[]>
->arrayOfStrings : string[]
+const result = liftedStringLength(functorXString);
+>result : any
+>liftedStringLength(functorXString) : any
+>liftedStringLength : (lrclra: staticMap<any, any, any>.C1<{}>) => any
+>functorXString : any
 
-const expectedType: Array<number> = result;
->expectedType : number[]
->Array : T[]
->result : number[]
+const expectedType: FunctorX<number> = result;
+>expectedType : FunctorX<number>
+>FunctorX : FunctorX<A>
+>result : any
 
 const expectError = liftedStringLength(result)
->expectError : number[]
->liftedStringLength(result) : number[]
->liftedStringLength : FMap<string[], number[]>
->result : number[]
+>expectError : any
+>liftedStringLength(result) : any
+>liftedStringLength : (lrclra: staticMap<any, any, any>.C1<{}>) => any
+>result : any
 
 

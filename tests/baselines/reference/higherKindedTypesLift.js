@@ -1,33 +1,50 @@
 //// [higherKindedTypesLift.ts]
-interface FMap<FA, FB> {
-    (fmapfa: FA): FB
+export interface Functor<A, Container<_T>> {
+    map<B>(f: (a: A) => B): Container<B>;
+}
+
+class FunctorX<A> implements Functor<A, FunctorX> {
+    constructor(private elements: A[]) {}
+    map<B>(f: (a: A) => B): FunctorX<B> {
+        const mappedElements = this.elements.map(f);
+        return new FunctorX(mappedElements);
+    }
+
+    firstVal(): A | undefined {
+        return this.elements.length ? this.elements[0] : undefined;
+    };
 }
 
 
 interface StaticFunctor<CS<_TS>> {
-    <AS, BS>(csas: CS<AS>, fmapstatic: FMap<AS, BS>): CS<BS>;
+    <AS, BS>(csas: CS<AS>, fmapstatic: (as: AS) => BS): CS<BS>;
 }
 
 
-interface LiftedResult<LC<_LT>> {
-    <LA, LB>(lmap: FMap<LA,LB>): FMap<LC<LA>,LC<LB>>
+interface LiftedResult<LRC<_LT>> {
+    <LRA, LRB>(lrmap: (lra: LRA) => LRB): (lrclra: LRC<LRA>) => LC<LRB>
 }
 
-declare function lift<C<_T>>(fToLift: StaticFunctor<C>): LiftedResult<C>
+function lift<C<_T>>(fToLift: StaticFunctor<C>): LiftedResult<C> {
+    return lmap => lca => fToLift(lca, lmap);
+}
 
+function staticMap<C1<_T1> extends Functor<_T1, C1>, A1, B1>(fa1: C1<A1>, fmap1: (a1: A1) => B1): C1<B1> {
+    return fa1.map(fmap1);
+}
 
-declare const myArrayFunctor: StaticFunctor<Array>
+const liftedFunctor = lift(staticMap);
 
-const liftedArray = lift(myArrayFunctor);
+function stringLength(strarg: string): number {
+    return strarg.length;
+}
 
-declare function stringLength(strarg: string): number
+const liftedStringLength = liftedFunctor(stringLength);
 
-const liftedStringLength = liftedArray(stringLength);
+const functorXString = new FunctorX("myFunctorX");
 
-declare const arrayOfStrings: Array<string>;
-
-const result = liftedStringLength(arrayOfStrings);
-const expectedType: Array<number> = result;
+const result = liftedStringLength(functorXString);
+const expectedType: FunctorX<number> = result;
 
 const expectError = liftedStringLength(result)
 
@@ -35,8 +52,33 @@ const expectError = liftedStringLength(result)
 
 //// [higherKindedTypesLift.js]
 "use strict";
-var liftedArray = lift(myArrayFunctor);
-var liftedStringLength = liftedArray(stringLength);
-var result = liftedStringLength(arrayOfStrings);
+exports.__esModule = true;
+var FunctorX = /** @class */ (function () {
+    function FunctorX(elements) {
+        this.elements = elements;
+    }
+    FunctorX.prototype.map = function (f) {
+        var mappedElements = this.elements.map(f);
+        return new FunctorX(mappedElements);
+    };
+    FunctorX.prototype.firstVal = function () {
+        return this.elements.length ? this.elements[0] : undefined;
+    };
+    ;
+    return FunctorX;
+}());
+function lift(fToLift) {
+    return function (lmap) { return function (lca) { return fToLift(lca, lmap); }; };
+}
+function staticMap(fa1, fmap1) {
+    return fa1.map(fmap1);
+}
+var liftedFunctor = lift(staticMap);
+function stringLength(strarg) {
+    return strarg.length;
+}
+var liftedStringLength = liftedFunctor(stringLength);
+var functorXString = new FunctorX("myFunctorX");
+var result = liftedStringLength(functorXString);
 var expectedType = result;
 var expectError = liftedStringLength(result);

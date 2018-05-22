@@ -1,8 +1,16 @@
 tests/cases/compiler/higherKindedTypes.ts(37,5): error TS2322: Type 'F<A>' is not assignable to type 'F<B>'.
-  Type 'Functor<A, F<_T>>' is not assignable to type 'F<B>'.
+  Type 'F<A>' is not assignable to type 'F<B>'.
+tests/cases/compiler/higherKindedTypes.ts(41,7): error TS2322: Type 'FunctorX<string>' is not assignable to type 'FunctorX<number>'.
+  Type 'string' is not assignable to type 'number'.
+tests/cases/compiler/higherKindedTypes.ts(44,7): error TS2322: Type 'FunctorY<string>' is not assignable to type 'FunctorY<number>'.
+  Type 'string' is not assignable to type 'number'.
+tests/cases/compiler/higherKindedTypes.ts(47,7): error TS2322: Type 'FunctorX<string>' is not assignable to type 'FunctorX<string[]>'.
+  Type 'string' is not assignable to type 'string[]'.
+tests/cases/compiler/higherKindedTypes.ts(50,7): error TS2322: Type 'FunctorY<string>' is not assignable to type 'FunctorY<string[]>'.
+  Type 'string' is not assignable to type 'string[]'.
 
 
-==== tests/cases/compiler/higherKindedTypes.ts (1 errors) ====
+==== tests/cases/compiler/higherKindedTypes.ts (5 errors) ====
     interface Functor<A, Container<_T>> {
         map<B>(f: (a: A) => B): Container<B>;
     }
@@ -42,18 +50,30 @@ tests/cases/compiler/higherKindedTypes.ts(37,5): error TS2322: Type 'F<A>' is no
         return fa;
         ~~~~~~~~~~
 !!! error TS2322: Type 'F<A>' is not assignable to type 'F<B>'.
-!!! error TS2322:   Type 'Functor<A, F<_T>>' is not assignable to type 'F<B>'.
+!!! error TS2322:   Type 'F<A>' is not assignable to type 'F<B>'.
     }
     
     const resultX3 = staticMap(initialX, val => val.length);
     const expectX3: FunctorX<number> = resultX3;
+          ~~~~~~~~
+!!! error TS2322: Type 'FunctorX<string>' is not assignable to type 'FunctorX<number>'.
+!!! error TS2322:   Type 'string' is not assignable to type 'number'.
     
     const resultY3 = staticMap(initialY, val => val.length);
     const expectY3: FunctorY<number> = resultY3;
+          ~~~~~~~~
+!!! error TS2322: Type 'FunctorY<string>' is not assignable to type 'FunctorY<number>'.
+!!! error TS2322:   Type 'string' is not assignable to type 'number'.
     
     const resultX4 = staticMap(initialX, val => [val]);
     const expectX4: FunctorX<string[]> = resultX4;
+          ~~~~~~~~
+!!! error TS2322: Type 'FunctorX<string>' is not assignable to type 'FunctorX<string[]>'.
+!!! error TS2322:   Type 'string' is not assignable to type 'string[]'.
     
     const resultY4 = staticMap(initialY, val => [val]);
     const expectY4: FunctorY<string[]> = resultY4;
+          ~~~~~~~~
+!!! error TS2322: Type 'FunctorY<string>' is not assignable to type 'FunctorY<string[]>'.
+!!! error TS2322:   Type 'string' is not assignable to type 'string[]'.
     
