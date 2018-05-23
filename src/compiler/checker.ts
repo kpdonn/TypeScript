@@ -3098,7 +3098,7 @@ namespace ts {
                 if (type.flags & TypeFlags.NonPrimitive) {
                     return createKeywordTypeNode(SyntaxKind.ObjectKeyword);
                 }
-                if (type.flags & TypeFlags.TypeParameter && (type as PlainTypeParameter).isThisType) {
+                if (type.flags & TypeFlags.TypeParameter && (type as TypeParameter).isThisType) {
                     if (context.flags & NodeBuilderFlags.InObjectTypeLiteral) {
                         if (!context.encounteredError && !(context.flags & NodeBuilderFlags.AllowThisInObjectLiteral)) {
                             context.encounteredError = true;
@@ -5445,7 +5445,7 @@ namespace ts {
                     (<GenericType>type).instantiations.set(getTypeListId(type.typeParameters), <GenericType>type);
                     (<GenericType>type).target = <GenericType>type;
                     (<GenericType>type).typeArguments = type.typeParameters;
-                    type.thisType = <PlainTypeParameter>createType(TypeFlags.TypeParameter);
+                    type.thisType = <TypeParameter>createType(TypeFlags.TypeParameter);
                     type.thisType.isThisType = true;
                     type.thisType.symbol = symbol;
                     type.thisType.constraint = type;
@@ -5605,7 +5605,7 @@ namespace ts {
                     type.instantiations.set(getTypeListId(type.typeParameters), type);
                     type.target = type;
                     type.typeArguments = type.typeParameters;
-                    type.thisType = <PlainTypeParameter>createType(TypeFlags.TypeParameter);
+                    type.thisType = <TypeParameter>createType(TypeFlags.TypeParameter);
                     type.thisType.isThisType = true;
                     type.thisType.constraint = type;
                     type.declaredProperties = emptyArray;
@@ -6498,14 +6498,14 @@ namespace ts {
         }
 
         function isTypeParameter(type: Type): type is TypeParameter {
-            return !!(type.flags & TypeFlags.TypeParameter || getObjectFlags(type) & ObjectFlags.GenericTypeParameter);
+            return isNonGenericTypeParameter(type) || isGenericTypeParameter(type);
         }
 
         function isGenericTypeParameter(type: Type): type is GenericTypeParameter {
             return !!(getObjectFlags(type) & ObjectFlags.GenericTypeParameter);
         }
 
-        function isPlainTypeParameter(type: Type): type is PlainTypeParameter {
+        function isNonGenericTypeParameter(type: Type): type is TypeParameter {
             return !!(type.flags & TypeFlags.TypeParameter);
         }
 
@@ -6769,7 +6769,7 @@ namespace ts {
             function computeBaseConstraint(t: Type): Type {
                 if (isTypeParameter(t)) {
                     const constraint = getConstraintFromTypeParameter(t);
-                    return (t as PlainTypeParameter).isThisType || !constraint ?
+                    return t.isThisType || !constraint ?
                         constraint :
                         getBaseConstraint(constraint);
                 }
@@ -8244,7 +8244,7 @@ namespace ts {
             type.instantiations.set(getTypeListId(type.typeParameters), <GenericType>type);
             type.target = <GenericType>type;
             type.typeArguments = type.typeParameters;
-            type.thisType = <PlainTypeParameter>createType(TypeFlags.TypeParameter);
+            type.thisType = <TypeParameter>createType(TypeFlags.TypeParameter);
             type.thisType.isThisType = true;
             type.thisType.constraint = type;
             type.declaredProperties = properties;
@@ -9542,14 +9542,7 @@ namespace ts {
         }
 
         function cloneTypeParameter(original: TypeParameter): TypeParameter {
-            if (isPlainTypeParameter(original)) {
-                const clone = <TypeParameter>createType(TypeFlags.TypeParameter);
-                clone.symbol = original.symbol;
-                clone.original = original;
-                return clone;
-            }
-            else {
-                Debug.assert(isGenericTypeParameter(original));
+            if (isGenericTypeParameter(original)) {
                 const clone = <GenericTypeParameter>createObjectType(ObjectFlags.GenericTypeParameter | ObjectFlags.Reference);
                 clone.symbol = original.symbol;
 
@@ -9561,13 +9554,19 @@ namespace ts {
                 clone.instantiations.set(getTypeListId(clone.typeParameters), clone);
                 clone.target = clone;
                 clone.typeArguments = clone.typeParameters;
-                clone.thisType = <PlainTypeParameter>createType(TypeFlags.TypeParameter);
+                clone.thisType = <TypeParameter>createType(TypeFlags.TypeParameter);
                 clone.thisType.isThisType = true;
                 clone.thisType.constraint = clone;
                 clone.declaredProperties = emptyArray;
                 clone.declaredCallSignatures = emptyArray;
                 clone.declaredConstructSignatures = emptyArray;
 
+                clone.original = original;
+                return clone;
+            }
+            else {
+                const clone = <TypeParameter>createType(TypeFlags.TypeParameter);
+                clone.symbol = original.symbol;
                 clone.original = original;
                 return clone;
             }
@@ -9716,9 +9715,9 @@ namespace ts {
             function containsReference(node: Node): boolean {
                 switch (node.kind) {
                     case SyntaxKind.ThisType:
-                        return (<PlainTypeParameter>tp).isThisType;
+                        return tp.isThisType;
                     case SyntaxKind.Identifier:
-                        return !(<PlainTypeParameter>tp).isThisType && isPartOfTypeNode(node) && maybeTypeParameterReference(node, isGenericTypeParameter(tp)) &&
+                        return !tp.isThisType && isPartOfTypeNode(node) && maybeTypeParameterReference(node, isGenericTypeParameter(tp)) &&
                             getTypeFromTypeNode(<TypeNode>node) === tp;
                     case SyntaxKind.TypeQuery:
                         return true;
@@ -13957,7 +13956,7 @@ namespace ts {
             }
 
             function narrowByInKeyword(type: Type, literal: LiteralExpression, assumeTrue: boolean) {
-                if ((type.flags & (TypeFlags.Union | TypeFlags.Object)) || (type.flags & TypeFlags.TypeParameter && (type as PlainTypeParameter).isThisType)) {
+                if ((type.flags & (TypeFlags.Union | TypeFlags.Object)) || (type.flags & TypeFlags.TypeParameter && (type as TypeParameter).isThisType)) {
                     const propName = escapeLeadingUnderscores(literal.text);
                     return filterType(type, t => isTypePresencePossible(t, propName, assumeTrue));
                 }
@@ -16999,7 +16998,7 @@ namespace ts {
             }
              if (type.flags & TypeFlags.TypeParameter) {
                 // get the original type -- represented as the type constraint of the 'this' type
-                type = (type as PlainTypeParameter).isThisType ? getConstraintOfTypeParameter(<TypeParameter>type) : getBaseConstraintOfType(<TypeParameter>type);
+                type = (type as TypeParameter).isThisType ? getConstraintOfTypeParameter(<TypeParameter>type) : getBaseConstraintOfType(<TypeParameter>type);
             }
             if (!type || !hasBaseType(type, enclosingClass)) {
                 error(errorNode, Diagnostics.Property_0_is_protected_and_only_accessible_through_an_instance_of_class_1, symbolToString(prop), typeToString(enclosingClass));
@@ -17078,7 +17077,7 @@ namespace ts {
                 const indexInfo = getIndexInfoOfType(apparentType, IndexKind.String);
                 if (!(indexInfo && indexInfo.type)) {
                     if (right.escapedText && !checkAndReportErrorForExtendingInterface(node)) {
-                        reportNonexistentProperty(right, leftType.flags & TypeFlags.TypeParameter && (leftType as PlainTypeParameter).isThisType ? apparentType : leftType);
+                        reportNonexistentProperty(right, leftType.flags & TypeFlags.TypeParameter && (leftType as TypeParameter).isThisType ? apparentType : leftType);
                     }
                     return unknownType;
                 }

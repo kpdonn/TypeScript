@@ -3949,15 +3949,15 @@ namespace ts {
         resolvedStringIndexType?: IndexType;
     }
 
-    // non-generic type parameters (TypeFlags.TypeParameter)
-    export interface PlainTypeParameter extends InstantiableType {
+    // type parameters (TypeFlags.TypeParameter, except for GenericTypeParameters (see below))
+    export interface TypeParameter extends InstantiableType {
         /** Retrieve using getConstraintFromTypeParameter */
         /* @internal */
         constraint?: Type;        // Constraint
         /* @internal */
         default?: Type;
         /* @internal */
-        original?: PlainTypeParameter; // The type parameter this type parameter was cloned from
+        original?: TypeParameter; // The type parameter this type parameter was cloned from
         /* @internal */
         mapper?: TypeMapper; // mapper for cloned type parameters
         /* @internal */
@@ -3965,18 +3965,10 @@ namespace ts {
     }
 
     // Generic type parameters (TypeFlags.Object, ObjectFlags.GenericTypeParameter)
-    export interface GenericTypeParameter extends GenericType, InstantiableType, InterfaceTypeWithDeclaredMembers {
-        /* @internal */
-        constraint?: Type;
-        /* @internal */
-        default?: Type;
+    export interface GenericTypeParameter extends GenericType, TypeParameter, InterfaceTypeWithDeclaredMembers {
         /* @internal */
         original?: GenericTypeParameter; // The type parameter this type parameter was cloned from
-        /* @internal */
-        mapper?: TypeMapper; // mapper for cloned type parameters
     }
-
-    export type TypeParameter = PlainTypeParameter | GenericTypeParameter;
 
     // Indexed access types (TypeFlags.IndexedAccess)
     // Possible forms are T[xxx], xxx[T], or xxx[keyof T], where T is a type variable
