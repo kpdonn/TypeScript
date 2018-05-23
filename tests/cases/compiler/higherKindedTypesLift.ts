@@ -1,17 +1,17 @@
 // @strict: true
 
-export interface Functor<A, Container<_T>> {
-    map<B>(f: (a: A) => B): Container<B>;
+export interface Functor<AF, Container<_TF>> {
+    map<BF>(f: (a: AF) => BF): Container<BF>;
 }
 
-class FunctorX<A> implements Functor<A, FunctorX> {
-    constructor(private elements: A[]) {}
-    map<B>(f: (a: A) => B): FunctorX<B> {
+class FunctorX<AX> implements Functor<AX, FunctorX> {
+    constructor(private elements: AX[]) {}
+    map<BX>(f: (a: AX) => BX): FunctorX<BX> {
         const mappedElements = this.elements.map(f);
         return new FunctorX(mappedElements);
     }
 
-    firstVal(): A | undefined {
+    firstVal(): AX | undefined {
         return this.elements.length ? this.elements[0] : undefined;
     };
 }
@@ -26,7 +26,7 @@ interface LiftedResult<LRC<_LT>> {
     <LRA, LRB>(lrmap: (lra: LRA) => LRB): <NC<_NT> extends LRC<_NT>>(lrclra: NC<LRA>) => NC<LRB>
 }
 
-function lift<C<_T>>(fToLift: StaticFunctor<C>): LiftedResult<C> {
+function lift<C<_TL>>(fToLift: StaticFunctor<C>): LiftedResult<C> {
     return lmap => lca => fToLift(lca, lmap);
 }
 
@@ -51,15 +51,15 @@ const expectError = liftedStringLength(result);
 
 
 
-export interface DiffFunctor<DA, DContainer<_T>> {
+export interface DiffFunctor<DA, DContainer<_TD>> {
     diffMap<DB>(df: (da: DA) => DB): DContainer<DB>;
 }
 
-declare class DiffFunctorY<A> implements DiffFunctor<A, DiffFunctorY> {
+declare class DiffFunctorY<AY> implements DiffFunctor<AY, DiffFunctorY> {
 
-    diffMap<B>(f: (a: A) => B): DiffFunctorY<B>
+    diffMap<BY>(f: (a: AY) => BY): DiffFunctorY<BY>
 
-    firstValY(): A | undefined
+    firstValY(): AY | undefined
 }
 
 declare const diffFunctorYString: DiffFunctorY<string>;

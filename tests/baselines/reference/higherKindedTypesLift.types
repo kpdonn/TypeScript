@@ -1,73 +1,73 @@
 === tests/cases/compiler/higherKindedTypesLift.ts ===
-export interface Functor<A, Container<_T>> {
->Functor : Functor<A, Container<_T>>
->A : A
->Container : Container<_T>
->_T : _T
+export interface Functor<AF, Container<_TF>> {
+>Functor : Functor<AF, Container<_TF>>
+>AF : AF
+>Container : Container<_TF>
+>_TF : _TF
 
-    map<B>(f: (a: A) => B): Container<B>;
->map : <B>(f: (a: A) => B) => Container<B>
->B : B
->f : (a: A) => B
->a : A
->A : A
->B : B
->Container : Container<_T>
->B : B
+    map<BF>(f: (a: AF) => BF): Container<BF>;
+>map : <BF>(f: (a: AF) => BF) => Container<BF>
+>BF : BF
+>f : (a: AF) => BF
+>a : AF
+>AF : AF
+>BF : BF
+>Container : Container<_TF>
+>BF : BF
 }
 
-class FunctorX<A> implements Functor<A, FunctorX> {
->FunctorX : FunctorX<A>
->A : A
->Functor : Functor<A, Container<_T>>
->A : A
->FunctorX : FunctorX<A>
+class FunctorX<AX> implements Functor<AX, FunctorX> {
+>FunctorX : FunctorX<AX>
+>AX : AX
+>Functor : Functor<AF, Container<_TF>>
+>AX : AX
+>FunctorX : FunctorX<AX>
 
-    constructor(private elements: A[]) {}
->elements : A[]
->A : A
+    constructor(private elements: AX[]) {}
+>elements : AX[]
+>AX : AX
 
-    map<B>(f: (a: A) => B): FunctorX<B> {
->map : <B>(f: (a: A) => B) => FunctorX<B>
->B : B
->f : (a: A) => B
->a : A
->A : A
->B : B
->FunctorX : FunctorX<A>
->B : B
+    map<BX>(f: (a: AX) => BX): FunctorX<BX> {
+>map : <BX>(f: (a: AX) => BX) => FunctorX<BX>
+>BX : BX
+>f : (a: AX) => BX
+>a : AX
+>AX : AX
+>BX : BX
+>FunctorX : FunctorX<AX>
+>BX : BX
 
         const mappedElements = this.elements.map(f);
->mappedElements : B[]
->this.elements.map(f) : B[]
->this.elements.map : <U>(callbackfn: (value: A, index: number, array: A[]) => U, thisArg?: any) => U[]
->this.elements : A[]
+>mappedElements : BX[]
+>this.elements.map(f) : BX[]
+>this.elements.map : <U>(callbackfn: (value: AX, index: number, array: AX[]) => U, thisArg?: any) => U[]
+>this.elements : AX[]
 >this : this
->elements : A[]
->map : <U>(callbackfn: (value: A, index: number, array: A[]) => U, thisArg?: any) => U[]
->f : (a: A) => B
+>elements : AX[]
+>map : <U>(callbackfn: (value: AX, index: number, array: AX[]) => U, thisArg?: any) => U[]
+>f : (a: AX) => BX
 
         return new FunctorX(mappedElements);
->new FunctorX(mappedElements) : FunctorX<B>
+>new FunctorX(mappedElements) : FunctorX<BX>
 >FunctorX : typeof FunctorX
->mappedElements : B[]
+>mappedElements : BX[]
     }
 
-    firstVal(): A | undefined {
->firstVal : () => A | undefined
->A : A
+    firstVal(): AX | undefined {
+>firstVal : () => AX | undefined
+>AX : AX
 
         return this.elements.length ? this.elements[0] : undefined;
->this.elements.length ? this.elements[0] : undefined : A | undefined
+>this.elements.length ? this.elements[0] : undefined : AX | undefined
 >this.elements.length : number
->this.elements : A[]
+>this.elements : AX[]
 >this : this
->elements : A[]
+>elements : AX[]
 >length : number
->this.elements[0] : A
->this.elements : A[]
+>this.elements[0] : AX
+>this.elements : AX[]
 >this : this
->elements : A[]
+>elements : AX[]
 >0 : 0
 >undefined : undefined
 
@@ -118,15 +118,15 @@ interface LiftedResult<LRC<_LT>> {
 >LRB : LRB
 }
 
-function lift<C<_T>>(fToLift: StaticFunctor<C>): LiftedResult<C> {
->lift : <C>(fToLift: StaticFunctor<C<_T>>) => LiftedResult<C<_T>>
->C : C<_T>
->_T : _T
->fToLift : StaticFunctor<C<_T>>
+function lift<C<_TL>>(fToLift: StaticFunctor<C>): LiftedResult<C> {
+>lift : <C>(fToLift: StaticFunctor<C<_TL>>) => LiftedResult<C<_TL>>
+>C : C<_TL>
+>_TL : _TL
+>fToLift : StaticFunctor<C<_TL>>
 >StaticFunctor : StaticFunctor<CS<_TS>>
->C : C<_T>
+>C : C<_TL>
 >LiftedResult : LiftedResult<LRC<_LT>>
->C : C<_T>
+>C : C<_TL>
 
     return lmap => lca => fToLift(lca, lmap);
 >lmap => lca => fToLift(lca, lmap) : <LRA, LRB>(lmap: (lra: LRA) => LRB) => <NC extends C<_NT>>(lca: NC<LRA>) => C<LRB>
@@ -134,7 +134,7 @@ function lift<C<_T>>(fToLift: StaticFunctor<C>): LiftedResult<C> {
 >lca => fToLift(lca, lmap) : <NC extends C<_NT>>(lca: NC<LRA>) => C<LRB>
 >lca : NC<LRA>
 >fToLift(lca, lmap) : C<LRB>
->fToLift : StaticFunctor<C<_T>>
+>fToLift : StaticFunctor<C<_TL>>
 >lca : NC<LRA>
 >lmap : (lra: LRA) => LRB
 }
@@ -143,7 +143,7 @@ function staticMap<C1<_T1> extends Functor<_T1, C1>, A1, B1>(fa1: C1<A1>, fmap1:
 >staticMap : <C1 extends Functor<_T1, C1<_T1>>, A1, B1>(fa1: C1<A1>, fmap1: (a1: A1) => B1) => C1<B1>
 >C1 : C1<_T1>
 >_T1 : _T1
->Functor : Functor<A, Container<_T>>
+>Functor : Functor<AF, Container<_TF>>
 >_T1 : _T1
 >C1 : C1<_T1>
 >A1 : A1
@@ -160,16 +160,16 @@ function staticMap<C1<_T1> extends Functor<_T1, C1>, A1, B1>(fa1: C1<A1>, fmap1:
 
     return fa1.map(fmap1);
 >fa1.map(fmap1) : C1<B1>
->fa1.map : <B>(f: (a: A1) => B) => C1<B>
+>fa1.map : <BF>(f: (a: A1) => BF) => C1<BF>
 >fa1 : C1<A1>
->map : <B>(f: (a: A1) => B) => C1<B>
+>map : <BF>(f: (a: A1) => BF) => C1<BF>
 >fmap1 : (a1: A1) => B1
 }
 
 const liftedFunctor = lift(staticMap);
 >liftedFunctor : LiftedResult<C1<_T1>>
 >lift(staticMap) : LiftedResult<C1<_T1>>
->lift : <C>(fToLift: StaticFunctor<C<_T>>) => LiftedResult<C<_T>>
+>lift : <C>(fToLift: StaticFunctor<C<_TL>>) => LiftedResult<C<_TL>>
 >staticMap : <C1 extends Functor<_T1, C1<_T1>>, A1, B1>(fa1: C1<A1>, fmap1: (a1: A1) => B1) => C1<B1>
 
 function stringLength(strarg: string): number {
@@ -203,7 +203,7 @@ const result = liftedStringLength(functorXString);
 
 const expectedType: FunctorX<number> = result;
 >expectedType : FunctorX<number>
->FunctorX : FunctorX<A>
+>FunctorX : FunctorX<AX>
 >result : FunctorX<number>
 
 const expectError = liftedStringLength(result);
@@ -214,11 +214,11 @@ const expectError = liftedStringLength(result);
 
 
 
-export interface DiffFunctor<DA, DContainer<_T>> {
->DiffFunctor : DiffFunctor<DA, DContainer<_T>>
+export interface DiffFunctor<DA, DContainer<_TD>> {
+>DiffFunctor : DiffFunctor<DA, DContainer<_TD>>
 >DA : DA
->DContainer : DContainer<_T>
->_T : _T
+>DContainer : DContainer<_TD>
+>_TD : _TD
 
     diffMap<DB>(df: (da: DA) => DB): DContainer<DB>;
 >diffMap : <DB>(df: (da: DA) => DB) => DContainer<DB>
@@ -227,35 +227,35 @@ export interface DiffFunctor<DA, DContainer<_T>> {
 >da : DA
 >DA : DA
 >DB : DB
->DContainer : DContainer<_T>
+>DContainer : DContainer<_TD>
 >DB : DB
 }
 
-declare class DiffFunctorY<A> implements DiffFunctor<A, DiffFunctorY> {
->DiffFunctorY : DiffFunctorY<A>
->A : A
->DiffFunctor : DiffFunctor<DA, DContainer<_T>>
->A : A
->DiffFunctorY : DiffFunctorY<A>
+declare class DiffFunctorY<AY> implements DiffFunctor<AY, DiffFunctorY> {
+>DiffFunctorY : DiffFunctorY<AY>
+>AY : AY
+>DiffFunctor : DiffFunctor<DA, DContainer<_TD>>
+>AY : AY
+>DiffFunctorY : DiffFunctorY<AY>
 
-    diffMap<B>(f: (a: A) => B): DiffFunctorY<B>
->diffMap : <B>(f: (a: A) => B) => DiffFunctorY<B>
->B : B
->f : (a: A) => B
->a : A
->A : A
->B : B
->DiffFunctorY : DiffFunctorY<A>
->B : B
+    diffMap<BY>(f: (a: AY) => BY): DiffFunctorY<BY>
+>diffMap : <BY>(f: (a: AY) => BY) => DiffFunctorY<BY>
+>BY : BY
+>f : (a: AY) => BY
+>a : AY
+>AY : AY
+>BY : BY
+>DiffFunctorY : DiffFunctorY<AY>
+>BY : BY
 
-    firstValY(): A | undefined
->firstValY : () => A | undefined
->A : A
+    firstValY(): AY | undefined
+>firstValY : () => AY | undefined
+>AY : AY
 }
 
 declare const diffFunctorYString: DiffFunctorY<string>;
 >diffFunctorYString : DiffFunctorY<string>
->DiffFunctorY : DiffFunctorY<A>
+>DiffFunctorY : DiffFunctorY<AY>
 
 // should have error because DiffFunctorY has diffMap function, not "map" as needed because liftedFunctor was created from staticMap which declared Functor
 const expectError2 = liftedStringLength(diffFunctorYString);
