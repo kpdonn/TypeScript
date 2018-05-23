@@ -3783,7 +3783,6 @@ namespace ts {
         JsxAttributes                              = 1 << 12, // Jsx attributes type
         MarkerType                                 = 1 << 13, // Marker type used for variance probing
         GenericTypeParameter                       = 1 << 14, // uninstantiated type parameter that has its own type parameters
-        GenericTypeParameterReference              = 1 << 15, // type reference with a GenericTypeParameter as its target
 
         ClassOrInterface = Class | Interface
     }
@@ -3827,8 +3826,9 @@ namespace ts {
      * explicit "this" argument.
      */
     export interface TypeReference extends ObjectType {
-        target: GenericType;    // Type reference target
-        typeArguments?: Type[];  // Type reference type arguments (undefined if none)
+        target: GenericType;                      // Type reference target
+        typeArguments?: Type[];                   // Type reference type arguments (undefined if none)
+        genericTypeParameterReference?: boolean;  // true if target is a GenericTypeParameter but NOT true if this is the GenericTypeParameter (ie if this === target)
     }
 
     /* @internal */

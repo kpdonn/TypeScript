@@ -6510,7 +6510,7 @@ namespace ts {
         }
 
         function isGenericTypeParameterReference(type: Type): type is TypeReference {
-            return !!(getObjectFlags(type) & ObjectFlags.GenericTypeParameterReference);
+            return isTypeReference(type) && type.genericTypeParameterReference;
         }
 
         function isTypeVariable(type: Type): boolean {
@@ -7679,11 +7679,12 @@ namespace ts {
             const id = getTypeListId(typeArguments);
             let type = target.instantiations.get(id);
             if (!type) {
-                type = <TypeReference>createObjectType(ObjectFlags.Reference | (isGenericTypeParameter(target) ? ObjectFlags.GenericTypeParameterReference : 0), target.symbol);
+                type = <TypeReference>createObjectType(ObjectFlags.Reference, target.symbol);
                 target.instantiations.set(id, type);
                 type.flags |= typeArguments ? getPropagatingFlagsOfTypes(typeArguments, /*excludeKinds*/ 0) : 0;
                 type.target = target;
                 type.typeArguments = typeArguments;
+                type.genericTypeParameterReference = isGenericTypeParameter(target);
             }
             return type;
         }
@@ -12328,8 +12329,8 @@ namespace ts {
         // results for union and intersection types for performance reasons.
         function couldContainTypeVariables(type: Type): boolean {
             const objectFlags = getObjectFlags(type);
-            return !!(type.flags & TypeFlags.Instantiable ||
-                objectFlags & (ObjectFlags.GenericTypeParameter | ObjectFlags.GenericTypeParameterReference) ||
+            return !!(type.flags & TypeFlags.Instantiable || isGenericTypeParameterReference(type) ||
+                objectFlags & ObjectFlags.GenericTypeParameter ||
                 objectFlags & ObjectFlags.Reference && forEach((<TypeReference>type).typeArguments, couldContainTypeVariables) ||
                 objectFlags & ObjectFlags.Anonymous && type.symbol && type.symbol.flags & (SymbolFlags.Function | SymbolFlags.Method | SymbolFlags.TypeLiteral | SymbolFlags.Class) ||
                 objectFlags & ObjectFlags.Mapped ||
