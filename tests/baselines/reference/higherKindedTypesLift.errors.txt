@@ -95,3 +95,15 @@ tests/cases/compiler/higherKindedTypesLift.ts(74,41): error TS2345: Argument of 
 !!! error TS2345:     Type '<IB>(fi: (ia: string) => IB) => IB' is not assignable to type '<BF>(f: (a: string) => BF) => C1<BF>'.
 !!! error TS2345:       Type 'BF' is not assignable to type 'C1<BF>'.
     
+    
+    
+    declare class InvalidFunctor2<IA2> {
+        // does not actually implement Functor because it doesn't return InvalidFunctor2<IB>
+        map<IB2>(fi2: (ia2: IA2) => IB2): FunctorX<IB2>
+    
+        someUniqueMethod(): IA2
+    }
+    
+    declare const invalidFunctor2: InvalidFunctor2<string>;
+    const expectError4 = liftedStringLength(invalidFunctor2);
+    

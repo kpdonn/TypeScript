@@ -272,3 +272,34 @@ const expectError3 = liftedStringLength(invalidFunctor);
 >liftedStringLength : Symbol(liftedStringLength, Decl(higherKindedTypesLift.ts, 40, 5))
 >invalidFunctor : Symbol(invalidFunctor, Decl(higherKindedTypesLift.ts, 72, 13))
 
+
+
+declare class InvalidFunctor2<IA2> {
+>InvalidFunctor2 : Symbol(InvalidFunctor2, Decl(higherKindedTypesLift.ts, 73, 56))
+>IA2 : Symbol(IA2, Decl(higherKindedTypesLift.ts, 77, 30))
+
+    // does not actually implement Functor because it doesn't return InvalidFunctor2<IB>
+    map<IB2>(fi2: (ia2: IA2) => IB2): FunctorX<IB2>
+>map : Symbol(InvalidFunctor2.map, Decl(higherKindedTypesLift.ts, 77, 36))
+>IB2 : Symbol(IB2, Decl(higherKindedTypesLift.ts, 79, 8))
+>fi2 : Symbol(fi2, Decl(higherKindedTypesLift.ts, 79, 13))
+>ia2 : Symbol(ia2, Decl(higherKindedTypesLift.ts, 79, 19))
+>IA2 : Symbol(IA2, Decl(higherKindedTypesLift.ts, 77, 30))
+>IB2 : Symbol(IB2, Decl(higherKindedTypesLift.ts, 79, 8))
+>FunctorX : Symbol(FunctorX, Decl(higherKindedTypesLift.ts, 2, 1))
+>IB2 : Symbol(IB2, Decl(higherKindedTypesLift.ts, 79, 8))
+
+    someUniqueMethod(): IA2
+>someUniqueMethod : Symbol(InvalidFunctor2.someUniqueMethod, Decl(higherKindedTypesLift.ts, 79, 51))
+>IA2 : Symbol(IA2, Decl(higherKindedTypesLift.ts, 77, 30))
+}
+
+declare const invalidFunctor2: InvalidFunctor2<string>;
+>invalidFunctor2 : Symbol(invalidFunctor2, Decl(higherKindedTypesLift.ts, 84, 13))
+>InvalidFunctor2 : Symbol(InvalidFunctor2, Decl(higherKindedTypesLift.ts, 73, 56))
+
+const expectError4 = liftedStringLength(invalidFunctor2);
+>expectError4 : Symbol(expectError4, Decl(higherKindedTypesLift.ts, 85, 5))
+>liftedStringLength : Symbol(liftedStringLength, Decl(higherKindedTypesLift.ts, 40, 5))
+>invalidFunctor2 : Symbol(invalidFunctor2, Decl(higherKindedTypesLift.ts, 84, 13))
+

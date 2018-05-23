@@ -74,3 +74,15 @@ declare class InvalidFunctor<IA> {
 
 declare const invalidFunctor: InvalidFunctor<string>;
 const expectError3 = liftedStringLength(invalidFunctor);
+
+
+
+declare class InvalidFunctor2<IA2> {
+    // does not actually implement Functor because it doesn't return InvalidFunctor2<IB>
+    map<IB2>(fi2: (ia2: IA2) => IB2): FunctorX<IB2>
+
+    someUniqueMethod(): IA2
+}
+
+declare const invalidFunctor2: InvalidFunctor2<string>;
+const expectError4 = liftedStringLength(invalidFunctor2);

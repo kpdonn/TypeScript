@@ -290,3 +290,35 @@ const expectError3 = liftedStringLength(invalidFunctor);
 >liftedStringLength : <NC extends C1<_NT>>(lrclra: LiftedResult<C1<_LT>>.NC<string>) => LiftedResult<C1<_LT>>.NC<number>
 >invalidFunctor : InvalidFunctor<string>
 
+
+
+declare class InvalidFunctor2<IA2> {
+>InvalidFunctor2 : InvalidFunctor2<IA2>
+>IA2 : IA2
+
+    // does not actually implement Functor because it doesn't return InvalidFunctor2<IB>
+    map<IB2>(fi2: (ia2: IA2) => IB2): FunctorX<IB2>
+>map : <IB2>(fi2: (ia2: IA2) => IB2) => FunctorX<IB2>
+>IB2 : IB2
+>fi2 : (ia2: IA2) => IB2
+>ia2 : IA2
+>IA2 : IA2
+>IB2 : IB2
+>FunctorX : FunctorX<AX>
+>IB2 : IB2
+
+    someUniqueMethod(): IA2
+>someUniqueMethod : () => IA2
+>IA2 : IA2
+}
+
+declare const invalidFunctor2: InvalidFunctor2<string>;
+>invalidFunctor2 : InvalidFunctor2<string>
+>InvalidFunctor2 : InvalidFunctor2<IA2>
+
+const expectError4 = liftedStringLength(invalidFunctor2);
+>expectError4 : InvalidFunctor2<number>
+>liftedStringLength(invalidFunctor2) : InvalidFunctor2<number>
+>liftedStringLength : <NC extends C1<_NT>>(lrclra: LiftedResult<C1<_LT>>.NC<string>) => LiftedResult<C1<_LT>>.NC<number>
+>invalidFunctor2 : InvalidFunctor2<string>
+
