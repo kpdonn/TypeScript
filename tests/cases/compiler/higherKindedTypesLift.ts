@@ -65,3 +65,12 @@ declare class DiffFunctorY<AY> implements DiffFunctor<AY, DiffFunctorY> {
 declare const diffFunctorYString: DiffFunctorY<string>;
 // should have error because DiffFunctorY has diffMap function, not "map" as needed because liftedFunctor was created from staticMap which declared Functor
 const expectError2 = liftedStringLength(diffFunctorYString);
+
+
+declare class InvalidFunctor<IA> {
+    // does not actually implement Functor because it doesn't return InvalidFunctor<IB>
+    map<IB>(fi: (ia: IA) => IB): IB
+}
+
+declare const invalidFunctor: InvalidFunctor<string>;
+const expectError3 = liftedStringLength(invalidFunctor);

@@ -264,3 +264,29 @@ const expectError2 = liftedStringLength(diffFunctorYString);
 >liftedStringLength : <NC extends C1<_NT>>(lrclra: LiftedResult<C1<_LT>>.NC<string>) => LiftedResult<C1<_LT>>.NC<number>
 >diffFunctorYString : DiffFunctorY<string>
 
+
+declare class InvalidFunctor<IA> {
+>InvalidFunctor : InvalidFunctor<IA>
+>IA : IA
+
+    // does not actually implement Functor because it doesn't return InvalidFunctor<IB>
+    map<IB>(fi: (ia: IA) => IB): IB
+>map : <IB>(fi: (ia: IA) => IB) => IB
+>IB : IB
+>fi : (ia: IA) => IB
+>ia : IA
+>IA : IA
+>IB : IB
+>IB : IB
+}
+
+declare const invalidFunctor: InvalidFunctor<string>;
+>invalidFunctor : InvalidFunctor<string>
+>InvalidFunctor : InvalidFunctor<IA>
+
+const expectError3 = liftedStringLength(invalidFunctor);
+>expectError3 : any
+>liftedStringLength(invalidFunctor) : any
+>liftedStringLength : <NC extends C1<_NT>>(lrclra: LiftedResult<C1<_LT>>.NC<string>) => LiftedResult<C1<_LT>>.NC<number>
+>invalidFunctor : InvalidFunctor<string>
+

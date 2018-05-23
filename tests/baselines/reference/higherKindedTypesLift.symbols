@@ -247,3 +247,28 @@ const expectError2 = liftedStringLength(diffFunctorYString);
 >liftedStringLength : Symbol(liftedStringLength, Decl(higherKindedTypesLift.ts, 40, 5))
 >diffFunctorYString : Symbol(diffFunctorYString, Decl(higherKindedTypesLift.ts, 62, 13))
 
+
+declare class InvalidFunctor<IA> {
+>InvalidFunctor : Symbol(InvalidFunctor, Decl(higherKindedTypesLift.ts, 64, 60))
+>IA : Symbol(IA, Decl(higherKindedTypesLift.ts, 67, 29))
+
+    // does not actually implement Functor because it doesn't return InvalidFunctor<IB>
+    map<IB>(fi: (ia: IA) => IB): IB
+>map : Symbol(InvalidFunctor.map, Decl(higherKindedTypesLift.ts, 67, 34))
+>IB : Symbol(IB, Decl(higherKindedTypesLift.ts, 69, 8))
+>fi : Symbol(fi, Decl(higherKindedTypesLift.ts, 69, 12))
+>ia : Symbol(ia, Decl(higherKindedTypesLift.ts, 69, 17))
+>IA : Symbol(IA, Decl(higherKindedTypesLift.ts, 67, 29))
+>IB : Symbol(IB, Decl(higherKindedTypesLift.ts, 69, 8))
+>IB : Symbol(IB, Decl(higherKindedTypesLift.ts, 69, 8))
+}
+
+declare const invalidFunctor: InvalidFunctor<string>;
+>invalidFunctor : Symbol(invalidFunctor, Decl(higherKindedTypesLift.ts, 72, 13))
+>InvalidFunctor : Symbol(InvalidFunctor, Decl(higherKindedTypesLift.ts, 64, 60))
+
+const expectError3 = liftedStringLength(invalidFunctor);
+>expectError3 : Symbol(expectError3, Decl(higherKindedTypesLift.ts, 73, 5))
+>liftedStringLength : Symbol(liftedStringLength, Decl(higherKindedTypesLift.ts, 40, 5))
+>invalidFunctor : Symbol(invalidFunctor, Decl(higherKindedTypesLift.ts, 72, 13))
+
