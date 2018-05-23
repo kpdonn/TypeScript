@@ -3949,7 +3949,7 @@ namespace ts {
         resolvedStringIndexType?: IndexType;
     }
 
-    // type parameters (TypeFlags.TypeParameter, except for GenericTypeParameters (see below))
+    // type parameters (TypeFlags.TypeParameter)
     export interface TypeParameter extends InstantiableType {
         /** Retrieve using getConstraintFromTypeParameter */
         /* @internal */
@@ -3962,12 +3962,16 @@ namespace ts {
         mapper?: TypeMapper; // mapper for cloned type parameters
         /* @internal */
         isThisType?: boolean;
+        /* @internal */
+        isGeneric?: boolean;
     }
 
     // Generic type parameters (TypeFlags.Object, ObjectFlags.GenericTypeParameter)
     export interface GenericTypeParameter extends GenericType, TypeParameter, InterfaceTypeWithDeclaredMembers {
         /* @internal */
         original?: GenericTypeParameter; // The type parameter this type parameter was cloned from
+        /* @internal */
+        isGeneric: true;
     }
 
     // Indexed access types (TypeFlags.IndexedAccess)

@@ -5592,7 +5592,9 @@ namespace ts {
                 const localTypeParameters = getLocalTypeParametersOfClassOrInterfaceOrTypeAlias(symbol);
                 if (localTypeParameters) {
                     const type = <GenericTypeParameter>createObjectType(ObjectFlags.GenericTypeParameter | ObjectFlags.Reference);
+                    type.flags |= TypeFlags.TypeParameter;
                     type.symbol = symbol;
+                    type.isGeneric = true;
                     links.declaredType = type;
 
                     type.localTypeParameters = localTypeParameters;
@@ -5616,6 +5618,7 @@ namespace ts {
                     const type = <TypeParameter>createType(TypeFlags.TypeParameter);
                     type.symbol = symbol;
                     links.declaredType = type;
+                    type.isGeneric = false;
                 }
             }
             return <TypeParameter>links.declaredType;
@@ -6492,21 +6495,12 @@ namespace ts {
             return getObjectFlags(type) & ObjectFlags.Mapped && isGenericIndexType(getConstraintTypeFromMappedType(<MappedType>type));
         }
 
-        function isUninstantiatedGenericType(type: Type): type is GenericType {
-            return length((<GenericType>type).typeParameters) &&
-                (getObjectFlags(type) & (ObjectFlags.ClassOrInterface | ObjectFlags.GenericTypeParameter) && (<GenericType>type).target === type);
-        }
-
         function isTypeParameter(type: Type): type is TypeParameter {
-            return isNonGenericTypeParameter(type) || isGenericTypeParameter(type);
+            return !!(type.flags & TypeFlags.TypeParameter);
         }
 
         function isGenericTypeParameter(type: Type): type is GenericTypeParameter {
-            return !!(getObjectFlags(type) & ObjectFlags.GenericTypeParameter);
-        }
-
-        function isNonGenericTypeParameter(type: Type): type is TypeParameter {
-            return !!(type.flags & TypeFlags.TypeParameter);
+            return isTypeParameter(type) && type.isGeneric;
         }
 
         function isGenericTypeParameterReference(type: Type): type is TypeReference {
@@ -6514,7 +6508,7 @@ namespace ts {
         }
 
         function isTypeVariable(type: Type): boolean {
-            return !!(type.flags & TypeFlags.TypeVariable || isGenericTypeParameter(type) || isGenericTypeParameterReference(type));
+            return !!(type.flags & TypeFlags.TypeVariable || isGenericTypeParameterReference(type));
         }
 
         function isTypeReference(type: Type): type is TypeReference {
@@ -6712,7 +6706,7 @@ namespace ts {
         }
 
         function getBaseConstraintOfInstantiableNonPrimitiveUnionOrIntersection(type: Type) {
-            if (type.flags & (TypeFlags.InstantiableNonPrimitive | TypeFlags.UnionOrIntersection) || isGenericTypeParameter(type)) {
+            if (type.flags & (TypeFlags.InstantiableNonPrimitive | TypeFlags.UnionOrIntersection)) {
                 const constraint = getResolvedBaseConstraint(<InstantiableType | UnionOrIntersectionType>type);
                 if (constraint !== noConstraintType && constraint !== circularConstraintType) {
                     return constraint;
@@ -6872,7 +6866,8 @@ namespace ts {
          * type itself. Note that the apparent type of a union type is the union type itself.
          */
         function getApparentType(type: Type): Type {
-            const t = type.flags & TypeFlags.Instantiable ? getBaseConstraintOfType(type) || emptyObjectType : type;
+            const t = isGenericTypeParameter(type) ? getApparentTypeOfGenericTypeParameter(type) :
+                type.flags & TypeFlags.Instantiable ? getBaseConstraintOfType(type) || emptyObjectType : type;
             return t.flags & TypeFlags.Intersection ? getApparentTypeOfIntersectionType(<IntersectionType>t) :
                 t.flags & TypeFlags.StringLike ? globalStringType :
                 t.flags & TypeFlags.NumberLike ? globalNumberType :
@@ -6880,7 +6875,6 @@ namespace ts {
                 t.flags & TypeFlags.ESSymbolLike ? getGlobalESSymbolType(/*reportErrors*/ languageVersion >= ScriptTarget.ES2015) :
                 t.flags & TypeFlags.NonPrimitive ? emptyObjectType :
                 t.flags & TypeFlags.Index ? keyofConstraintType :
-                isGenericTypeParameter(t) ? getApparentTypeOfGenericTypeParameter(t) :
                 t;
         }
 
@@ -7818,7 +7812,7 @@ namespace ts {
         }
 
         function tryGetGenericTypeArgument(node: NodeWithTypeArguments, genericType: GenericType): Type | undefined {
-            Debug.assert(isUninstantiatedGenericType(genericType));
+            Debug.assert(getObjectFlags(genericType) & (ObjectFlags.ClassOrInterface | ObjectFlags.GenericTypeParameter) && genericType.target === genericType);
             const parentTypeParameter = tryGetParentGenericTypeParameter(node);
             if (!parentTypeParameter || length(genericType.localTypeParameters) !== length(parentTypeParameter.localTypeParameters)) {
                 return undefined;
@@ -9544,8 +9538,11 @@ namespace ts {
         function cloneTypeParameter(original: TypeParameter): TypeParameter {
             if (isGenericTypeParameter(original)) {
                 const clone = <GenericTypeParameter>createObjectType(ObjectFlags.GenericTypeParameter | ObjectFlags.Reference);
+                clone.flags |= TypeFlags.TypeParameter;
                 clone.symbol = original.symbol;
+                clone.isGeneric = original.isGeneric;
 
+                // kpdonn: I don't believe it is necessary to clone child type parameters
                 clone.localTypeParameters = original.localTypeParameters;
                 clone.outerTypeParameters = original.outerTypeParameters;
                 clone.typeParameters = original.typeParameters;
@@ -9554,9 +9551,12 @@ namespace ts {
                 clone.instantiations.set(getTypeListId(clone.typeParameters), clone);
                 clone.target = clone;
                 clone.typeArguments = clone.typeParameters;
+
+                // TODO (kpdonn): figure out if this is needed and add test if so.
                 clone.thisType = <TypeParameter>createType(TypeFlags.TypeParameter);
                 clone.thisType.isThisType = true;
                 clone.thisType.constraint = clone;
+
                 clone.declaredProperties = emptyArray;
                 clone.declaredCallSignatures = emptyArray;
                 clone.declaredConstructSignatures = emptyArray;
@@ -9568,6 +9568,7 @@ namespace ts {
                 const clone = <TypeParameter>createType(TypeFlags.TypeParameter);
                 clone.symbol = original.symbol;
                 clone.original = original;
+                clone.isGeneric = original.isGeneric;
                 return clone;
             }
         }
@@ -9717,7 +9718,7 @@ namespace ts {
                     case SyntaxKind.ThisType:
                         return tp.isThisType;
                     case SyntaxKind.Identifier:
-                        return !tp.isThisType && isPartOfTypeNode(node) && maybeTypeParameterReference(node, isGenericTypeParameter(tp)) &&
+                        return !tp.isThisType && isPartOfTypeNode(node) && maybeTypeParameterReference(node, tp.isGeneric) &&
                             getTypeFromTypeNode(<TypeNode>node) === tp;
                     case SyntaxKind.TypeQuery:
                         return true;
@@ -9817,15 +9818,14 @@ namespace ts {
                 if ((<ObjectType>type).objectFlags & ObjectFlags.Mapped) {
                     return getAnonymousTypeInstantiation(<MappedType>type, mapper);
                 }
-                if ((<ObjectType>type).objectFlags & ObjectFlags.GenericTypeParameter) {
-                    return mapper(type);
-                }
                 if (isGenericTypeParameterReference(type)) {
                     const newType = mapper(type.target);
                     if (isTypeReference(newType)) {
                         const localTypeArguments = getLocalTypeArguments(type);
-                        const newMapper = createTypeMapper(type.target.localTypeParameters, localTypeArguments);
-                        const newTypeArguments = instantiateTypes(newType.typeArguments, createReplacementMapper(type.target, anyType, combineTypeMappers(newMapper, mapper)));
+                        const localArgsMapper = createTypeMapper(type.target.localTypeParameters, localTypeArguments);
+                        // need replacement mapper to avoid infinite loop when encountering pattern like `T<_T> extends Functor<_T, T>` and we are instantiating `T` as its constraint
+                        const newMapper = createReplacementMapper(type.target, anyType, combineTypeMappers(localArgsMapper, mapper));
+                        const newTypeArguments = instantiateTypes(newType.typeArguments, newMapper);
                         return createTypeReference(newType.target, newTypeArguments);
                     }
                     return newType;
@@ -21460,6 +21460,7 @@ namespace ts {
                         typeArguments = getEffectiveTypeArguments(node, typeParameters);
                         mapper = createTypeMapper(typeParameters, typeArguments);
                     }
+                    // TODO (kpdonn): handle generic type parameters
                     if (isGenericTypeParameter(typeParameters[i])) {
                         continue;
                     }
