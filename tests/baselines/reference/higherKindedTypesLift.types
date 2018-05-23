@@ -119,28 +119,28 @@ interface LiftedResult<LRC<_LT>> {
 }
 
 function lift<C<_TL>>(fToLift: StaticFunctor<C>): LiftedResult<C> {
->lift : <C>(fToLift: StaticFunctor<C<_TL>>) => LiftedResult<C<_TL>>
+>lift : <C>(fToLift: StaticFunctor<C<_TS>>) => LiftedResult<C<_LT>>
 >C : C<_TL>
 >_TL : _TL
->fToLift : StaticFunctor<C<_TL>>
+>fToLift : StaticFunctor<C<_TS>>
 >StaticFunctor : StaticFunctor<CS<_TS>>
 >C : C<_TL>
 >LiftedResult : LiftedResult<LRC<_LT>>
 >C : C<_TL>
 
     return lmap => lca => fToLift(lca, lmap);
->lmap => lca => fToLift(lca, lmap) : <LRA, LRB>(lmap: (lra: LRA) => LRB) => <NC extends C<_NT>>(lca: NC<LRA>) => C<LRB>
+>lmap => lca => fToLift(lca, lmap) : <LRA, LRB>(lmap: (lra: LRA) => LRB) => <NC extends C<_NT>>(lca: LiftedResult<C<_LT>>.NC<LRA>) => C<LRB>
 >lmap : (lra: LRA) => LRB
->lca => fToLift(lca, lmap) : <NC extends C<_NT>>(lca: NC<LRA>) => C<LRB>
->lca : NC<LRA>
+>lca => fToLift(lca, lmap) : <NC extends C<_NT>>(lca: LiftedResult<C<_LT>>.NC<LRA>) => C<LRB>
+>lca : LiftedResult<C<_LT>>.NC<LRA>
 >fToLift(lca, lmap) : C<LRB>
->fToLift : StaticFunctor<C<_TL>>
->lca : NC<LRA>
+>fToLift : StaticFunctor<C<_TS>>
+>lca : LiftedResult<C<_LT>>.NC<LRA>
 >lmap : (lra: LRA) => LRB
 }
 
 function staticMap<C1<_T1> extends Functor<_T1, C1>, A1, B1>(fa1: C1<A1>, fmap1: (a1: A1) => B1): C1<B1> {
->staticMap : <C1 extends Functor<_T1, C1<_T1>>, A1, B1>(fa1: C1<A1>, fmap1: (a1: A1) => B1) => C1<B1>
+>staticMap : <C1 extends Functor<_T1, C1<_TF>>, A1, B1>(fa1: C1<A1>, fmap1: (a1: A1) => B1) => C1<B1>
 >C1 : C1<_T1>
 >_T1 : _T1
 >Functor : Functor<AF, Container<_TF>>
@@ -167,10 +167,10 @@ function staticMap<C1<_T1> extends Functor<_T1, C1>, A1, B1>(fa1: C1<A1>, fmap1:
 }
 
 const liftedFunctor = lift(staticMap);
->liftedFunctor : LiftedResult<C1<_T1>>
->lift(staticMap) : LiftedResult<C1<_T1>>
->lift : <C>(fToLift: StaticFunctor<C<_TL>>) => LiftedResult<C<_TL>>
->staticMap : <C1 extends Functor<_T1, C1<_T1>>, A1, B1>(fa1: C1<A1>, fmap1: (a1: A1) => B1) => C1<B1>
+>liftedFunctor : LiftedResult<C1<_LT>>
+>lift(staticMap) : LiftedResult<C1<_LT>>
+>lift : <C>(fToLift: StaticFunctor<C<_TS>>) => LiftedResult<C<_LT>>
+>staticMap : <C1 extends Functor<_T1, C1<_TF>>, A1, B1>(fa1: C1<A1>, fmap1: (a1: A1) => B1) => C1<B1>
 
 function stringLength(strarg: string): number {
 >stringLength : (strarg: string) => number
@@ -183,9 +183,9 @@ function stringLength(strarg: string): number {
 }
 
 const liftedStringLength = liftedFunctor(stringLength);
->liftedStringLength : <NC extends C1<_NT>>(lrclra: NC<string>) => NC<number>
->liftedFunctor(stringLength) : <NC extends C1<_NT>>(lrclra: NC<string>) => NC<number>
->liftedFunctor : LiftedResult<C1<_T1>>
+>liftedStringLength : <NC extends C1<_NT>>(lrclra: LiftedResult<C1<_LT>>.NC<string>) => LiftedResult<C1<_LT>>.NC<number>
+>liftedFunctor(stringLength) : <NC extends C1<_NT>>(lrclra: LiftedResult<C1<_LT>>.NC<string>) => LiftedResult<C1<_LT>>.NC<number>
+>liftedFunctor : LiftedResult<C1<_LT>>
 >stringLength : (strarg: string) => number
 
 const functorXString = new FunctorX(["myFunctorX"]);
@@ -198,7 +198,7 @@ const functorXString = new FunctorX(["myFunctorX"]);
 const result = liftedStringLength(functorXString);
 >result : FunctorX<number>
 >liftedStringLength(functorXString) : FunctorX<number>
->liftedStringLength : <NC extends C1<_NT>>(lrclra: NC<string>) => NC<number>
+>liftedStringLength : <NC extends C1<_NT>>(lrclra: LiftedResult<C1<_LT>>.NC<string>) => LiftedResult<C1<_LT>>.NC<number>
 >functorXString : FunctorX<string>
 
 const expectedType: FunctorX<number> = result;
@@ -209,7 +209,7 @@ const expectedType: FunctorX<number> = result;
 const expectError = liftedStringLength(result);
 >expectError : any
 >liftedStringLength(result) : any
->liftedStringLength : <NC extends C1<_NT>>(lrclra: NC<string>) => NC<number>
+>liftedStringLength : <NC extends C1<_NT>>(lrclra: LiftedResult<C1<_LT>>.NC<string>) => LiftedResult<C1<_LT>>.NC<number>
 >result : FunctorX<number>
 
 
@@ -261,6 +261,6 @@ declare const diffFunctorYString: DiffFunctorY<string>;
 const expectError2 = liftedStringLength(diffFunctorYString);
 >expectError2 : any
 >liftedStringLength(diffFunctorYString) : any
->liftedStringLength : <NC extends C1<_NT>>(lrclra: NC<string>) => NC<number>
+>liftedStringLength : <NC extends C1<_NT>>(lrclra: LiftedResult<C1<_LT>>.NC<string>) => LiftedResult<C1<_LT>>.NC<number>
 >diffFunctorYString : DiffFunctorY<string>
 

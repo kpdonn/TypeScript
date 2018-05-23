@@ -7819,11 +7819,14 @@ namespace ts {
         function tryGetGenericTypeArgument(node: NodeWithTypeArguments, genericType: GenericType): Type | undefined {
             Debug.assert(isUninstantiatedGenericType(genericType));
             const parentTypeParameter = tryGetParentGenericTypeParameter(node);
-            if (!parentTypeParameter) {
+            if (!parentTypeParameter || length(genericType.localTypeParameters) !== length(parentTypeParameter.localTypeParameters)) {
                 return undefined;
             }
 
-            return genericType;
+            const localTypeArguments = getLocalTypeArguments(parentTypeParameter);
+            const numOuters = length(genericType.outerTypeParameters);
+            const outerTypeArguments = numOuters && genericType.typeArguments.slice(0, numOuters);
+            return createTypeReference(genericType, concatenate(outerTypeArguments, localTypeArguments));
         }
 
         function getTypeReferenceName(node: TypeReferenceType): EntityNameOrEntityNameExpression | undefined {
@@ -9820,12 +9823,10 @@ namespace ts {
                 if (isGenericTypeParameterReference(type)) {
                     const newType = mapper(type.target);
                     if (isTypeReference(newType)) {
-                        Debug.assertEqual(length(newType.target.localTypeParameters), length(type.target.localTypeParameters));
-                        const localTypeArguments = type.typeArguments.slice(length(type.target.outerTypeParameters), length(type.target.typeParameters));
-                        const newLocalTypeArguments = instantiateTypes(localTypeArguments, mapper);
-                        const numNewOuters = length(newType.target.outerTypeParameters);
-                        const newOuterTypeArguments = numNewOuters && newType.typeArguments.slice(0, numNewOuters);
-                        return createTypeReference(newType.target, concatenate(newOuterTypeArguments, newLocalTypeArguments));
+                        const localTypeArguments = getLocalTypeArguments(type);
+                        const newMapper = createTypeMapper(type.target.localTypeParameters, localTypeArguments);
+                        const newTypeArguments = instantiateTypes(newType.typeArguments, createReplacementMapper(type.target, anyType, combineTypeMappers(newMapper, mapper)));
+                        return createTypeReference(newType.target, newTypeArguments);
                     }
                     return newType;
                 }
@@ -12883,18 +12884,21 @@ namespace ts {
                     inferredType = getTypeFromInference(inference);
                 }
 
-                let constraint;
                 if (isGenericTypeParameter(inference.typeParameter)) {
-                    inferredType = getTargetType(inferredType);
-                    constraint = getApparentTypeOfGenericTypeParameter(inference.typeParameter);
+                    if (isTypeReference(inferredType) && length(inferredType.target.localTypeParameters) === length(inference.typeParameter.localTypeParameters)) {
+                        const inferredGeneric = <GenericType>getTargetType(inferredType);
+                        const localTypeArguments = getLocalTypeArguments(inference.typeParameter);
+                        const numInferredOuters = length(inferredGeneric.outerTypeParameters);
+                        const inferredOuterTypeArguments = numInferredOuters && inferredGeneric.typeArguments.slice(0, numInferredOuters);
+                        inferredType = createTypeReference(inferredGeneric, concatenate(inferredOuterTypeArguments, localTypeArguments));
+                    }
                 }
-                else {
-                    constraint = getConstraintOfTypeParameter(inference.typeParameter);
-                }
+
                 inference.inferredType = inferredType;
 
+                const constraint = getConstraintOfTypeParameter(inference.typeParameter);
                 if (constraint) {
-                    const instantiatedConstraint = instantiateType(constraint, createReplacementMapper(inference.typeParameter, inference.typeParameter, context));
+                    const instantiatedConstraint = instantiateType(constraint, context);
                     if (!context.compareTypes(inferredType, getTypeWithThisArgument(instantiatedConstraint, inferredType))) {
                         inference.inferredType = inferredType = instantiatedConstraint;
                     }
@@ -12902,6 +12906,13 @@ namespace ts {
             }
 
             return inferredType;
+        }
+
+        function getLocalTypeArguments(type: TypeReference): Type[] | undefined {
+            if (length(type.target.localTypeParameters)) {
+                return type.typeArguments.slice(length(type.target.outerTypeParameters), length(type.target.typeParameters));
+            }
+            return undefined;
         }
 
         function getDefaultTypeArgumentType(isInJavaScriptFile: boolean): Type {

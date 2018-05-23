@@ -1,6 +1,6 @@
 tests/cases/compiler/higherKindedTypesLift.ts(48,40): error TS2345: Argument of type 'FunctorX<number>' is not assignable to parameter of type 'FunctorX<string>'.
   Type 'number' is not assignable to type 'string'.
-tests/cases/compiler/higherKindedTypesLift.ts(65,41): error TS2345: Argument of type 'DiffFunctorY<string>' is not assignable to parameter of type 'NC<string>'.
+tests/cases/compiler/higherKindedTypesLift.ts(65,41): error TS2345: Argument of type 'DiffFunctorY<string>' is not assignable to parameter of type 'C1<string>'.
   Property 'map' is missing in type 'DiffFunctorY<string>'.
 
 
@@ -74,6 +74,6 @@ tests/cases/compiler/higherKindedTypesLift.ts(65,41): error TS2345: Argument of 
     // should have error because DiffFunctorY has diffMap function, not "map" as needed because liftedFunctor was created from staticMap which declared Functor
     const expectError2 = liftedStringLength(diffFunctorYString);
                                             ~~~~~~~~~~~~~~~~~~
-!!! error TS2345: Argument of type 'DiffFunctorY<string>' is not assignable to parameter of type 'NC<string>'.
+!!! error TS2345: Argument of type 'DiffFunctorY<string>' is not assignable to parameter of type 'C1<string>'.
 !!! error TS2345:   Property 'map' is missing in type 'DiffFunctorY<string>'.
     
