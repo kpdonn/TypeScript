@@ -1,18 +1,42 @@
+tests/cases/compiler/higherKindedTypes.ts(5,11): error TS2430: Interface 'FunctorX<A>' incorrectly extends interface 'Functor<A, FunctorX<A>>'.
+  Types of property 'map' are incompatible.
+    Type '<B>(f: (a: A) => B) => FunctorX<B>' is not assignable to type '<B>(f: (a: A) => B) => FunctorX<A>'.
+      Type 'FunctorX<B>' is not assignable to type 'FunctorX<A>'.
+        Type 'B' is not assignable to type 'A'.
+tests/cases/compiler/higherKindedTypes.ts(10,11): error TS2430: Interface 'FunctorY<A>' incorrectly extends interface 'Functor<A, FunctorY<A>>'.
+  Types of property 'map' are incompatible.
+    Type '<B>(f: (a: A) => B) => FunctorY<B>' is not assignable to type '<B>(f: (a: A) => B) => FunctorY<A>'.
+      Type 'FunctorY<B>' is not assignable to type 'FunctorY<A>'.
+        Type 'B' is not assignable to type 'A'.
+tests/cases/compiler/higherKindedTypes.ts(33,5): error TS2322: Type 'F<A>' is not assignable to type 'F<B>'.
+  Type 'A' is not assignable to type 'B'.
 tests/cases/compiler/higherKindedTypes.ts(37,5): error TS2322: Type 'F<A>' is not assignable to type 'F<B>'.
-  Type 'F<A>' is not assignable to type 'F<B>'.
+  Type 'A' is not assignable to type 'B'.
 
 
-==== tests/cases/compiler/higherKindedTypes.ts (1 errors) ====
+==== tests/cases/compiler/higherKindedTypes.ts (4 errors) ====
     interface Functor<A, Container<_T>> {
         map<B>(f: (a: A) => B): Container<B>;
     }
     
     interface FunctorX<A> extends Functor<A, FunctorX> {
+              ~~~~~~~~
+!!! error TS2430: Interface 'FunctorX<A>' incorrectly extends interface 'Functor<A, FunctorX<A>>'.
+!!! error TS2430:   Types of property 'map' are incompatible.
+!!! error TS2430:     Type '<B>(f: (a: A) => B) => FunctorX<B>' is not assignable to type '<B>(f: (a: A) => B) => FunctorX<A>'.
+!!! error TS2430:       Type 'FunctorX<B>' is not assignable to type 'FunctorX<A>'.
+!!! error TS2430:         Type 'B' is not assignable to type 'A'.
         map<B>(f: (a: A) => B): FunctorX<B>;
         xVal: string;
     }
     
     interface FunctorY<A> extends Functor<A, FunctorY> {
+              ~~~~~~~~
+!!! error TS2430: Interface 'FunctorY<A>' incorrectly extends interface 'Functor<A, FunctorY<A>>'.
+!!! error TS2430:   Types of property 'map' are incompatible.
+!!! error TS2430:     Type '<B>(f: (a: A) => B) => FunctorY<B>' is not assignable to type '<B>(f: (a: A) => B) => FunctorY<A>'.
+!!! error TS2430:       Type 'FunctorY<B>' is not assignable to type 'FunctorY<A>'.
+!!! error TS2430:         Type 'B' is not assignable to type 'A'.
         map<B>(f: (a: A) => B): FunctorY<B>;
         yVal: A;
     }
@@ -36,13 +60,16 @@ tests/cases/compiler/higherKindedTypes.ts(37,5): error TS2322: Type 'F<A>' is no
     function staticMap<F<_T> extends Functor<_T, F>, A, B>(fa: F<A>, f: (a: A) => B): F<B> {
         const result = fa.map(f);
         return result;
+        ~~~~~~~~~~~~~~
+!!! error TS2322: Type 'F<A>' is not assignable to type 'F<B>'.
+!!! error TS2322:   Type 'A' is not assignable to type 'B'.
     }
     
     function staticMapBadImplementation<F<_T> extends Functor<_T, F>, A, B>(fa: F<A>, f: (a: A) => B): F<B> {
         return fa;
         ~~~~~~~~~~
 !!! error TS2322: Type 'F<A>' is not assignable to type 'F<B>'.
-!!! error TS2322:   Type 'F<A>' is not assignable to type 'F<B>'.
+!!! error TS2322:   Type 'A' is not assignable to type 'B'.
     }
     
     const resultX3 = staticMap(initialX, val => val.length);

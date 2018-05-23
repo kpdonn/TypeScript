@@ -3768,21 +3768,22 @@ namespace ts {
     }
 
     export const enum ObjectFlags {
-        Class            = 1 << 0,  // Class
-        Interface        = 1 << 1,  // Interface
-        Reference        = 1 << 2,  // Generic type reference
-        Tuple            = 1 << 3,  // Synthesized generic tuple type
-        Anonymous        = 1 << 4,  // Anonymous
-        Mapped           = 1 << 5,  // Mapped
-        Instantiated     = 1 << 6,  // Instantiated anonymous or mapped type
-        ObjectLiteral    = 1 << 7,  // Originates in an object literal
-        EvolvingArray    = 1 << 8,  // Evolving array type
+        Class                                      = 1 << 0,  // Class
+        Interface                                  = 1 << 1,  // Interface
+        Reference                                  = 1 << 2,  // Generic type reference
+        Tuple                                      = 1 << 3,  // Synthesized generic tuple type
+        Anonymous                                  = 1 << 4,  // Anonymous
+        Mapped                                     = 1 << 5,  // Mapped
+        Instantiated                               = 1 << 6,  // Instantiated anonymous or mapped type
+        ObjectLiteral                              = 1 << 7,  // Originates in an object literal
+        EvolvingArray                              = 1 << 8,  // Evolving array type
         ObjectLiteralPatternWithComputedProperties = 1 << 9,  // Object literal pattern with computed properties
-        ContainsSpread   = 1 << 10, // Object literal contains spread operation
-        ReverseMapped    = 1 << 11, // Object contains a property from a reverse-mapped type
-        JsxAttributes    = 1 << 12, // Jsx attributes type
-        MarkerType       = 1 << 13, // Marker type used for variance probing
-        GenericTypeParameter = 1 << 14, // Apparent type of generic type parameter
+        ContainsSpread                             = 1 << 10, // Object literal contains spread operation
+        ReverseMapped                              = 1 << 11, // Object contains a property from a reverse-mapped type
+        JsxAttributes                              = 1 << 12, // Jsx attributes type
+        MarkerType                                 = 1 << 13, // Marker type used for variance probing
+        GenericTypeParameter                       = 1 << 14, // uninstantiated type parameter that has its own type parameters
+        GenericTypeParameterReference              = 1 << 15, // type reference with a GenericTypeParameter as its target
 
         ClassOrInterface = Class | Interface
     }
@@ -3948,36 +3949,34 @@ namespace ts {
         resolvedStringIndexType?: IndexType;
     }
 
-    // Type parameters (TypeFlags.TypeParameter)
-    export interface TypeParameter extends InstantiableType {
+    // non-generic type parameters (TypeFlags.TypeParameter)
+    export interface PlainTypeParameter extends InstantiableType {
         /** Retrieve using getConstraintFromTypeParameter */
         /* @internal */
         constraint?: Type;        // Constraint
         /* @internal */
         default?: Type;
         /* @internal */
-        target?: TypeParameter;  // Instantiation target
+        original?: PlainTypeParameter; // The type parameter this type parameter was cloned from
         /* @internal */
-        mapper?: TypeMapper;     // Instantiation mapper
+        mapper?: TypeMapper; // mapper for cloned type parameters
         /* @internal */
         isThisType?: boolean;
-        /* @internal */
-        resolvedDefaultType?: Type;
-        /* @internal */
-        typeParameters?: TypeParameter[];
-        /* @internal */
-        typeArguments?: Type[]; // Only set for references
-        /* @internal */
-        genericTarget?: TypeParameter; // This is the original generic type parameter a type parameter reference points to
-        /* @internal */
-        references?: Map<TypeParameter>;  // Generic instantiation cache for generic type parameters
-        /* @internal */
-        outerTypeParameters?: TypeParameter[]; // only set for generic type parameters
-        /* @internal */
-        localTypeParameters?: TypeParameter[]; // only set for generic type parameters
-        /* @internal */
-        resolvedApparentType?: Type;
     }
+
+    // Generic type parameters (TypeFlags.Object, ObjectFlags.GenericTypeParameter)
+    export interface GenericTypeParameter extends GenericType, InstantiableType, InterfaceTypeWithDeclaredMembers {
+        /* @internal */
+        constraint?: Type;
+        /* @internal */
+        default?: Type;
+        /* @internal */
+        original?: GenericTypeParameter; // The type parameter this type parameter was cloned from
+        /* @internal */
+        mapper?: TypeMapper; // mapper for cloned type parameters
+    }
+
+    export type TypeParameter = PlainTypeParameter | GenericTypeParameter;
 
     // Indexed access types (TypeFlags.IndexedAccess)
     // Possible forms are T[xxx], xxx[T], or xxx[keyof T], where T is a type variable
@@ -4095,11 +4094,10 @@ namespace ts {
         NakedTypeVariable               = 1 << 0,  // Naked type variable in union or intersection type
         HomomorphicMappedType           = 1 << 1,  // Reverse inference for homomorphic mapped type
         MappedTypeConstraint            = 1 << 2,  // Reverse inference for mapped type
-        GenericTypeParameterConstraint  = 1 << 3,  // Inferred from constraint of a generic type parameter
-        ReturnType                      = 1 << 4,  // Inference made from return type of generic function
-        LiteralKeyof                    = 1 << 5,  // Inference made from a string literal to a keyof T
-        NoConstraints                   = 1 << 6,  // Don't infer from constraints of instantiable types
-        AlwaysStrict                    = 1 << 7,  // Always use strict rules for contravariant inferences
+        ReturnType                      = 1 << 3,  // Inference made from return type of generic function
+        LiteralKeyof                    = 1 << 4,  // Inference made from a string literal to a keyof T
+        NoConstraints                   = 1 << 5,  // Don't infer from constraints of instantiable types
+        AlwaysStrict                    = 1 << 6,  // Always use strict rules for contravariant inferences
 
         PriorityImpliesCombination  = ReturnType | MappedTypeConstraint | LiteralKeyof,  // These priorities imply that the resulting type should be a combination of all candidates
     }

@@ -1,10 +1,14 @@
-tests/cases/compiler/higherKindedTypesLift.ts(28,35): error TS2345: Argument of type 'NC<LRA>' is not assignable to parameter of type 'C<LRA>'.
-  Type 'NC<LRA>' is not assignable to type 'C<LRA>'.
+tests/cases/compiler/higherKindedTypesLift.ts(7,5): error TS2416: Property 'map' in type 'FunctorX<A>' is not assignable to the same property in base type 'Functor<A, FunctorX<A>>'.
+  Type '<B>(f: (a: A) => B) => FunctorX<B>' is not assignable to type '<B>(f: (a: A) => B) => FunctorX<A>'.
+    Type 'FunctorX<B>' is not assignable to type 'FunctorX<A>'.
+      Type 'B' is not assignable to type 'A'.
+tests/cases/compiler/higherKindedTypesLift.ts(32,5): error TS2322: Type 'C1<A1>' is not assignable to type 'C1<B1>'.
+  Type 'A1' is not assignable to type 'B1'.
 tests/cases/compiler/higherKindedTypesLift.ts(48,40): error TS2345: Argument of type 'FunctorX<number>' is not assignable to parameter of type 'FunctorX<string>'.
   Type 'number' is not assignable to type 'string'.
 
 
-==== tests/cases/compiler/higherKindedTypesLift.ts (2 errors) ====
+==== tests/cases/compiler/higherKindedTypesLift.ts (3 errors) ====
     export interface Functor<A, Container<_T>> {
         map<B>(f: (a: A) => B): Container<B>;
     }
@@ -12,6 +16,11 @@ tests/cases/compiler/higherKindedTypesLift.ts(48,40): error TS2345: Argument of 
     class FunctorX<A> implements Functor<A, FunctorX> {
         constructor(private elements: A[]) {}
         map<B>(f: (a: A) => B): FunctorX<B> {
+        ~~~
+!!! error TS2416: Property 'map' in type 'FunctorX<A>' is not assignable to the same property in base type 'Functor<A, FunctorX<A>>'.
+!!! error TS2416:   Type '<B>(f: (a: A) => B) => FunctorX<B>' is not assignable to type '<B>(f: (a: A) => B) => FunctorX<A>'.
+!!! error TS2416:     Type 'FunctorX<B>' is not assignable to type 'FunctorX<A>'.
+!!! error TS2416:       Type 'B' is not assignable to type 'A'.
             const mappedElements = this.elements.map(f);
             return new FunctorX(mappedElements);
         }
@@ -33,13 +42,13 @@ tests/cases/compiler/higherKindedTypesLift.ts(48,40): error TS2345: Argument of 
     
     function lift<C<_T>>(fToLift: StaticFunctor<C>): LiftedResult<C> {
         return lmap => lca => fToLift(lca, lmap);
-                                      ~~~
-!!! error TS2345: Argument of type 'NC<LRA>' is not assignable to parameter of type 'C<LRA>'.
-!!! error TS2345:   Type 'NC<LRA>' is not assignable to type 'C<LRA>'.
     }
     
     function staticMap<C1<_T1> extends Functor<_T1, C1>, A1, B1>(fa1: C1<A1>, fmap1: (a1: A1) => B1): C1<B1> {
         return fa1.map(fmap1);
+        ~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'C1<A1>' is not assignable to type 'C1<B1>'.
+!!! error TS2322:   Type 'A1' is not assignable to type 'B1'.
     }
     
     const liftedFunctor = lift(staticMap);
