@@ -154,15 +154,15 @@ function staticMap<F<_T> extends Functor<_T, F>, A, B>(fa: F<A>, f: (a: A) => B)
 >B : B
 
     const result = fa.map(f);
->result : F<A>
->fa.map(f) : F<A>
->fa.map : <B>(f: (a: A) => B) => F<A>
+>result : F<B>
+>fa.map(f) : F<B>
+>fa.map : <B>(f: (a: A) => B) => F<B>
 >fa : F<A>
->map : <B>(f: (a: A) => B) => F<A>
+>map : <B>(f: (a: A) => B) => F<B>
 >f : (a: A) => B
 
     return result;
->result : F<A>
+>result : F<B>
 }
 
 function staticMapBadImplementation<F<_T> extends Functor<_T, F>, A, B>(fa: F<A>, f: (a: A) => B): F<B> {

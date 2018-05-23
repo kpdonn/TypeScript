@@ -5591,19 +5591,19 @@ namespace ts {
             if (!links.declaredType) {
                 const localTypeParameters = getLocalTypeParametersOfClassOrInterfaceOrTypeAlias(symbol);
                 if (localTypeParameters) {
-                    const type = <GenericType & InterfaceTypeWithDeclaredMembers>createObjectType(ObjectFlags.GenericTypeParameter | ObjectFlags.Reference);
+                    const type = <GenericTypeParameter>createObjectType(ObjectFlags.GenericTypeParameter | ObjectFlags.Reference);
                     type.symbol = symbol;
                     links.declaredType = type;
 
                     type.localTypeParameters = localTypeParameters;
-                    const declaration = <TypeParameterDeclaration>getDeclarationOfKind(symbol, SyntaxKind.TypeParameter);
+                    const declaration = getDeclarationOfKind<TypeParameterDeclaration>(symbol, SyntaxKind.TypeParameter);
                     const outerTypeParameters = getOuterTypeParameters(declaration);
                     type.outerTypeParameters = filter(outerTypeParameters, tp => tp !== type && isTypeParameterPossiblyReferenced(tp, declaration.constraint));
                     type.typeParameters = concatenate(type.outerTypeParameters, type.localTypeParameters);
 
                     type.instantiations = createMap<TypeReference>();
-                    type.instantiations.set(getTypeListId(type.typeParameters), <GenericType>type);
-                    type.target = <GenericType>type;
+                    type.instantiations.set(getTypeListId(type.typeParameters), type);
+                    type.target = type;
                     type.typeArguments = type.typeParameters;
                     type.thisType = <PlainTypeParameter>createType(TypeFlags.TypeParameter);
                     type.thisType.isThisType = true;
@@ -6515,6 +6515,10 @@ namespace ts {
 
         function isTypeVariable(type: Type): boolean {
             return !!(type.flags & TypeFlags.TypeVariable || isGenericTypeParameter(type) || isGenericTypeParameterReference(type));
+        }
+
+        function isTypeReference(type: Type): type is TypeReference {
+            return !!(getObjectFlags(type) & ObjectFlags.Reference);
         }
 
         function resolveStructuredTypeMembers(type: StructuredType): ResolvedType {
@@ -9804,13 +9808,15 @@ namespace ts {
                 if ((<ObjectType>type).objectFlags & ObjectFlags.GenericTypeParameter) {
                     return mapper(type);
                 }
-                if ((<ObjectType>type).objectFlags & ObjectFlags.GenericTypeParameterReference) {
-                    const newType = mapper((<TypeReference>type).target);
-                    if (newType.flags & TypeFlags.Object && (<ObjectType>newType).objectFlags & ObjectFlags.Reference) {
-                        Debug.assertEqual(length((<TypeReference>newType).target.localTypeParameters), length((<TypeReference>type).target.localTypeParameters));
-                        const typeArguments = (<TypeReference>type).typeArguments;
-                        const newTypeArguments = instantiateTypes(typeArguments, mapper);
-                        return createTypeReference((<TypeReference>newType).target, newTypeArguments);
+                if (isGenericTypeParameterReference(type)) {
+                    const newType = mapper(type.target);
+                    if (isTypeReference(newType)) {
+                        Debug.assertEqual(length(newType.target.localTypeParameters), length(type.target.localTypeParameters));
+                        const localTypeArguments = type.typeArguments.slice(length(type.target.outerTypeParameters), length(type.target.typeParameters));
+                        const newLocalTypeArguments = instantiateTypes(localTypeArguments, mapper);
+                        const numNewOuters = length(newType.target.outerTypeParameters);
+                        const newOuterTypeArguments = numNewOuters && newType.typeArguments.slice(0, numNewOuters);
+                        return createTypeReference(newType.target, concatenate(newOuterTypeArguments, newLocalTypeArguments));
                     }
                     return newType;
                 }

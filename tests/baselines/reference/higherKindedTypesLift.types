@@ -159,10 +159,10 @@ function staticMap<C1<_T1> extends Functor<_T1, C1>, A1, B1>(fa1: C1<A1>, fmap1:
 >B1 : B1
 
     return fa1.map(fmap1);
->fa1.map(fmap1) : C1<A1>
->fa1.map : <B>(f: (a: A1) => B) => C1<A1>
+>fa1.map(fmap1) : C1<B1>
+>fa1.map : <B>(f: (a: A1) => B) => C1<B>
 >fa1 : C1<A1>
->map : <B>(f: (a: A1) => B) => C1<A1>
+>map : <B>(f: (a: A1) => B) => C1<B>
 >fmap1 : (a1: A1) => B1
 }
 
