@@ -47,5 +47,21 @@ const functorXString = new FunctorX(["myFunctorX"]);
 const result = liftedStringLength(functorXString);
 const expectedType: FunctorX<number> = result;
 
-const expectError = liftedStringLength(result)
+const expectError = liftedStringLength(result);
 
+
+
+export interface DiffFunctor<DA, DContainer<_T>> {
+    diffMap<DB>(df: (da: DA) => DB): DContainer<DB>;
+}
+
+declare class DiffFunctorY<A> implements DiffFunctor<A, DiffFunctorY> {
+
+    diffMap<B>(f: (a: A) => B): DiffFunctorY<B>
+
+    firstValY(): A | undefined
+}
+
+declare const diffFunctorYString: DiffFunctorY<string>;
+// should have error because DiffFunctorY has diffMap function, not "map" as needed because liftedFunctor was created from staticMap which declared Functor
+const expectError2 = liftedStringLength(diffFunctorYString);

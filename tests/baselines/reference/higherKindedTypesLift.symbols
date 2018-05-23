@@ -191,9 +191,59 @@ const expectedType: FunctorX<number> = result;
 >FunctorX : Symbol(FunctorX, Decl(higherKindedTypesLift.ts, 2, 1))
 >result : Symbol(result, Decl(higherKindedTypesLift.ts, 44, 5))
 
-const expectError = liftedStringLength(result)
+const expectError = liftedStringLength(result);
 >expectError : Symbol(expectError, Decl(higherKindedTypesLift.ts, 47, 5))
 >liftedStringLength : Symbol(liftedStringLength, Decl(higherKindedTypesLift.ts, 40, 5))
 >result : Symbol(result, Decl(higherKindedTypesLift.ts, 44, 5))
 
+
+
+export interface DiffFunctor<DA, DContainer<_T>> {
+>DiffFunctor : Symbol(DiffFunctor, Decl(higherKindedTypesLift.ts, 47, 47))
+>DA : Symbol(DA, Decl(higherKindedTypesLift.ts, 51, 29))
+>DContainer : Symbol(DContainer, Decl(higherKindedTypesLift.ts, 51, 32))
+>_T : Symbol(_T, Decl(higherKindedTypesLift.ts, 51, 44))
+
+    diffMap<DB>(df: (da: DA) => DB): DContainer<DB>;
+>diffMap : Symbol(DiffFunctor.diffMap, Decl(higherKindedTypesLift.ts, 51, 50))
+>DB : Symbol(DB, Decl(higherKindedTypesLift.ts, 52, 12))
+>df : Symbol(df, Decl(higherKindedTypesLift.ts, 52, 16))
+>da : Symbol(da, Decl(higherKindedTypesLift.ts, 52, 21))
+>DA : Symbol(DA, Decl(higherKindedTypesLift.ts, 51, 29))
+>DB : Symbol(DB, Decl(higherKindedTypesLift.ts, 52, 12))
+>DContainer : Symbol(DContainer, Decl(higherKindedTypesLift.ts, 51, 32))
+>DB : Symbol(DB, Decl(higherKindedTypesLift.ts, 52, 12))
+}
+
+declare class DiffFunctorY<A> implements DiffFunctor<A, DiffFunctorY> {
+>DiffFunctorY : Symbol(DiffFunctorY, Decl(higherKindedTypesLift.ts, 53, 1))
+>A : Symbol(A, Decl(higherKindedTypesLift.ts, 55, 27))
+>DiffFunctor : Symbol(DiffFunctor, Decl(higherKindedTypesLift.ts, 47, 47))
+>A : Symbol(A, Decl(higherKindedTypesLift.ts, 55, 27))
+>DiffFunctorY : Symbol(DiffFunctorY, Decl(higherKindedTypesLift.ts, 53, 1))
+
+    diffMap<B>(f: (a: A) => B): DiffFunctorY<B>
+>diffMap : Symbol(DiffFunctorY.diffMap, Decl(higherKindedTypesLift.ts, 55, 71))
+>B : Symbol(B, Decl(higherKindedTypesLift.ts, 57, 12))
+>f : Symbol(f, Decl(higherKindedTypesLift.ts, 57, 15))
+>a : Symbol(a, Decl(higherKindedTypesLift.ts, 57, 19))
+>A : Symbol(A, Decl(higherKindedTypesLift.ts, 55, 27))
+>B : Symbol(B, Decl(higherKindedTypesLift.ts, 57, 12))
+>DiffFunctorY : Symbol(DiffFunctorY, Decl(higherKindedTypesLift.ts, 53, 1))
+>B : Symbol(B, Decl(higherKindedTypesLift.ts, 57, 12))
+
+    firstValY(): A | undefined
+>firstValY : Symbol(DiffFunctorY.firstValY, Decl(higherKindedTypesLift.ts, 57, 47))
+>A : Symbol(A, Decl(higherKindedTypesLift.ts, 55, 27))
+}
+
+declare const diffFunctorYString: DiffFunctorY<string>;
+>diffFunctorYString : Symbol(diffFunctorYString, Decl(higherKindedTypesLift.ts, 62, 13))
+>DiffFunctorY : Symbol(DiffFunctorY, Decl(higherKindedTypesLift.ts, 53, 1))
+
+// should have error because DiffFunctorY has diffMap function, not "map" as needed because liftedFunctor was created from staticMap which declared Functor
+const expectError2 = liftedStringLength(diffFunctorYString);
+>expectError2 : Symbol(expectError2, Decl(higherKindedTypesLift.ts, 64, 5))
+>liftedStringLength : Symbol(liftedStringLength, Decl(higherKindedTypesLift.ts, 40, 5))
+>diffFunctorYString : Symbol(diffFunctorYString, Decl(higherKindedTypesLift.ts, 62, 13))
 

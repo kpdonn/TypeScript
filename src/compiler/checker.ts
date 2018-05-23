@@ -6815,7 +6815,8 @@ namespace ts {
 
         function getApparentTypeOfGenericTypeParameter(type: GenericTypeParameter) {
             const localTypeArgs = map(type.localTypeParameters, getApparentType);
-            return createTypeReference(type, concatenate(type.outerTypeParameters, localTypeArgs));
+            const outerTypeArgs = type.mapper && instantiateTypes(type.outerTypeParameters, type.mapper);
+            return createTypeReference(type, concatenate(outerTypeArgs, localTypeArgs));
         }
 
         function getResolvedTypeParameterDefault(typeParameter: TypeParameter): Type | undefined {
@@ -9692,7 +9693,7 @@ namespace ts {
             return type;
         }
 
-        function maybeTypeParameterReference(node: Node, genericTypeParameter?: boolean) {
+        function maybeTypeParameterReference(node: Node, genericTypeParameter: boolean) {
             return !(node.kind === SyntaxKind.QualifiedName ||
                !genericTypeParameter && node.parent.kind === SyntaxKind.TypeReference && (<TypeReferenceNode>node.parent).typeArguments && node === (<TypeReferenceNode>node.parent).typeName);
         }
@@ -9713,7 +9714,7 @@ namespace ts {
                     case SyntaxKind.ThisType:
                         return (<PlainTypeParameter>tp).isThisType;
                     case SyntaxKind.Identifier:
-                        return !(<PlainTypeParameter>tp).isThisType && isPartOfTypeNode(node) && maybeTypeParameterReference(node) &&
+                        return !(<PlainTypeParameter>tp).isThisType && isPartOfTypeNode(node) && maybeTypeParameterReference(node, isGenericTypeParameter(tp)) &&
                             getTypeFromTypeNode(<TypeNode>node) === tp;
                     case SyntaxKind.TypeQuery:
                         return true;
@@ -12893,7 +12894,7 @@ namespace ts {
                 inference.inferredType = inferredType;
 
                 if (constraint) {
-                    const instantiatedConstraint = instantiateType(constraint, context);
+                    const instantiatedConstraint = instantiateType(constraint, createReplacementMapper(inference.typeParameter, inference.typeParameter, context));
                     if (!context.compareTypes(inferredType, getTypeWithThisArgument(instantiatedConstraint, inferredType))) {
                         inference.inferredType = inferredType = instantiatedConstraint;
                     }
