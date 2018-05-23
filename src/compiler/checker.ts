@@ -6712,7 +6712,7 @@ namespace ts {
         }
 
         function getBaseConstraintOfInstantiableNonPrimitiveUnionOrIntersection(type: Type) {
-            if (type.flags & (TypeFlags.InstantiableNonPrimitive | TypeFlags.UnionOrIntersection)) {
+            if (type.flags & (TypeFlags.InstantiableNonPrimitive | TypeFlags.UnionOrIntersection) || isGenericTypeParameter(type)) {
                 const constraint = getResolvedBaseConstraint(<InstantiableType | UnionOrIntersectionType>type);
                 if (constraint !== noConstraintType && constraint !== circularConstraintType) {
                     return constraint;
@@ -6813,6 +6813,11 @@ namespace ts {
             return type.resolvedApparentType || (type.resolvedApparentType = getTypeWithThisArgument(type, type, /*apparentType*/ true));
         }
 
+        function getApparentTypeOfGenericTypeParameter(type: GenericTypeParameter) {
+            const localTypeArgs = map(type.localTypeParameters, getApparentType);
+            return createTypeReference(type, concatenate(type.outerTypeParameters, localTypeArgs));
+        }
+
         function getResolvedTypeParameterDefault(typeParameter: TypeParameter): Type | undefined {
             if (!typeParameter.default) {
                 if (typeParameter.original) {
@@ -6866,7 +6871,7 @@ namespace ts {
          * type itself. Note that the apparent type of a union type is the union type itself.
          */
         function getApparentType(type: Type): Type {
-            const t = type.flags & TypeFlags.Instantiable || isGenericTypeParameter(type) ? getBaseConstraintOfType(type) || emptyObjectType : type;
+            const t = type.flags & TypeFlags.Instantiable ? getBaseConstraintOfType(type) || emptyObjectType : type;
             return t.flags & TypeFlags.Intersection ? getApparentTypeOfIntersectionType(<IntersectionType>t) :
                 t.flags & TypeFlags.StringLike ? globalStringType :
                 t.flags & TypeFlags.NumberLike ? globalNumberType :
@@ -6874,6 +6879,7 @@ namespace ts {
                 t.flags & TypeFlags.ESSymbolLike ? getGlobalESSymbolType(/*reportErrors*/ languageVersion >= ScriptTarget.ES2015) :
                 t.flags & TypeFlags.NonPrimitive ? emptyObjectType :
                 t.flags & TypeFlags.Index ? keyofConstraintType :
+                isGenericTypeParameter(t) ? getApparentTypeOfGenericTypeParameter(t) :
                 t;
         }
 
@@ -7508,8 +7514,10 @@ namespace ts {
         function getBaseSignature(signature: Signature) {
             const typeParameters = signature.typeParameters;
             if (typeParameters) {
-                const typeEraser = createTypeEraser(typeParameters);
-                const baseConstraints = map(typeParameters, tp => instantiateType(getBaseConstraintOfType(tp), typeEraser) || emptyObjectType);
+                // for generic type parameters just erase the child type parameters, not the generic type parameter itself
+                // because generic type parameters are an object type that can be inferred
+                const typeEraser = createTypeEraser(flatMap(typeParameters, tp => isGenericTypeParameter(tp) ? tp.localTypeParameters : tp));
+                const baseConstraints = map(typeParameters, tp => instantiateType(getApparentType(tp), typeEraser) || emptyObjectType);
                 return instantiateSignature(signature, createTypeMapper(typeParameters, baseConstraints), /*eraseTypeParameters*/ true);
             }
             return signature;
@@ -12877,8 +12885,7 @@ namespace ts {
                 let constraint;
                 if (isGenericTypeParameter(inference.typeParameter)) {
                     inferredType = getTargetType(inferredType);
-                    const localTypeArgs = map(inference.typeParameter.localTypeParameters, getApparentType);
-                    constraint = createTypeReference(inference.typeParameter, concatenate(inference.typeParameter.outerTypeParameters, localTypeArgs));
+                    constraint = getApparentTypeOfGenericTypeParameter(inference.typeParameter);
                 }
                 else {
                     constraint = getConstraintOfTypeParameter(inference.typeParameter);

@@ -167,8 +167,8 @@ function staticMap<C1<_T1> extends Functor<_T1, C1>, A1, B1>(fa1: C1<A1>, fmap1:
 }
 
 const liftedFunctor = lift(staticMap);
->liftedFunctor : LiftedResult<{}>
->lift(staticMap) : LiftedResult<{}>
+>liftedFunctor : LiftedResult<C1<_T1>>
+>lift(staticMap) : LiftedResult<C1<_T1>>
 >lift : <C>(fToLift: StaticFunctor<C<_T>>) => LiftedResult<C<_T>>
 >staticMap : <C1 extends Functor<_T1, C1<_T1>>, A1, B1>(fa1: C1<A1>, fmap1: (a1: A1) => B1) => C1<B1>
 
@@ -185,7 +185,7 @@ function stringLength(strarg: string): number {
 const liftedStringLength = liftedFunctor(stringLength);
 >liftedStringLength : <NC extends LRC<_NT>>(lrclra: NC<string>) => NC<number>
 >liftedFunctor(stringLength) : <NC extends LRC<_NT>>(lrclra: NC<string>) => NC<number>
->liftedFunctor : LiftedResult<{}>
+>liftedFunctor : LiftedResult<C1<_T1>>
 >stringLength : (strarg: string) => number
 
 const functorXString = new FunctorX(["myFunctorX"]);
