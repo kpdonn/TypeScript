@@ -188,6 +188,35 @@ function staticMapBadImplementation<F<_T> extends Functor<_T, F>, A, B>(fa: F<A>
 >fa : F<A>
 }
 
+function staticMapNoConstraint<F<_T>, A, B>(fa: F<A>, f: (a: A) => B): F<B> {
+>staticMapNoConstraint : <F, A, B>(fa: F<A>, f: (a: A) => B) => F<B>
+>F : F<_T>
+>_T : _T
+>A : A
+>B : B
+>fa : F<A>
+>F : F<_T>
+>A : A
+>f : (a: A) => B
+>a : A
+>A : A
+>B : B
+>F : F<_T>
+>B : B
+
+    // expect error here since F has no constraint so we have no idea what shape it will be
+    const result = fa.map(f);
+>result : any
+>fa.map(f) : any
+>fa.map : any
+>fa : F<A>
+>map : any
+>f : (a: A) => B
+
+    return result;
+>result : any
+}
+
 const resultX3 = staticMap(initialX, val => val.length);
 >resultX3 : FunctorX<number>
 >staticMap(initialX, val => val.length) : FunctorX<number>
