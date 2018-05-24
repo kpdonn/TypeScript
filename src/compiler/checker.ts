@@ -9823,8 +9823,7 @@ namespace ts {
                     let newType = mapper(type.target);
                     newType = (<WrapperType>newType).wrappedType || newType;
                     if (isTypeReference(newType)) {
-                        // need replacement mapper to avoid infinite loop when encountering pattern like `T<_T> extends Functor<_T, T>` and we are instantiating `T` as its constraint
-                        const newMapper = createReplacementMapper(type.target, anyType, combineTypeMappers(getLocalTypeArgumentMapper(type), mapper));
+                        const newMapper = combineTypeMappers(getLocalTypeArgumentMapper(type), mapper);
                         const newTypeArguments = instantiateTypes(newType.typeArguments, newMapper);
                         return createTypeReference(newType.target, newTypeArguments);
                     }
