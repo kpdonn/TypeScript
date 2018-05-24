@@ -7817,11 +7817,12 @@ namespace ts {
             if (!parentTypeParameter || length(genericType.localTypeParameters) !== length(parentTypeParameter.localTypeParameters)) {
                 return undefined;
             }
+            return makeGenericTypeArgument(parentTypeParameter, genericType);
+        }
 
-            const localTypeArguments = getLocalTypeArguments(parentTypeParameter);
-            const numOuters = length(genericType.outerTypeParameters);
-            const outerTypeArguments = numOuters && genericType.typeArguments.slice(0, numOuters);
-            return createTypeReference(genericType, concatenate(outerTypeArguments, localTypeArguments));
+        function makeGenericTypeArgument(source: GenericTypeParameter, target: GenericType): Type {
+            Debug.assertEqual(length(source.localTypeParameters), length(target.localTypeParameters));
+            return createTypeReference(target, concatenate(target.outerTypeParameters, source.localTypeParameters));
         }
 
         function getTypeReferenceName(node: TypeReferenceType): EntityNameOrEntityNameExpression | undefined {
@@ -9822,10 +9823,8 @@ namespace ts {
                     let newType = mapper(type.target);
                     newType = (<WrapperType>newType).wrappedType || newType;
                     if (isTypeReference(newType)) {
-                        const localTypeArguments = getLocalTypeArguments(type);
-                        const localArgsMapper = createTypeMapper(type.target.localTypeParameters, localTypeArguments);
                         // need replacement mapper to avoid infinite loop when encountering pattern like `T<_T> extends Functor<_T, T>` and we are instantiating `T` as its constraint
-                        const newMapper = createReplacementMapper(type.target, anyType, combineTypeMappers(localArgsMapper, mapper));
+                        const newMapper = createReplacementMapper(type.target, anyType, combineTypeMappers(getLocalTypeArgumentMapper(type), mapper));
                         const newTypeArguments = instantiateTypes(newType.typeArguments, newMapper);
                         return createTypeReference(newType.target, newTypeArguments);
                     }
@@ -9860,6 +9859,14 @@ namespace ts {
                 return instantiateType((<SubstitutionType>type).typeVariable, mapper);
             }
             return type;
+        }
+
+        function getLocalTypeArgumentMapper(type: TypeReference): TypeMapper | undefined {
+            if (length(type.target.localTypeParameters)) {
+                const localTypeArguments = type.typeArguments.slice(length(type.target.outerTypeParameters), length(type.target.typeParameters));
+                return createTypeMapper(type.target.localTypeParameters, localTypeArguments);
+            }
+            return undefined;
         }
 
         function getWildcardInstantiation(type: Type) {
@@ -12912,11 +12919,6 @@ namespace ts {
             return inferredType;
         }
 
-        function makeGenericTypeArgument(source: GenericTypeParameter, target: GenericType): Type {
-            Debug.assertEqual(length(source.localTypeParameters), length(target.localTypeParameters));
-            return createTypeReference(target, concatenate(target.outerTypeParameters, source.localTypeParameters));
-        }
-
         function wrapType(type: Type): WrapperType {
             if (!type.wrapperType) {
                 const wrapper = <WrapperType>createObjectType(ObjectFlags.Wrapper);
@@ -12924,13 +12926,6 @@ namespace ts {
                 type.wrapperType = wrapper;
             }
             return type.wrapperType;
-        }
-
-        function getLocalTypeArguments(type: TypeReference): Type[] | undefined {
-            if (length(type.target.localTypeParameters)) {
-                return type.typeArguments.slice(length(type.target.outerTypeParameters), length(type.target.typeParameters));
-            }
-            return undefined;
         }
 
         function getDefaultTypeArgumentType(isInJavaScriptFile: boolean): Type {
