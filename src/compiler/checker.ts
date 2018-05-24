@@ -9801,6 +9801,12 @@ namespace ts {
             return getConditionalType(root, mapper);
         }
 
+        function instantiateTypeReference(type: TypeReference, mapper: TypeMapper): Type {
+            const typeArguments = type.typeArguments;
+            const newTypeArguments = instantiateTypes(typeArguments, mapper);
+            return newTypeArguments !== typeArguments ? createTypeReference(type.target, newTypeArguments) : type;
+        }
+
         function instantiateType(type: Type, mapper: TypeMapper): Type {
             if (!(type && mapper && mapper !== identityMapper)) {
                 return type;
@@ -9820,19 +9826,17 @@ namespace ts {
                     return getAnonymousTypeInstantiation(<MappedType>type, mapper);
                 }
                 if (isTypeParameterReference(type)) {
-                    let newType = mapper(type.target);
-                    newType = (<WrapperType>newType).wrappedType || newType;
-                    if (isTypeReference(newType)) {
-                        const newMapper = combineTypeMappers(getLocalTypeArgumentMapper(type), mapper);
-                        const newTypeArguments = instantiateTypes(newType.typeArguments, newMapper);
-                        return createTypeReference(newType.target, newTypeArguments);
+                    const newType = unwrapType(mapper(type.target));
+                    if (newType === type) {
+                        return instantiateTypeReference(type, mapper);
                     }
-                    return newType;
+                    const newMapper = combineTypeMappers(getLocalTypeArgumentMapper(type), mapper);
+                    // if newType is genericTypeParameter it can't be instantiated by instantiateType because it would match
+                    // type.flags & TypeFlags.TypeParameter before (<ObjectType>type).objectFlags & ObjectFlags.Reference
+                    return isGenericTypeParameter(newType) ? instantiateTypeReference(newType, newMapper) : instantiateType(newType, newMapper);
                 }
                 if ((<ObjectType>type).objectFlags & ObjectFlags.Reference) {
-                    const typeArguments = (<TypeReference>type).typeArguments;
-                    const newTypeArguments = instantiateTypes(typeArguments, mapper);
-                    return newTypeArguments !== typeArguments ? createTypeReference((<TypeReference>type).target, newTypeArguments) : type;
+                    return instantiateTypeReference(<TypeReference>type, mapper);
                 }
             }
             if (type.flags & TypeFlags.Union && !(type.flags & TypeFlags.Primitive)) {
@@ -12925,6 +12929,10 @@ namespace ts {
                 type.wrapperType = wrapper;
             }
             return type.wrapperType;
+        }
+
+        function unwrapType(type: Type): Type {
+            return getObjectFlags(type) & ObjectFlags.Wrapper ? (<WrapperType>type).wrappedType : type;
         }
 
         function getDefaultTypeArgumentType(isInJavaScriptFile: boolean): Type {
