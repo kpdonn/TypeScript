@@ -196,21 +196,21 @@ const functorXString = new FunctorX(["myFunctorX"]);
 >"myFunctorX" : "myFunctorX"
 
 const result = liftedStringLength(functorXString);
->result : FunctorX<number>
->liftedStringLength(functorXString) : FunctorX<number>
+>result : any
+>liftedStringLength(functorXString) : any
 >liftedStringLength : <NC extends C1<_NT>>(lrclra: LiftedResult<C1<_LT>>.NC<string>) => LiftedResult<C1<_LT>>.NC<number>
 >functorXString : FunctorX<string>
 
 const expectedType: FunctorX<number> = result;
 >expectedType : FunctorX<number>
 >FunctorX : FunctorX<AX>
->result : FunctorX<number>
+>result : any
 
 const expectError = liftedStringLength(result);
 >expectError : any
 >liftedStringLength(result) : any
 >liftedStringLength : <NC extends C1<_NT>>(lrclra: LiftedResult<C1<_LT>>.NC<string>) => LiftedResult<C1<_LT>>.NC<number>
->result : FunctorX<number>
+>result : any
 
 
 
@@ -317,8 +317,8 @@ declare const invalidFunctor2: InvalidFunctor2<string>;
 >InvalidFunctor2 : InvalidFunctor2<IA2>
 
 const expectError4 = liftedStringLength(invalidFunctor2);
->expectError4 : InvalidFunctor2<number>
->liftedStringLength(invalidFunctor2) : InvalidFunctor2<number>
+>expectError4 : any
+>liftedStringLength(invalidFunctor2) : any
 >liftedStringLength : <NC extends C1<_NT>>(lrclra: LiftedResult<C1<_LT>>.NC<string>) => LiftedResult<C1<_LT>>.NC<number>
 >invalidFunctor2 : InvalidFunctor2<string>
 

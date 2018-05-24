@@ -1,14 +1,22 @@
-tests/cases/compiler/higherKindedTypesLift.ts(48,40): error TS2345: Argument of type 'FunctorX<number>' is not assignable to parameter of type 'FunctorX<string>'.
-  Type 'number' is not assignable to type 'string'.
-tests/cases/compiler/higherKindedTypesLift.ts(65,41): error TS2345: Argument of type 'DiffFunctorY<string>' is not assignable to parameter of type 'C1<string>'.
-  Property 'map' is missing in type 'DiffFunctorY<string>'.
-tests/cases/compiler/higherKindedTypesLift.ts(74,41): error TS2345: Argument of type 'InvalidFunctor<string>' is not assignable to parameter of type 'C1<string>'.
+tests/cases/compiler/higherKindedTypesLift.ts(45,35): error TS2345: Argument of type 'FunctorX<string>' is not assignable to parameter of type 'Functor<string, FunctorX<string>>'.
   Types of property 'map' are incompatible.
-    Type '<IB>(fi: (ia: string) => IB) => IB' is not assignable to type '<BF>(f: (a: string) => BF) => C1<BF>'.
-      Type 'BF' is not assignable to type 'C1<BF>'.
+    Type '<BX>(f: (a: string) => BX) => FunctorX<BX>' is not assignable to type '<BF>(f: (a: string) => BF) => FunctorX<string>'.
+      Type 'FunctorX<BF>' is not assignable to type 'FunctorX<string>'.
+        Type 'BF' is not assignable to type 'string'.
+tests/cases/compiler/higherKindedTypesLift.ts(65,41): error TS2345: Argument of type 'DiffFunctorY<string>' is not assignable to parameter of type 'Functor<string, DiffFunctorY<string>>'.
+  Property 'map' is missing in type 'DiffFunctorY<string>'.
+tests/cases/compiler/higherKindedTypesLift.ts(74,41): error TS2345: Argument of type 'InvalidFunctor<string>' is not assignable to parameter of type 'Functor<string, InvalidFunctor<string>>'.
+  Types of property 'map' are incompatible.
+    Type '<IB>(fi: (ia: string) => IB) => IB' is not assignable to type '<BF>(f: (a: string) => BF) => InvalidFunctor<string>'.
+      Type 'BF' is not assignable to type 'InvalidFunctor<string>'.
+tests/cases/compiler/higherKindedTypesLift.ts(86,41): error TS2345: Argument of type 'InvalidFunctor2<string>' is not assignable to parameter of type 'Functor<string, InvalidFunctor2<string>>'.
+  Types of property 'map' are incompatible.
+    Type '<IB2>(fi2: (ia2: string) => IB2) => FunctorX<IB2>' is not assignable to type '<BF>(f: (a: string) => BF) => InvalidFunctor2<string>'.
+      Type 'FunctorX<BF>' is not assignable to type 'InvalidFunctor2<string>'.
+        Property 'someUniqueMethod' is missing in type 'FunctorX<BF>'.
 
 
-==== tests/cases/compiler/higherKindedTypesLift.ts (3 errors) ====
+==== tests/cases/compiler/higherKindedTypesLift.ts (4 errors) ====
     export interface Functor<AF, Container<_TF>> {
         map<BF>(f: (a: AF) => BF): Container<BF>;
     }
@@ -54,12 +62,15 @@ tests/cases/compiler/higherKindedTypesLift.ts(74,41): error TS2345: Argument of 
     const functorXString = new FunctorX(["myFunctorX"]);
     
     const result = liftedStringLength(functorXString);
+                                      ~~~~~~~~~~~~~~
+!!! error TS2345: Argument of type 'FunctorX<string>' is not assignable to parameter of type 'Functor<string, FunctorX<string>>'.
+!!! error TS2345:   Types of property 'map' are incompatible.
+!!! error TS2345:     Type '<BX>(f: (a: string) => BX) => FunctorX<BX>' is not assignable to type '<BF>(f: (a: string) => BF) => FunctorX<string>'.
+!!! error TS2345:       Type 'FunctorX<BF>' is not assignable to type 'FunctorX<string>'.
+!!! error TS2345:         Type 'BF' is not assignable to type 'string'.
     const expectedType: FunctorX<number> = result;
     
     const expectError = liftedStringLength(result);
-                                           ~~~~~~
-!!! error TS2345: Argument of type 'FunctorX<number>' is not assignable to parameter of type 'FunctorX<string>'.
-!!! error TS2345:   Type 'number' is not assignable to type 'string'.
     
     
     
@@ -78,7 +89,7 @@ tests/cases/compiler/higherKindedTypesLift.ts(74,41): error TS2345: Argument of 
     // should have error because DiffFunctorY has diffMap function, not "map" as needed because liftedFunctor was created from staticMap which declared Functor
     const expectError2 = liftedStringLength(diffFunctorYString);
                                             ~~~~~~~~~~~~~~~~~~
-!!! error TS2345: Argument of type 'DiffFunctorY<string>' is not assignable to parameter of type 'C1<string>'.
+!!! error TS2345: Argument of type 'DiffFunctorY<string>' is not assignable to parameter of type 'Functor<string, DiffFunctorY<string>>'.
 !!! error TS2345:   Property 'map' is missing in type 'DiffFunctorY<string>'.
     
     
@@ -90,10 +101,10 @@ tests/cases/compiler/higherKindedTypesLift.ts(74,41): error TS2345: Argument of 
     declare const invalidFunctor: InvalidFunctor<string>;
     const expectError3 = liftedStringLength(invalidFunctor);
                                             ~~~~~~~~~~~~~~
-!!! error TS2345: Argument of type 'InvalidFunctor<string>' is not assignable to parameter of type 'C1<string>'.
+!!! error TS2345: Argument of type 'InvalidFunctor<string>' is not assignable to parameter of type 'Functor<string, InvalidFunctor<string>>'.
 !!! error TS2345:   Types of property 'map' are incompatible.
-!!! error TS2345:     Type '<IB>(fi: (ia: string) => IB) => IB' is not assignable to type '<BF>(f: (a: string) => BF) => C1<BF>'.
-!!! error TS2345:       Type 'BF' is not assignable to type 'C1<BF>'.
+!!! error TS2345:     Type '<IB>(fi: (ia: string) => IB) => IB' is not assignable to type '<BF>(f: (a: string) => BF) => InvalidFunctor<string>'.
+!!! error TS2345:       Type 'BF' is not assignable to type 'InvalidFunctor<string>'.
     
     
     
@@ -106,4 +117,10 @@ tests/cases/compiler/higherKindedTypesLift.ts(74,41): error TS2345: Argument of 
     
     declare const invalidFunctor2: InvalidFunctor2<string>;
     const expectError4 = liftedStringLength(invalidFunctor2);
+                                            ~~~~~~~~~~~~~~~
+!!! error TS2345: Argument of type 'InvalidFunctor2<string>' is not assignable to parameter of type 'Functor<string, InvalidFunctor2<string>>'.
+!!! error TS2345:   Types of property 'map' are incompatible.
+!!! error TS2345:     Type '<IB2>(fi2: (ia2: string) => IB2) => FunctorX<IB2>' is not assignable to type '<BF>(f: (a: string) => BF) => InvalidFunctor2<string>'.
+!!! error TS2345:       Type 'FunctorX<BF>' is not assignable to type 'InvalidFunctor2<string>'.
+!!! error TS2345:         Property 'someUniqueMethod' is missing in type 'FunctorX<BF>'.
     

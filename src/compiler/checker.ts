@@ -9542,7 +9542,7 @@ namespace ts {
                 clone.symbol = original.symbol;
                 clone.isGeneric = original.isGeneric;
 
-                // kpdonn: I don't believe it is necessary to clone child type parameters
+                // kpdonn: I currently haven't found it necessary to clone child type parameters but there may be edge cases I haven't found yet.
                 clone.localTypeParameters = original.localTypeParameters;
                 clone.outerTypeParameters = original.outerTypeParameters;
                 clone.typeParameters = original.typeParameters;
@@ -12886,17 +12886,20 @@ namespace ts {
 
                 if (isGenericTypeParameter(inference.typeParameter)) {
                     if (isTypeReference(inferredType) && length(inferredType.target.localTypeParameters) === length(inference.typeParameter.localTypeParameters)) {
-                        const inferredGeneric = <GenericType>getTargetType(inferredType);
-                        const localTypeArguments = getLocalTypeArguments(inference.typeParameter);
-                        const numInferredOuters = length(inferredGeneric.outerTypeParameters);
-                        const inferredOuterTypeArguments = numInferredOuters && inferredGeneric.typeArguments.slice(0, numInferredOuters);
-                        inferredType = createTypeReference(inferredGeneric, concatenate(inferredOuterTypeArguments, localTypeArguments));
+                        inferredType = makeGenericTypeArgument(inference.typeParameter, inferredType.target);
                     }
                 }
 
                 inference.inferredType = inferredType;
 
-                const constraint = getConstraintOfTypeParameter(inference.typeParameter);
+                let constraint = getConstraintOfTypeParameter(inference.typeParameter);
+                if (isGenericTypeParameter(inference.typeParameter) && isGenericTypeParameterReference(constraint)
+                    && !some(context.inferences, ii => ii.typeParameter === (<TypeReference>constraint).target)) {
+                    const constraintArgsMapper = createTypeMapper(constraint.target.typeParameters, constraint.typeArguments.slice(0, length(constraint.target.typeParameters)));
+                    const genericArgument = makeGenericTypeArgument(<GenericTypeParameter>constraint.target, inference.typeParameter);
+                    const mapper = combineTypeMappers(makeUnaryTypeMapper(constraint.target, genericArgument), constraintArgsMapper);
+                    constraint = instantiateType(getConstraintOfTypeParameter(constraint.target), mapper);
+                }
                 if (constraint) {
                     const instantiatedConstraint = instantiateType(constraint, context);
                     if (!context.compareTypes(inferredType, getTypeWithThisArgument(instantiatedConstraint, inferredType))) {
@@ -12906,6 +12909,11 @@ namespace ts {
             }
 
             return inferredType;
+        }
+
+        function makeGenericTypeArgument(source: GenericTypeParameter, target: GenericType): TypeReference {
+            Debug.assertEqual(length(source.localTypeParameters), length(target.localTypeParameters));
+            return createTypeReference(target, concatenate(target.outerTypeParameters, source.localTypeParameters));
         }
 
         function getLocalTypeArguments(type: TypeReference): Type[] | undefined {
