@@ -6503,12 +6503,12 @@ namespace ts {
             return isTypeParameter(type) && type.isGeneric;
         }
 
-        function isGenericTypeParameterReference(type: Type): type is TypeReference {
-            return isTypeReference(type) && type.genericTypeParameterReference;
+        function isTypeParameterReference(type: Type): type is TypeReference {
+            return isTypeReference(type) && type.typeParameterReference;
         }
 
         function isTypeVariable(type: Type): boolean {
-            return !!(type.flags & TypeFlags.TypeVariable || isGenericTypeParameterReference(type));
+            return !!(type.flags & TypeFlags.TypeVariable || isTypeParameterReference(type));
         }
 
         function isTypeReference(type: Type): type is TypeReference {
@@ -7678,7 +7678,7 @@ namespace ts {
                 type.flags |= typeArguments ? getPropagatingFlagsOfTypes(typeArguments, /*excludeKinds*/ 0) : 0;
                 type.target = target;
                 type.typeArguments = typeArguments;
-                type.genericTypeParameterReference = isGenericTypeParameter(target);
+                type.typeParameterReference = isGenericTypeParameter(target);
             }
             return type;
         }
@@ -9819,7 +9819,7 @@ namespace ts {
                 if ((<ObjectType>type).objectFlags & ObjectFlags.Mapped) {
                     return getAnonymousTypeInstantiation(<MappedType>type, mapper);
                 }
-                if (isGenericTypeParameterReference(type)) {
+                if (isTypeParameterReference(type)) {
                     let newType = mapper(type.target);
                     newType = (<WrapperType>newType).wrappedType || newType;
                     if (isTypeReference(newType)) {
@@ -12335,7 +12335,7 @@ namespace ts {
         // results for union and intersection types for performance reasons.
         function couldContainTypeVariables(type: Type): boolean {
             const objectFlags = getObjectFlags(type);
-            return !!(type.flags & TypeFlags.Instantiable || isGenericTypeParameterReference(type) ||
+            return !!(type.flags & TypeFlags.Instantiable || isTypeParameterReference(type) ||
                 objectFlags & ObjectFlags.GenericTypeParameter ||
                 objectFlags & ObjectFlags.Reference && forEach((<TypeReference>type).typeArguments, couldContainTypeVariables) ||
                 objectFlags & ObjectFlags.Anonymous && type.symbol && type.symbol.flags & (SymbolFlags.Function | SymbolFlags.Method | SymbolFlags.TypeLiteral | SymbolFlags.Class) ||
@@ -12547,7 +12547,7 @@ namespace ts {
                                 inference.topLevel = false;
                             }
                         }
-                        if (!isGenericTypeParameterReference(target)) {
+                        if (!isTypeParameterReference(target)) {
                             return;
                         }
                     }
@@ -12667,7 +12667,7 @@ namespace ts {
 
             function getInferenceInfoForType(type: Type) {
                 if (isTypeVariable(type)) {
-                    type = isGenericTypeParameterReference(type) ? type.target : type;
+                    type = isTypeParameterReference(type) ? type.target : type;
                     for (const inference of inferences) {
                         if (type === inference.typeParameter) {
                             return inference;
@@ -12891,22 +12891,22 @@ namespace ts {
                     inferredType = getTypeFromInference(inference);
                 }
 
+                let constraint = getConstraintOfTypeParameter(inference.typeParameter);
+
                 if (isGenericTypeParameter(inference.typeParameter)) {
                     if (isTypeReference(inferredType) && length(inferredType.target.localTypeParameters) === length(inference.typeParameter.localTypeParameters)) {
                         inferredType = makeGenericTypeArgument(inference.typeParameter, inferredType.target);
+                    }
+
+                    if (isTypeParameterReference(constraint) && !contains(context.typeParameters, getTargetType(constraint))) {
+                        const genericArgument = wrapType(makeGenericTypeArgument(<GenericTypeParameter>constraint.target, inference.typeParameter));
+                        const mapper = combineTypeMappers(makeUnaryTypeMapper(constraint.target, genericArgument), getLocalTypeArgumentMapper(constraint));
+                        constraint = instantiateType(getConstraintOfTypeParameter(constraint.target), mapper);
                     }
                 }
 
                 inference.inferredType = inferredType;
 
-                let constraint = getConstraintOfTypeParameter(inference.typeParameter);
-                if (isGenericTypeParameter(inference.typeParameter) && isGenericTypeParameterReference(constraint)
-                    && !some(context.inferences, ii => ii.typeParameter === (<TypeReference>constraint).target)) {
-                    const constraintArgsMapper = createTypeMapper(constraint.target.typeParameters, constraint.typeArguments.slice(0, length(constraint.target.typeParameters)));
-                    const genericArgument = makeGenericTypeArgument(<GenericTypeParameter>constraint.target, inference.typeParameter);
-                    const mapper = combineTypeMappers(makeUnaryTypeMapper(constraint.target, wrapType(genericArgument)), constraintArgsMapper);
-                    constraint = instantiateType(getConstraintOfTypeParameter(constraint.target), mapper);
-                }
                 if (constraint) {
                     const instantiatedConstraint = instantiateType(constraint, context);
                     if (!context.compareTypes(inferredType, getTypeWithThisArgument(instantiatedConstraint, inferredType))) {

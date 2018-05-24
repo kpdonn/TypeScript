@@ -3832,7 +3832,7 @@ namespace ts {
     export interface TypeReference extends ObjectType {
         target: GenericType;                      // Type reference target
         typeArguments?: Type[];                   // Type reference type arguments (undefined if none)
-        genericTypeParameterReference?: boolean;  // true if target is a GenericTypeParameter but NOT true if this is the GenericTypeParameter (ie if this === target)
+        typeParameterReference?: boolean;         // true if target is a GenericTypeParameter but NOT true if this is the GenericTypeParameter (ie if this === target)
     }
 
     /* @internal */
