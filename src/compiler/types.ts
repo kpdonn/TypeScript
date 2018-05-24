@@ -3734,6 +3734,8 @@ namespace ts {
         aliasTypeArguments?: Type[];     // Alias type arguments (if any)
         /* @internal */
         wildcardInstantiation?: Type;    // Instantiation with type parameters mapped to wildcard type
+        /* @internal */
+        wrapperType?: WrapperType;       // wrapper type for this type
     }
 
     /* @internal */
@@ -3783,6 +3785,8 @@ namespace ts {
         JsxAttributes                              = 1 << 12, // Jsx attributes type
         MarkerType                                 = 1 << 13, // Marker type used for variance probing
         GenericTypeParameter                       = 1 << 14, // uninstantiated type parameter that has its own type parameters
+        /* @internal */
+        Wrapper                                    = 1 << 15, // wrapper for mapped GenericTypeParameters, which is needed to avoid instantiation order problems.
 
         ClassOrInterface = Class | Interface
     }
@@ -3972,6 +3976,12 @@ namespace ts {
         original?: GenericTypeParameter; // The type parameter this type parameter was cloned from
         /* @internal */
         isGeneric: true;
+    }
+
+    /* @internal */
+    // ObjectFlags.Wrapper
+    export interface WrapperType extends ObjectType {
+        wrappedType: Type;
     }
 
     // Indexed access types (TypeFlags.IndexedAccess)

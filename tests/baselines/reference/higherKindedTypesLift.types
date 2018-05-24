@@ -196,21 +196,21 @@ const functorXString = new FunctorX(["myFunctorX"]);
 >"myFunctorX" : "myFunctorX"
 
 const result = liftedStringLength(functorXString);
->result : any
->liftedStringLength(functorXString) : any
+>result : FunctorX<number>
+>liftedStringLength(functorXString) : FunctorX<number>
 >liftedStringLength : <NC extends C1<_NT>>(lrclra: LiftedResult<C1<_LT>>.NC<string>) => LiftedResult<C1<_LT>>.NC<number>
 >functorXString : FunctorX<string>
 
 const expectedType: FunctorX<number> = result;
 >expectedType : FunctorX<number>
 >FunctorX : FunctorX<AX>
->result : any
+>result : FunctorX<number>
 
 const expectError = liftedStringLength(result);
 >expectError : any
 >liftedStringLength(result) : any
 >liftedStringLength : <NC extends C1<_NT>>(lrclra: LiftedResult<C1<_LT>>.NC<string>) => LiftedResult<C1<_LT>>.NC<number>
->result : any
+>result : FunctorX<number>
 
 
 

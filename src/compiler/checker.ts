@@ -9819,7 +9819,8 @@ namespace ts {
                     return getAnonymousTypeInstantiation(<MappedType>type, mapper);
                 }
                 if (isGenericTypeParameterReference(type)) {
-                    const newType = mapper(type.target);
+                    let newType = mapper(type.target);
+                    newType = (<WrapperType>newType).wrappedType || newType;
                     if (isTypeReference(newType)) {
                         const localTypeArguments = getLocalTypeArguments(type);
                         const localArgsMapper = createTypeMapper(type.target.localTypeParameters, localTypeArguments);
@@ -12897,7 +12898,7 @@ namespace ts {
                     && !some(context.inferences, ii => ii.typeParameter === (<TypeReference>constraint).target)) {
                     const constraintArgsMapper = createTypeMapper(constraint.target.typeParameters, constraint.typeArguments.slice(0, length(constraint.target.typeParameters)));
                     const genericArgument = makeGenericTypeArgument(<GenericTypeParameter>constraint.target, inference.typeParameter);
-                    const mapper = combineTypeMappers(makeUnaryTypeMapper(constraint.target, genericArgument), constraintArgsMapper);
+                    const mapper = combineTypeMappers(makeUnaryTypeMapper(constraint.target, wrapType(genericArgument)), constraintArgsMapper);
                     constraint = instantiateType(getConstraintOfTypeParameter(constraint.target), mapper);
                 }
                 if (constraint) {
@@ -12911,9 +12912,18 @@ namespace ts {
             return inferredType;
         }
 
-        function makeGenericTypeArgument(source: GenericTypeParameter, target: GenericType): TypeReference {
+        function makeGenericTypeArgument(source: GenericTypeParameter, target: GenericType): Type {
             Debug.assertEqual(length(source.localTypeParameters), length(target.localTypeParameters));
             return createTypeReference(target, concatenate(target.outerTypeParameters, source.localTypeParameters));
+        }
+
+        function wrapType(type: Type): WrapperType {
+            if (!type.wrapperType) {
+                const wrapper = <WrapperType>createObjectType(ObjectFlags.Wrapper);
+                wrapper.wrappedType = type;
+                type.wrapperType = wrapper;
+            }
+            return type.wrapperType;
         }
 
         function getLocalTypeArguments(type: TypeReference): Type[] | undefined {
