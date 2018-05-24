@@ -6816,8 +6816,8 @@ namespace ts {
         function getResolvedTypeParameterDefault(typeParameter: TypeParameter): Type | undefined {
             if (!typeParameter.default) {
                 if (typeParameter.original) {
-                    const targetDefault = getResolvedTypeParameterDefault(typeParameter.original);
-                    typeParameter.default = targetDefault ? instantiateType(targetDefault, typeParameter.mapper) : noConstraintType;
+                    const originalDefault = getResolvedTypeParameterDefault(typeParameter.original);
+                    typeParameter.default = originalDefault ? instantiateType(originalDefault, typeParameter.mapper) : noConstraintType;
                 }
                 else {
                     // To block recursion, set the initial value to the resolvingDefaultType.
@@ -7615,8 +7615,8 @@ namespace ts {
         function getConstraintFromTypeParameter(typeParameter: TypeParameter): Type {
             if (!typeParameter.constraint) {
                 if (typeParameter.original) {
-                    const targetConstraint = getConstraintOfTypeParameter(typeParameter.original);
-                    typeParameter.constraint = targetConstraint ? instantiateType(targetConstraint, typeParameter.mapper) : noConstraintType;
+                    const originalConstraint = getConstraintOfTypeParameter(typeParameter.original);
+                    typeParameter.constraint = originalConstraint ? instantiateType(originalConstraint, typeParameter.mapper) : noConstraintType;
                 }
                 else {
                     const constraintDeclaration = getConstraintDeclaration(typeParameter);
@@ -9343,7 +9343,7 @@ namespace ts {
             return esSymbolType;
         }
 
-        function getThisType(node: ThisExpression | ThisTypeNode): Type {
+        function getThisType(node: Node): Type {
             const container = getThisContainer(node, /*includeArrowFunctions*/ false);
             const parent = container && container.parent;
             if (parent && (isClassLike(parent) || parent.kind === SyntaxKind.InterfaceDeclaration)) {
@@ -9808,58 +9808,57 @@ namespace ts {
         }
 
         function instantiateType(type: Type, mapper: TypeMapper): Type {
-            if (!(type && mapper && mapper !== identityMapper)) {
-                return type;
-            }
-            if (type.flags & TypeFlags.TypeParameter) {
-                return mapper(<TypeParameter>type);
-            }
-            if (type.flags & TypeFlags.Object) {
-                if ((<ObjectType>type).objectFlags & ObjectFlags.Anonymous) {
-                    // If the anonymous type originates in a declaration of a function, method, class, or
-                    // interface, in an object type literal, or in an object literal expression, we may need
-                    // to instantiate the type because it might reference a type parameter.
-                    return type.symbol && type.symbol.flags & (SymbolFlags.Function | SymbolFlags.Method | SymbolFlags.Class | SymbolFlags.TypeLiteral | SymbolFlags.ObjectLiteral) && type.symbol.declarations ?
-                        getAnonymousTypeInstantiation(<AnonymousType>type, mapper) : type;
+            if (type && mapper && mapper !== identityMapper) {
+                if (type.flags & TypeFlags.TypeParameter) {
+                    return mapper(<TypeParameter>type);
                 }
-                if ((<ObjectType>type).objectFlags & ObjectFlags.Mapped) {
-                    return getAnonymousTypeInstantiation(<MappedType>type, mapper);
-                }
-                if (isTypeParameterReference(type)) {
-                    const newType = unwrapType(mapper(type.target));
-                    if (newType === type) {
-                        return instantiateTypeReference(type, mapper);
+                if (type.flags & TypeFlags.Object) {
+                    if ((<ObjectType>type).objectFlags & ObjectFlags.Anonymous) {
+                        // If the anonymous type originates in a declaration of a function, method, class, or
+                        // interface, in an object type literal, or in an object literal expression, we may need
+                        // to instantiate the type because it might reference a type parameter.
+                        return type.symbol && type.symbol.flags & (SymbolFlags.Function | SymbolFlags.Method | SymbolFlags.Class | SymbolFlags.TypeLiteral | SymbolFlags.ObjectLiteral) && type.symbol.declarations ?
+                            getAnonymousTypeInstantiation(<AnonymousType>type, mapper) : type;
                     }
-                    const newMapper = combineTypeMappers(getLocalTypeArgumentMapper(type), mapper);
-                    // if newType is genericTypeParameter it can't be instantiated by instantiateType because it would match
-                    // type.flags & TypeFlags.TypeParameter before (<ObjectType>type).objectFlags & ObjectFlags.Reference
-                    return isGenericTypeParameter(newType) ? instantiateTypeReference(newType, newMapper) : instantiateType(newType, newMapper);
+                    if ((<ObjectType>type).objectFlags & ObjectFlags.Mapped) {
+                        return getAnonymousTypeInstantiation(<MappedType>type, mapper);
+                    }
+                    if (isTypeParameterReference(type)) {
+                        const newType = unwrapType(mapper(type.target));
+                        if (newType === type) {
+                            return instantiateTypeReference(type, mapper);
+                        }
+                        const newMapper = combineTypeMappers(getLocalTypeArgumentMapper(type), mapper);
+                        // if newType is genericTypeParameter it can't be instantiated by instantiateType because it would match
+                        // type.flags & TypeFlags.TypeParameter before (<ObjectType>type).objectFlags & ObjectFlags.Reference
+                        return isGenericTypeParameter(newType) ? instantiateTypeReference(newType, newMapper) : instantiateType(newType, newMapper);
+                    }
+                    if ((<ObjectType>type).objectFlags & ObjectFlags.Reference) {
+                        return instantiateTypeReference(<TypeReference>type, mapper);
+                    }
                 }
-                if ((<ObjectType>type).objectFlags & ObjectFlags.Reference) {
-                    return instantiateTypeReference(<TypeReference>type, mapper);
+                if (type.flags & TypeFlags.Union && !(type.flags & TypeFlags.Primitive)) {
+                    const types = (<UnionType>type).types;
+                    const newTypes = instantiateTypes(types, mapper);
+                    return newTypes !== types ? getUnionType(newTypes, UnionReduction.Literal, type.aliasSymbol, instantiateTypes(type.aliasTypeArguments, mapper)) : type;
                 }
-            }
-            if (type.flags & TypeFlags.Union && !(type.flags & TypeFlags.Primitive)) {
-                const types = (<UnionType>type).types;
-                const newTypes = instantiateTypes(types, mapper);
-                return newTypes !== types ? getUnionType(newTypes, UnionReduction.Literal, type.aliasSymbol, instantiateTypes(type.aliasTypeArguments, mapper)) : type;
-            }
-            if (type.flags & TypeFlags.Intersection) {
-                const types = (<IntersectionType>type).types;
-                const newTypes = instantiateTypes(types, mapper);
-                return newTypes !== types ? getIntersectionType(newTypes, type.aliasSymbol, instantiateTypes(type.aliasTypeArguments, mapper)) : type;
-            }
-            if (type.flags & TypeFlags.Index) {
-                return getIndexType(instantiateType((<IndexType>type).type, mapper));
-            }
-            if (type.flags & TypeFlags.IndexedAccess) {
-                return getIndexedAccessType(instantiateType((<IndexedAccessType>type).objectType, mapper), instantiateType((<IndexedAccessType>type).indexType, mapper));
-            }
-            if (type.flags & TypeFlags.Conditional) {
-                return getConditionalTypeInstantiation(<ConditionalType>type, combineTypeMappers((<ConditionalType>type).mapper, mapper));
-            }
-            if (type.flags & TypeFlags.Substitution) {
-                return instantiateType((<SubstitutionType>type).typeVariable, mapper);
+                if (type.flags & TypeFlags.Intersection) {
+                    const types = (<IntersectionType>type).types;
+                    const newTypes = instantiateTypes(types, mapper);
+                    return newTypes !== types ? getIntersectionType(newTypes, type.aliasSymbol, instantiateTypes(type.aliasTypeArguments, mapper)) : type;
+                }
+                if (type.flags & TypeFlags.Index) {
+                    return getIndexType(instantiateType((<IndexType>type).type, mapper));
+                }
+                if (type.flags & TypeFlags.IndexedAccess) {
+                    return getIndexedAccessType(instantiateType((<IndexedAccessType>type).objectType, mapper), instantiateType((<IndexedAccessType>type).indexType, mapper));
+                }
+                if (type.flags & TypeFlags.Conditional) {
+                    return getConditionalTypeInstantiation(<ConditionalType>type, combineTypeMappers((<ConditionalType>type).mapper, mapper));
+                }
+                if (type.flags & TypeFlags.Substitution) {
+                    return instantiateType((<SubstitutionType>type).typeVariable, mapper);
+                }
             }
             return type;
         }
@@ -12339,8 +12338,8 @@ namespace ts {
         // results for union and intersection types for performance reasons.
         function couldContainTypeVariables(type: Type): boolean {
             const objectFlags = getObjectFlags(type);
-            return !!(type.flags & TypeFlags.Instantiable || isTypeParameterReference(type) ||
-                objectFlags & ObjectFlags.GenericTypeParameter ||
+            return !!(type.flags & TypeFlags.Instantiable ||
+                isTypeParameterReference(type) ||
                 objectFlags & ObjectFlags.Reference && forEach((<TypeReference>type).typeArguments, couldContainTypeVariables) ||
                 objectFlags & ObjectFlags.Anonymous && type.symbol && type.symbol.flags & (SymbolFlags.Function | SymbolFlags.Method | SymbolFlags.TypeLiteral | SymbolFlags.Class) ||
                 objectFlags & ObjectFlags.Mapped ||
@@ -21500,7 +21499,7 @@ namespace ts {
                 const symbol = getNodeLinks(node).resolvedSymbol;
                 if (symbol) {
                     return symbol.flags & SymbolFlags.TypeAlias && getSymbolLinks(symbol).typeParameters ||
-                        getObjectFlags(type) & ObjectFlags.Reference && (<TypeReference>type).target.localTypeParameters;
+                        (getObjectFlags(type) & ObjectFlags.Reference ? (<TypeReference>type).target.localTypeParameters : undefined);
                 }
             }
             return undefined;

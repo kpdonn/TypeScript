@@ -3830,9 +3830,9 @@ namespace ts {
      * explicit "this" argument.
      */
     export interface TypeReference extends ObjectType {
-        target: GenericType;                      // Type reference target
-        typeArguments?: Type[];                   // Type reference type arguments (undefined if none)
-        typeParameterReference?: boolean;         // true if target is a GenericTypeParameter but NOT true if this is the GenericTypeParameter (ie if this === target)
+        target: GenericType;               // Type reference target
+        typeArguments?: Type[];            // Type reference type arguments (undefined if none)
+        typeParameterReference?: boolean;  // true if target is a GenericTypeParameter but NOT true if this is the GenericTypeParameter (ie if this === target)
     }
 
     /* @internal */
@@ -3844,7 +3844,7 @@ namespace ts {
         Independent   = 4,  // Unwitnessed type parameter
     }
 
-    // Generic class and interface types
+    // Generic class, interface and type parameter types
     export interface GenericType extends InterfaceType, TypeReference {
         /* @internal */
         instantiations: Map<TypeReference>;  // Generic instantiation cache
@@ -3953,7 +3953,7 @@ namespace ts {
         resolvedStringIndexType?: IndexType;
     }
 
-    // type parameters (TypeFlags.TypeParameter)
+    // Type parameters (TypeFlags.TypeParameter)
     export interface TypeParameter extends InstantiableType {
         /** Retrieve using getConstraintFromTypeParameter */
         /* @internal */
@@ -3970,7 +3970,7 @@ namespace ts {
         isGeneric?: boolean;
     }
 
-    // Generic type parameters (TypeFlags.Object, ObjectFlags.GenericTypeParameter)
+    // Generic type parameters (TypeFlags.TypeParameter, TypeFlags.Object, ObjectFlags.GenericTypeParameter)
     export interface GenericTypeParameter extends GenericType, TypeParameter, InterfaceTypeWithDeclaredMembers {
         /* @internal */
         original?: GenericTypeParameter; // The type parameter this type parameter was cloned from
@@ -4097,13 +4097,13 @@ namespace ts {
     export type TypeMapper = (t: TypeParameter) => Type;
 
     export const enum InferencePriority {
-        NakedTypeVariable               = 1 << 0,  // Naked type variable in union or intersection type
-        HomomorphicMappedType           = 1 << 1,  // Reverse inference for homomorphic mapped type
-        MappedTypeConstraint            = 1 << 2,  // Reverse inference for mapped type
-        ReturnType                      = 1 << 3,  // Inference made from return type of generic function
-        LiteralKeyof                    = 1 << 4,  // Inference made from a string literal to a keyof T
-        NoConstraints                   = 1 << 5,  // Don't infer from constraints of instantiable types
-        AlwaysStrict                    = 1 << 6,  // Always use strict rules for contravariant inferences
+        NakedTypeVariable           = 1 << 0,  // Naked type variable in union or intersection type
+        HomomorphicMappedType       = 1 << 1,  // Reverse inference for homomorphic mapped type
+        MappedTypeConstraint        = 1 << 2,  // Reverse inference for mapped type
+        ReturnType                  = 1 << 3,  // Inference made from return type of generic function
+        LiteralKeyof                = 1 << 4,  // Inference made from a string literal to a keyof T
+        NoConstraints               = 1 << 5,  // Don't infer from constraints of instantiable types
+        AlwaysStrict                = 1 << 6,  // Always use strict rules for contravariant inferences
 
         PriorityImpliesCombination  = ReturnType | MappedTypeConstraint | LiteralKeyof,  // These priorities imply that the resulting type should be a combination of all candidates
     }
