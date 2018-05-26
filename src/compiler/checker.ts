@@ -6593,12 +6593,12 @@ namespace ts {
             return !!(getObjectFlags(type) & ObjectFlags.Mapped) && isGenericIndexType(getConstraintTypeFromMappedType(<MappedType>type));
         }
 
-        function isTypeParameter(type: Type): type is TypeParameter {
-            return !!(type.flags & TypeFlags.TypeParameter);
+        function isTypeParameterLike(type: Type): type is TypeParameter | TypeReference {
+            return !!(type.flags & TypeFlags.TypeParameter || isTypeParameterReference(type));
         }
 
         function isGenericTypeParameter(type: Type): type is GenericTypeParameter {
-            return isTypeParameter(type) && !!type.isGeneric;
+            return !!(type.flags & TypeFlags.TypeParameter && (<TypeParameter>type).isGeneric);
         }
 
         function isTypeParameterReference(type: Type): type is TypeReference {
@@ -6607,6 +6607,10 @@ namespace ts {
 
         function isTypeVariable(type: Type): boolean {
             return !!(type.flags & TypeFlags.TypeVariable || isTypeParameterReference(type));
+        }
+
+        function isGenericTypeVariable(type: Type): boolean {
+            return isGenericTypeParameter(type) || isTypeParameterReference(type);
         }
 
         function isTypeReference(type: Type): type is TypeReference {
@@ -10023,12 +10027,13 @@ namespace ts {
             return type;
         }
 
+        function getLocalTypeArguments(type: TypeReference): Type[] | undefined {
+            return type.target.localTypeParameters && type.typeArguments!.slice(length(type.target.outerTypeParameters), length(type.target.typeParameters));
+        }
+
         function getLocalTypeArgumentMapper(type: TypeReference): TypeMapper | undefined {
-            if (length(type.target.localTypeParameters)) {
-                const localTypeArguments = type.typeArguments!.slice(length(type.target.outerTypeParameters), length(type.target.typeParameters));
-                return createTypeMapper(type.target.localTypeParameters!, localTypeArguments);
-            }
-            return undefined;
+            const localTypeArguments = getLocalTypeArguments(type);
+            return localTypeArguments && createTypeMapper(type.target.localTypeParameters!, localTypeArguments);
         }
 
         function getWildcardInstantiation(type: Type) {
@@ -12494,6 +12499,8 @@ namespace ts {
             return {
                 typeParameter: inference.typeParameter,
                 candidates: inference.candidates && inference.candidates.slice(),
+                targets: inference.targets && inference.targets.slice(),
+                signatures: inference.signatures && inference.signatures.slice(),
                 contraCandidates: inference.contraCandidates && inference.contraCandidates.slice(),
                 inferredType: inference.inferredType,
                 priority: inference.priority,
@@ -12613,10 +12620,10 @@ namespace ts {
                 !!getUnmatchedProperty(source, target, /*requireOptionalProperties*/ false) && !!getUnmatchedProperty(target, source, /*requireOptionalProperties*/ false);
         }
 
-        function getTypeFromInference(inference: InferenceInfo) {
+        function getTypeFromInference(inference: InferenceInfo, noDefaults?: boolean) {
             return inference.candidates ? getUnionType(inference.candidates, UnionReduction.Subtype) :
                 inference.contraCandidates ? getIntersectionType(inference.contraCandidates) :
-                emptyObjectType;
+                noDefaults ? silentNeverType : emptyObjectType;
         }
 
         function inferTypes(inferences: InferenceInfo[], originalSource: Type, originalTarget: Type, priority: InferencePriority = 0) {
@@ -12624,6 +12631,7 @@ namespace ts {
             let visited: Map<boolean>;
             let contravariant = false;
             let propagationType: Type;
+            let currentSignatures: InferenceSignatures | undefined;
             inferFromTypes(originalSource, originalTarget);
 
             function inferFromTypes(source: Type, target: Type) {
@@ -12703,7 +12711,9 @@ namespace ts {
                         if (!inference.isFixed) {
                             if (inference.priority === undefined || priority < inference.priority) {
                                 inference.candidates = undefined;
+                                inference.targets = undefined;
                                 inference.contraCandidates = undefined;
+                                inference.signatures = undefined;
                                 inference.priority = priority;
                             }
                             if (priority === inference.priority) {
@@ -12714,12 +12724,16 @@ namespace ts {
                                 else {
                                     inference.candidates = append(inference.candidates, candidate);
                                 }
+                                inference.targets = appendIfUnique(inference.targets, target);
+                                if (currentSignatures) {
+                                    inference.signatures = appendIfUnique(inference.signatures, currentSignatures);
+                                }
                             }
-                            if (!(priority & InferencePriority.ReturnType) && target.flags & TypeFlags.TypeParameter && !isTypeParameterAtTopLevel(originalTarget, <TypeParameter>target)) {
+                            if (!(priority & InferencePriority.ReturnType) && (isTypeParameterLike(target) && !isTypeParameterAtTopLevel(originalTarget, <TypeParameter>target))) {
                                 inference.topLevel = false;
                             }
                         }
-                        if (!isTypeParameterReference(target)) {
+                        if (!isGenericTypeVariable(target)) {
                             return;
                         }
                     }
@@ -12912,7 +12926,12 @@ namespace ts {
                 const targetLen = targetSignatures.length;
                 const len = sourceLen < targetLen ? sourceLen : targetLen;
                 for (let i = 0; i < len; i++) {
-                    inferFromSignature(getBaseSignature(sourceSignatures[sourceLen - len + i]), getBaseSignature(targetSignatures[targetLen - len + i]));
+                    const saveCurrentSignatures = currentSignatures;
+                    const sourceSignature = sourceSignatures[sourceLen - len + i];
+                    const targetSignature = targetSignatures[targetLen - len + i];
+                    currentSignatures = length(sourceSignature.typeParameters) && length(targetSignature.typeParameters) ? { sourceSignature, targetSignature } : undefined;
+                    inferFromSignature(getBaseSignature(sourceSignature), getBaseSignature(targetSignature));
+                    currentSignatures = saveCurrentSignatures;
                 }
             }
 
@@ -13023,10 +13042,9 @@ namespace ts {
             const inference = context.inferences[index];
             let inferredType = inference.inferredType;
             if (!inferredType) {
-                const signature = context.signature;
-                if (signature) {
+                if (context.signature) {
                     if (inference.candidates) {
-                        inferredType = getCovariantInference(inference, context, signature);
+                        inferredType = getCovariantInference(inference, context, context.signature);
                         // If we have inferred 'never' but have contravariant candidates. To get a more specific type we
                         // infer from the contravariant candidates instead.
                         if (inferredType.flags & TypeFlags.Never && inference.contraCandidates) {
@@ -13062,14 +13080,14 @@ namespace ts {
                     }
                 }
                 else {
-                    inferredType = getTypeFromInference(inference);
+                    inferredType = getTypeFromInference(inference, !!(context.flags & InferenceFlags.NoDefault));
                 }
 
                 let constraint = getConstraintOfTypeParameter(inference.typeParameter);
 
                 if (isGenericTypeParameter(inference.typeParameter)) {
-                    if (isTypeReference(inferredType) && length(inferredType.target.localTypeParameters) === length(inference.typeParameter.localTypeParameters)) {
-                        inferredType = makeGenericTypeArgument(inference.typeParameter, inferredType.target);
+                    if (isTypeReference(inferredType) && (<TypeReference>inferredType).target.typeParameters) {
+                        inferredType = inferGenericTypeArgument(inference.typeParameter, inferredType, inference, context);
                     }
 
                     if (constraint && isTypeParameterReference(constraint) && !contains(context.typeParameters, getTargetType(constraint))) {
@@ -13090,6 +13108,77 @@ namespace ts {
             }
 
             return inferredType;
+        }
+
+        function inferGenericTypeArgument(typeParameter: GenericTypeParameter, initialInferredType: TypeReference, initialInference: InferenceInfo, parentContext: InferenceContext): TypeReference {
+            const context = createInferenceContext(initialInferredType.target.typeParameters!, /*signature*/ undefined, InferenceFlags.NoDefault);
+            const constraint = getConstraintOfTypeParameter(typeParameter);
+            if (constraint) {
+                inferTypes(context.inferences, constraint, initialInferredType.target, InferencePriority.NoConstraints);
+                const results = getInferredTypes(context);
+
+                if (allTypeParametersMapped(typeParameter.localTypeParameters, results)) {
+                    return createFinalInferredGenericTypeArgument(typeParameter.localTypeParameters, results, initialInferredType);
+                }
+            }
+            if (initialInference.signatures) {
+                for (const signatures of initialInference.signatures) {
+                    const inferred = inferGenericTypeArgumentsFromSignatures(typeParameter, signatures, initialInferredType);
+                    Debug.assertEqual(getTargetType(inferred), getTargetType(initialInferredType));
+                    if (allTypeParametersMapped(typeParameter.localTypeParameters, inferred.typeArguments!)) {
+                        return createFinalInferredGenericTypeArgument(typeParameter.localTypeParameters, inferred.typeArguments!, initialInferredType);
+                    }
+                }
+            }
+            noop(parentContext);
+            return initialInferredType;
+        }
+
+        function allTypeParametersMapped(typeParameters: TypeParameter[], mappings: Type[]): boolean {
+            return !forEach(typeParameters, t => !contains(mappings, t));
+        }
+
+        function createFinalInferredGenericTypeArgument(typeParameters: TypeParameter[], mappedTypeArguments: Type[], initialInferredType: TypeReference): TypeReference {
+            const finalTypeArguments = map(mappedTypeArguments, (type, i) => contains(typeParameters, type) ? type : initialInferredType.typeArguments![i]);
+            return createTypeReference(initialInferredType.target, finalTypeArguments);
+        }
+
+        function inferGenericTypeArgumentsFromSignatures(typeParameter: GenericTypeParameter, signatures: InferenceSignatures, initialInferredType: TypeReference): TypeReference {
+            const inference1 = createInferenceInfo(typeParameter);
+            const targetSignature = signatures.targetSignature;
+            forEachMatchingParameterType(targetSignature, targetSignature, (source, target) => {
+                inferTypes([inference1], source, target);
+            });
+            inferTypes([inference1], getReturnTypeOfSignature(targetSignature), getReturnTypeOfSignature(targetSignature));
+            const targetContext = createInferenceContext(targetSignature.typeParameters!, /*signature*/ undefined, InferenceFlags.None);
+            forEach(concatenate(inference1.candidates, inference1.contraCandidates), candidate => inferTypes(targetContext.inferences, typeParameter, candidate, InferencePriority.NoConstraints));
+
+            const instantiatedTargetSig = instantiateSignature(targetSignature, targetContext, /*eraseTypeParameters*/ true);
+
+            const sourceSig = signatures.sourceSignature;
+
+            const sourceContext = createInferenceContext(sourceSig.typeParameters!.filter(tp => tp !== getTargetType(initialInferredType)), sourceSig, InferenceFlags.InferUnionTypes);
+            forEachMatchingParameterType(instantiatedTargetSig, sourceSig, (source, target) => {
+                // Type parameters from outer context referenced by source type are fixed by instantiation of the source type
+                inferTypes(sourceContext.inferences, source, target);
+            });
+            inferTypes(sourceContext.inferences, getReturnTypeOfSignature(instantiatedTargetSig), getReturnTypeOfSignature(sourceSig), InferencePriority.ReturnType);
+
+            const sourceResults = getInferredTypes(sourceContext);
+            noop(sourceResults);
+
+
+            const instantiatedSourceSig = instantiateSignature(sourceSig, sourceContext, /*eraseTypeParameters*/ true);
+
+            const inference2 = createInferenceInfo(typeParameter);
+
+            forEachMatchingParameterType(instantiatedSourceSig, instantiatedTargetSig, (source, target) => {
+                inferTypes([inference2], source, target);
+            });
+
+            const finalInference = <TypeReference>getTypeFromInference(inference2);
+
+            return finalInference;
         }
 
         function wrapType(type: Type): WrapperType {

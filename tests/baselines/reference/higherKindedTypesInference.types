@@ -1,0 +1,95 @@
+=== tests/cases/compiler/higherKindedTypesInference.ts ===
+export declare function stringLength(strarg: string): number;
+>stringLength : (strarg: string) => number
+>strarg : string
+
+export interface Functor<AF, Container<_TF> extends Functor<_TF, Container>> {
+>Functor : Functor<AF, Container<_TF>>
+>AF : AF
+>Container : Container<_TF>
+>_TF : _TF
+>Functor : Functor<AF, Container<_TF>>
+>_TF : _TF
+>Container : Container<_TF>
+
+    map<BF>(f: (a: AF) => BF): Container<BF>;
+>map : <BF>(f: (a: AF) => BF) => Container<BF>
+>BF : BF
+>f : (a: AF) => BF
+>a : AF
+>AF : AF
+>BF : BF
+>Container : Container<_TF>
+>BF : BF
+}
+
+declare function staticMap<C1<_T1> extends Functor<_T1, C1>, A1, B1>(fa1: C1<A1>, fmap1: (a1: A1) => B1): C1<B1>
+>staticMap : <C1 extends Functor<_T1, C1<_TF>>, A1, B1>(fa1: C1<A1>, fmap1: (a1: A1) => B1) => C1<B1>
+>C1 : C1<_T1>
+>_T1 : _T1
+>Functor : Functor<AF, Container<_TF>>
+>_T1 : _T1
+>C1 : C1<_T1>
+>A1 : A1
+>B1 : B1
+>fa1 : C1<A1>
+>C1 : C1<_T1>
+>A1 : A1
+>fmap1 : (a1: A1) => B1
+>a1 : A1
+>A1 : A1
+>B1 : B1
+>C1 : C1<_T1>
+>B1 : B1
+
+
+declare class WeirdFunctor1<X, Y, Z> {
+>WeirdFunctor1 : WeirdFunctor1<X, Y, Z>
+>X : X
+>Y : Y
+>Z : Z
+
+    methodX(): X
+>methodX : () => X
+>X : X
+
+    methodY(): Y
+>methodY : () => Y
+>Y : Y
+
+    methodZ(): Z
+>methodZ : () => Z
+>Z : Z
+
+    map<B>(f: (a: Y) => B): WeirdFunctor1<X, B, Z>
+>map : <B>(f: (a: Y) => B) => WeirdFunctor1<X, B, Z>
+>B : B
+>f : (a: Y) => B
+>a : Y
+>Y : Y
+>B : B
+>WeirdFunctor1 : WeirdFunctor1<X, Y, Z>
+>X : X
+>B : B
+>Z : Z
+}
+
+
+declare const weird1: WeirdFunctor1<number, string, object>
+>weird1 : WeirdFunctor1<number, string, object>
+>WeirdFunctor1 : WeirdFunctor1<X, Y, Z>
+
+
+const result1 = staticMap(weird1, stringLength);
+>result1 : WeirdFunctor1<number, number, object>
+>staticMap(weird1, stringLength) : WeirdFunctor1<number, number, object>
+>staticMap : <C1 extends Functor<_T1, C1<_TF>>, A1, B1>(fa1: C1<A1>, fmap1: (a1: A1) => B1) => C1<B1>
+>weird1 : WeirdFunctor1<number, string, object>
+>stringLength : (strarg: string) => number
+
+const expected1: WeirdFunctor1<number, number, object> = result1;
+>expected1 : WeirdFunctor1<number, number, object>
+>WeirdFunctor1 : WeirdFunctor1<X, Y, Z>
+>result1 : WeirdFunctor1<number, number, object>
+
+

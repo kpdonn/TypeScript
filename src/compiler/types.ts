@@ -4138,6 +4138,8 @@ namespace ts {
         LiteralKeyof                = 1 << 4,  // Inference made from a string literal to a keyof T
         NoConstraints               = 1 << 5,  // Don't infer from constraints of instantiable types
         AlwaysStrict                = 1 << 6,  // Always use strict rules for contravariant inferences
+        MatchingTypeArguments       = 1 << 7,
+        GenericSelf                 = 1 << 8,
 
         PriorityImpliesCombination  = ReturnType | MappedTypeConstraint | LiteralKeyof,  // These priorities imply that the resulting type should be a combination of all candidates
     }
@@ -4151,6 +4153,14 @@ namespace ts {
         priority?: InferencePriority;            // Priority of current inference set
         topLevel: boolean;                       // True if all inferences are to top level occurrences
         isFixed: boolean;                        // True if inferences are fixed
+        targets?: Type[];
+        signatures?: InferenceSignatures[];
+    }
+
+    /* @internal */
+    export interface InferenceSignatures {
+        sourceSignature: Signature;
+        targetSignature: Signature;
     }
 
     /* @internal */

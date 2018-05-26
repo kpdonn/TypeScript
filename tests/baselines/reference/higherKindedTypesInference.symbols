@@ -1,0 +1,94 @@
+=== tests/cases/compiler/higherKindedTypesInference.ts ===
+export declare function stringLength(strarg: string): number;
+>stringLength : Symbol(stringLength, Decl(higherKindedTypesInference.ts, 0, 0))
+>strarg : Symbol(strarg, Decl(higherKindedTypesInference.ts, 0, 37))
+
+export interface Functor<AF, Container<_TF> extends Functor<_TF, Container>> {
+>Functor : Symbol(Functor, Decl(higherKindedTypesInference.ts, 0, 61))
+>AF : Symbol(AF, Decl(higherKindedTypesInference.ts, 2, 25))
+>Container : Symbol(Container, Decl(higherKindedTypesInference.ts, 2, 28))
+>_TF : Symbol(_TF, Decl(higherKindedTypesInference.ts, 2, 39))
+>Functor : Symbol(Functor, Decl(higherKindedTypesInference.ts, 0, 61))
+>_TF : Symbol(_TF, Decl(higherKindedTypesInference.ts, 2, 39))
+>Container : Symbol(Container, Decl(higherKindedTypesInference.ts, 2, 28))
+
+    map<BF>(f: (a: AF) => BF): Container<BF>;
+>map : Symbol(Functor.map, Decl(higherKindedTypesInference.ts, 2, 78))
+>BF : Symbol(BF, Decl(higherKindedTypesInference.ts, 3, 8))
+>f : Symbol(f, Decl(higherKindedTypesInference.ts, 3, 12))
+>a : Symbol(a, Decl(higherKindedTypesInference.ts, 3, 16))
+>AF : Symbol(AF, Decl(higherKindedTypesInference.ts, 2, 25))
+>BF : Symbol(BF, Decl(higherKindedTypesInference.ts, 3, 8))
+>Container : Symbol(Container, Decl(higherKindedTypesInference.ts, 2, 28))
+>BF : Symbol(BF, Decl(higherKindedTypesInference.ts, 3, 8))
+}
+
+declare function staticMap<C1<_T1> extends Functor<_T1, C1>, A1, B1>(fa1: C1<A1>, fmap1: (a1: A1) => B1): C1<B1>
+>staticMap : Symbol(staticMap, Decl(higherKindedTypesInference.ts, 4, 1))
+>C1 : Symbol(C1, Decl(higherKindedTypesInference.ts, 6, 27))
+>_T1 : Symbol(_T1, Decl(higherKindedTypesInference.ts, 6, 30))
+>Functor : Symbol(Functor, Decl(higherKindedTypesInference.ts, 0, 61))
+>_T1 : Symbol(_T1, Decl(higherKindedTypesInference.ts, 6, 30))
+>C1 : Symbol(C1, Decl(higherKindedTypesInference.ts, 6, 27))
+>A1 : Symbol(A1, Decl(higherKindedTypesInference.ts, 6, 60))
+>B1 : Symbol(B1, Decl(higherKindedTypesInference.ts, 6, 64))
+>fa1 : Symbol(fa1, Decl(higherKindedTypesInference.ts, 6, 69))
+>C1 : Symbol(C1, Decl(higherKindedTypesInference.ts, 6, 27))
+>A1 : Symbol(A1, Decl(higherKindedTypesInference.ts, 6, 60))
+>fmap1 : Symbol(fmap1, Decl(higherKindedTypesInference.ts, 6, 81))
+>a1 : Symbol(a1, Decl(higherKindedTypesInference.ts, 6, 90))
+>A1 : Symbol(A1, Decl(higherKindedTypesInference.ts, 6, 60))
+>B1 : Symbol(B1, Decl(higherKindedTypesInference.ts, 6, 64))
+>C1 : Symbol(C1, Decl(higherKindedTypesInference.ts, 6, 27))
+>B1 : Symbol(B1, Decl(higherKindedTypesInference.ts, 6, 64))
+
+
+declare class WeirdFunctor1<X, Y, Z> {
+>WeirdFunctor1 : Symbol(WeirdFunctor1, Decl(higherKindedTypesInference.ts, 6, 112))
+>X : Symbol(X, Decl(higherKindedTypesInference.ts, 9, 28))
+>Y : Symbol(Y, Decl(higherKindedTypesInference.ts, 9, 30))
+>Z : Symbol(Z, Decl(higherKindedTypesInference.ts, 9, 33))
+
+    methodX(): X
+>methodX : Symbol(WeirdFunctor1.methodX, Decl(higherKindedTypesInference.ts, 9, 38))
+>X : Symbol(X, Decl(higherKindedTypesInference.ts, 9, 28))
+
+    methodY(): Y
+>methodY : Symbol(WeirdFunctor1.methodY, Decl(higherKindedTypesInference.ts, 10, 16))
+>Y : Symbol(Y, Decl(higherKindedTypesInference.ts, 9, 30))
+
+    methodZ(): Z
+>methodZ : Symbol(WeirdFunctor1.methodZ, Decl(higherKindedTypesInference.ts, 11, 16))
+>Z : Symbol(Z, Decl(higherKindedTypesInference.ts, 9, 33))
+
+    map<B>(f: (a: Y) => B): WeirdFunctor1<X, B, Z>
+>map : Symbol(WeirdFunctor1.map, Decl(higherKindedTypesInference.ts, 12, 16))
+>B : Symbol(B, Decl(higherKindedTypesInference.ts, 14, 8))
+>f : Symbol(f, Decl(higherKindedTypesInference.ts, 14, 11))
+>a : Symbol(a, Decl(higherKindedTypesInference.ts, 14, 15))
+>Y : Symbol(Y, Decl(higherKindedTypesInference.ts, 9, 30))
+>B : Symbol(B, Decl(higherKindedTypesInference.ts, 14, 8))
+>WeirdFunctor1 : Symbol(WeirdFunctor1, Decl(higherKindedTypesInference.ts, 6, 112))
+>X : Symbol(X, Decl(higherKindedTypesInference.ts, 9, 28))
+>B : Symbol(B, Decl(higherKindedTypesInference.ts, 14, 8))
+>Z : Symbol(Z, Decl(higherKindedTypesInference.ts, 9, 33))
+}
+
+
+declare const weird1: WeirdFunctor1<number, string, object>
+>weird1 : Symbol(weird1, Decl(higherKindedTypesInference.ts, 18, 13))
+>WeirdFunctor1 : Symbol(WeirdFunctor1, Decl(higherKindedTypesInference.ts, 6, 112))
+
+
+const result1 = staticMap(weird1, stringLength);
+>result1 : Symbol(result1, Decl(higherKindedTypesInference.ts, 21, 5))
+>staticMap : Symbol(staticMap, Decl(higherKindedTypesInference.ts, 4, 1))
+>weird1 : Symbol(weird1, Decl(higherKindedTypesInference.ts, 18, 13))
+>stringLength : Symbol(stringLength, Decl(higherKindedTypesInference.ts, 0, 0))
+
+const expected1: WeirdFunctor1<number, number, object> = result1;
+>expected1 : Symbol(expected1, Decl(higherKindedTypesInference.ts, 22, 5))
+>WeirdFunctor1 : Symbol(WeirdFunctor1, Decl(higherKindedTypesInference.ts, 6, 112))
+>result1 : Symbol(result1, Decl(higherKindedTypesInference.ts, 21, 5))
+
+
