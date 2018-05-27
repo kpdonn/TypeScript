@@ -3906,6 +3906,7 @@ namespace ts {
     export interface AnonymousType extends ObjectType {
         target?: AnonymousType;  // Instantiation target
         mapper?: TypeMapper;     // Instantiation mapper
+        freeTypeParameters?: TypeParameter[];
     }
 
     /* @internal */

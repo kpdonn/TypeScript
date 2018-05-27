@@ -9695,8 +9695,30 @@ namespace ts {
                     const newMapper = createTypeMapper(typeParameters, typeArguments);
                     result = target.objectFlags & ObjectFlags.Mapped ? instantiateMappedType(<MappedType>target, newMapper) : instantiateAnonymousType(target, newMapper);
                     links.instantiations!.set(id, result);
+                    if (target.objectFlags & ObjectFlags.Anonymous) {
+                        const freeTypeParameters = filter(typeArguments, typeArg => !!(typeArg.flags & TypeFlags.TypeParameter));
+                        (<AnonymousType>result).freeTypeParameters = length(freeTypeParameters) ? freeTypeParameters : undefined;
+                    }
                 }
                 return result;
+            }
+            return type;
+        }
+
+        function handleFreeTypeParameters(type: AnonymousType) {
+            if (type.freeTypeParameters) {
+                const singleCallSignature = getSingleCallSignature(type);
+                if (singleCallSignature) {
+                    const clonedExtraTypeParameters = map(type.freeTypeParameters, cloneTypeParameter);
+                    const mapper = createTypeMapper(type.freeTypeParameters, clonedExtraTypeParameters);
+                    const newSignature = instantiateSignature(singleCallSignature, mapper);
+                    newSignature.typeParameters = concatenate(newSignature.typeParameters, clonedExtraTypeParameters);
+                    return getOrCreateTypeFromSignature(newSignature);
+                }
+                else {
+                    const mapper = createTypeMapper(type.freeTypeParameters, map(type.freeTypeParameters, _ => emptyObjectType));
+                    return instantiateType(type, mapper);
+                }
             }
             return type;
         }
@@ -12292,8 +12314,12 @@ namespace ts {
             function mapper(t: Type): Type {
                 for (let i = 0; i < inferences.length; i++) {
                     if (t === inferences[i].typeParameter) {
-                        inferences[i].isFixed = true;
-                        return getInferredType(context, i);
+                        const inference = getInferredType(context, i);
+                        if (inference !== t) {
+                            inferences[i].isFixed = true;
+                            return inference;
+                        }
+                        return t;
                     }
                 }
                 return t;
@@ -12855,7 +12881,14 @@ namespace ts {
                         // We only have contravariant inferences, infer the best common subtype of those
                         inferredType = getContravariantInference(inference);
                     }
-                    else if (context.flags & InferenceFlags.NoDefault) {
+                }
+                else {
+                    inferredType = inference.candidates ? getUnionType(inference.candidates, UnionReduction.Subtype) :
+                        inference.contraCandidates ? getIntersectionType(inference.contraCandidates) : undefined;
+                }
+
+                if (!inferredType) {
+                    if (context.flags & InferenceFlags.NoDefault) {
                         // We use silentNeverType as the wildcard that signals no inferences.
                         inferredType = silentNeverType;
                     }
@@ -12874,27 +12907,26 @@ namespace ts {
                                     createBackreferenceMapper(context.signature!.typeParameters!, index),
                                     context));
                         }
-                        else {
-                            inferredType = getDefaultTypeArgumentType(!!(context.flags & InferenceFlags.AnyDefault));
-                        }
                     }
                 }
-                else {
-                    inferredType = getTypeFromInference(inference);
-                }
-
                 inference.inferredType = inferredType;
 
                 const constraint = getConstraintOfTypeParameter(inference.typeParameter);
                 if (constraint) {
                     const instantiatedConstraint = instantiateType(constraint, context);
-                    if (!context.compareTypes(inferredType, getTypeWithThisArgument(instantiatedConstraint, inferredType))) {
-                        inference.inferredType = inferredType = instantiatedConstraint;
+                    if (inferredType) {
+                        if (!context.compareTypes(inferredType, getTypeWithThisArgument(instantiatedConstraint, inferredType))) {
+                            inference.inferredType = inferredType = instantiatedConstraint;
+                            return instantiatedConstraint;
+                        }
+                        return inferredType;
                     }
+                    inference.inferredType = inferredType = instantiatedConstraint;
+                    return instantiatedConstraint;
                 }
             }
 
-            return inferredType;
+            return inference.inferredType || inference.typeParameter;
         }
 
         function getDefaultTypeArgumentType(isInJavaScriptFile: boolean): Type {
@@ -18425,6 +18457,15 @@ namespace ts {
                 result = chooseOverload(candidates, assignableRelation, signatureHelpTrailingComma);
             }
             if (result) {
+                const resultReturnType = getReturnTypeOfSignature(result);
+                if (getObjectFlags(resultReturnType) & ObjectFlags.Anonymous) {
+                    const newReturnType = handleFreeTypeParameters(<AnonymousType>resultReturnType);
+                    if (newReturnType !== resultReturnType) {
+                        const newResult = cloneSignature(result);
+                        newResult.resolvedReturnType = newReturnType;
+                        return newResult;
+                    }
+                }
                 return result;
             }
 
