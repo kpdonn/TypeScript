@@ -7718,6 +7718,8 @@ namespace ts {
                 type.flags |= typeArguments ? getPropagatingFlagsOfTypes(typeArguments, /*excludeKinds*/ 0) : 0;
                 type.target = target;
                 type.typeArguments = typeArguments;
+                const freeTypeParameters = filter(typeArguments, typeArg => !!(typeArg.flags & TypeFlags.TypeParameter));
+                type.freeTypeParameters = length(freeTypeParameters) ? freeTypeParameters : undefined;
             }
             return type;
         }
@@ -9695,17 +9697,15 @@ namespace ts {
                     const newMapper = createTypeMapper(typeParameters, typeArguments);
                     result = target.objectFlags & ObjectFlags.Mapped ? instantiateMappedType(<MappedType>target, newMapper) : instantiateAnonymousType(target, newMapper);
                     links.instantiations!.set(id, result);
-                    if (target.objectFlags & ObjectFlags.Anonymous) {
-                        const freeTypeParameters = filter(typeArguments, typeArg => !!(typeArg.flags & TypeFlags.TypeParameter));
-                        (<AnonymousType>result).freeTypeParameters = length(freeTypeParameters) ? freeTypeParameters : undefined;
-                    }
+                    const freeTypeParameters = filter(typeArguments, typeArg => !!(typeArg.flags & TypeFlags.TypeParameter));
+                    result.freeTypeParameters = length(freeTypeParameters) ? freeTypeParameters : undefined;
                 }
                 return result;
             }
             return type;
         }
 
-        function handleFreeTypeParameters(type: AnonymousType) {
+        function handleFreeTypeParameters(type: Type) {
             if (type.freeTypeParameters) {
                 const singleCallSignature = getSingleCallSignature(type);
                 if (singleCallSignature) {
@@ -12908,6 +12908,9 @@ namespace ts {
                                     context));
                         }
                     }
+                }
+                else if (inferredType.freeTypeParameters) {
+                    inferredType = instantiateType(inferredType, context);
                 }
                 inference.inferredType = inferredType;
 
@@ -17800,9 +17803,10 @@ namespace ts {
                 // Type parameters from outer context referenced by source type are fixed by instantiation of the source type
                 inferTypes(context.inferences, instantiateType(source, contextualMapper || identityMapper), target);
             });
-            if (!contextualMapper) {
-                inferTypes(context.inferences, getReturnTypeOfSignature(contextualSignature), getReturnTypeOfSignature(signature), InferencePriority.ReturnType);
-            }
+
+            const contextualReturnType = instantiateType(getReturnTypeOfSignature(contextualSignature), contextualMapper || identityMapper);
+            inferTypes(context.inferences, contextualReturnType, getReturnTypeOfSignature(signature), InferencePriority.ReturnType);
+
             return getSignatureInstantiation(signature, getInferredTypes(context), isInJavaScriptFile(contextualSignature.declaration));
         }
 
@@ -18458,8 +18462,8 @@ namespace ts {
             }
             if (result) {
                 const resultReturnType = getReturnTypeOfSignature(result);
-                if (getObjectFlags(resultReturnType) & ObjectFlags.Anonymous) {
-                    const newReturnType = handleFreeTypeParameters(<AnonymousType>resultReturnType);
+                if (resultReturnType.freeTypeParameters) {
+                    const newReturnType = handleFreeTypeParameters(resultReturnType);
                     if (newReturnType !== resultReturnType) {
                         const newResult = cloneSignature(result);
                         newResult.resolvedReturnType = newReturnType;

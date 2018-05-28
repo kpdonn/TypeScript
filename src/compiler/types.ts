@@ -3765,6 +3765,8 @@ namespace ts {
         aliasTypeArguments?: Type[];     // Alias type arguments (if any)
         /* @internal */
         wildcardInstantiation?: Type;    // Instantiation with type parameters mapped to wildcard type
+        /* @internal */
+        freeTypeParameters?: TypeParameter[];
     }
 
     /* @internal */
@@ -3906,7 +3908,6 @@ namespace ts {
     export interface AnonymousType extends ObjectType {
         target?: AnonymousType;  // Instantiation target
         mapper?: TypeMapper;     // Instantiation mapper
-        freeTypeParameters?: TypeParameter[];
     }
 
     /* @internal */
