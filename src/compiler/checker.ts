@@ -12364,12 +12364,12 @@ namespace ts {
             function mapper(t: Type): Type {
                 for (let i = 0; i < inferences.length; i++) {
                     if (t === inferences[i].typeParameter) {
+                        inferences[i].isFixed = true;
                         const inference = getInferredType(context, i);
-                        if (inference !== t) {
-                            inferences[i].isFixed = true;
-                            return inference;
+                        if (inference === t) {
+                            inferences[i].isFixed = false;
                         }
-                        return t;
+                        return inference;
                     }
                 }
                 return t;
