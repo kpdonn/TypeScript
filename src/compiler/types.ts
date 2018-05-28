@@ -3908,6 +3908,7 @@ namespace ts {
     export interface AnonymousType extends ObjectType {
         target?: AnonymousType;  // Instantiation target
         mapper?: TypeMapper;     // Instantiation mapper
+        typeArguments?: Type[];
     }
 
     /* @internal */
@@ -4093,6 +4094,8 @@ namespace ts {
         isolatedSignatureType?: ObjectType; // A manufactured type that just contains the signature for purposes of signature comparison
         /* @internal */
         instantiations?: Map<Signature>;    // Generic signature instantiation cache
+        /* @internal */
+        typeArguments?: Type[];
     }
 
     export const enum IndexKind {

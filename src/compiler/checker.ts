@@ -7512,7 +7512,9 @@ namespace ts {
         }
 
         function createSignatureInstantiation(signature: Signature, typeArguments: Type[]): Signature {
-            return instantiateSignature(signature, createSignatureTypeMapper(signature, typeArguments), /*eraseTypeParameters*/ true);
+            const newSignature = instantiateSignature(signature, createSignatureTypeMapper(signature, typeArguments), /*eraseTypeParameters*/ true);
+            newSignature.typeArguments = typeArguments;
+            return newSignature;
         }
         function createSignatureTypeMapper(signature: Signature, typeArguments: Type[]): TypeMapper {
             return createTypeMapper(signature.typeParameters!, typeArguments);
@@ -7718,8 +7720,6 @@ namespace ts {
                 type.flags |= typeArguments ? getPropagatingFlagsOfTypes(typeArguments, /*excludeKinds*/ 0) : 0;
                 type.target = target;
                 type.typeArguments = typeArguments;
-                const freeTypeParameters = filter(typeArguments, typeArg => !!(typeArg.flags & TypeFlags.TypeParameter));
-                type.freeTypeParameters = length(freeTypeParameters) ? freeTypeParameters : undefined;
             }
             return type;
         }
@@ -9650,9 +9650,8 @@ namespace ts {
             return result;
         }
 
-        function getAnonymousTypeInstantiation(type: AnonymousType, mapper: TypeMapper) {
-            const target = type.objectFlags & ObjectFlags.Instantiated ? type.target! : type;
-            const { symbol } = target;
+        function getTypeParametersForAnonymousType(type: AnonymousType): TypeParameter[] {
+            const { symbol } = type;
             const links = getSymbolLinks(symbol);
             let typeParameters = links.outerTypeParameters;
             if (!typeParameters) {
@@ -9676,15 +9675,23 @@ namespace ts {
                     outerTypeParameters = addRange(outerTypeParameters, templateTagParameters);
                 }
                 typeParameters = outerTypeParameters || emptyArray;
-                typeParameters = symbol.flags & SymbolFlags.TypeLiteral && !target.aliasTypeArguments ?
+                typeParameters = symbol.flags & SymbolFlags.TypeLiteral && !type.aliasTypeArguments ?
                     filter(typeParameters, tp => isTypeParameterPossiblyReferenced(tp, declaration)) :
                     typeParameters;
                 links.outerTypeParameters = typeParameters;
                 if (typeParameters.length) {
                     links.instantiations = createMap<Type>();
-                    links.instantiations.set(getTypeListId(typeParameters), target);
+                    links.instantiations.set(getTypeListId(typeParameters), type);
                 }
             }
+            return typeParameters;
+        }
+
+        function getAnonymousTypeInstantiation(type: AnonymousType, mapper: TypeMapper) {
+            const target = type.objectFlags & ObjectFlags.Instantiated ? type.target! : type;
+            const { symbol } = target;
+            const links = getSymbolLinks(symbol);
+            const typeParameters = getTypeParametersForAnonymousType(target);
             if (typeParameters.length) {
                 // We are instantiating an anonymous type that has one or more type parameters in scope. Apply the
                 // mapper to the type parameters to produce the effective list of type arguments, and compute the
@@ -9696,17 +9703,54 @@ namespace ts {
                 if (!result) {
                     const newMapper = createTypeMapper(typeParameters, typeArguments);
                     result = target.objectFlags & ObjectFlags.Mapped ? instantiateMappedType(<MappedType>target, newMapper) : instantiateAnonymousType(target, newMapper);
+                    (<AnonymousType>result).typeArguments = typeArguments;
                     links.instantiations!.set(id, result);
-                    const freeTypeParameters = filter(typeArguments, typeArg => !!(typeArg.flags & TypeFlags.TypeParameter));
-                    result.freeTypeParameters = length(freeTypeParameters) ? freeTypeParameters : undefined;
                 }
                 return result;
             }
             return type;
         }
 
-        function handleFreeTypeParameters(type: Type, freeTypeParameters: TypeParameter[]): Type {
-            if (type.freeTypeParameters) {
+        function isTypeParameter(type: Type): type is TypeParameter {
+            return !!(type.flags & TypeFlags.TypeParameter);
+        }
+
+        function isAnonymousType(type: Type): type is AnonymousType {
+            return !!(getObjectFlags(type) & ObjectFlags.Anonymous);
+        }
+
+        function isTypeReference(type: Type): type is TypeReference {
+            return !!(getObjectFlags(type) & ObjectFlags.Reference);
+        }
+
+        function isUnionOrIntersection(type: Type): type is UnionOrIntersectionType {
+            return !!(type.flags & TypeFlags.UnionOrIntersection);
+        }
+
+        function getFreeTypeParameters(type: Type): TypeParameter[] {
+            if (!type.freeTypeParameters) {
+                if (isTypeParameter(type)) {
+                    type.freeTypeParameters = type.isThisType ? emptyArray : [type];
+                    return type.freeTypeParameters;
+                }
+                const typesToCheck = isTypeReference(type) ? type.typeArguments || emptyArray :
+                    isAnonymousType(type) ? type.typeArguments || getTypeParametersForAnonymousType(type) :
+                    isUnionOrIntersection(type) ? type.types : emptyArray;
+
+                let freeTypeParameters: TypeParameter[] | undefined;
+                for (const t of typesToCheck) {
+                    for (const tp of getFreeTypeParameters(t)) {
+                        freeTypeParameters = appendIfUnique(freeTypeParameters, tp);
+                    }
+                }
+                type.freeTypeParameters = freeTypeParameters || emptyArray;
+            }
+            return type.freeTypeParameters;
+        }
+
+        function handleFreeTypeParameters(type: Type, shouldIgnore: Type[]): Type {
+            const freeTypeParameters = filter(getFreeTypeParameters(type), tp => !contains(shouldIgnore, tp));
+            if (freeTypeParameters.length) {
                 const singleCallSignature = getSingleCallSignature(type);
                 if (singleCallSignature) {
                     const clonedExtraTypeParameters = map(freeTypeParameters, cloneTypeParameter);
@@ -18484,9 +18528,9 @@ namespace ts {
             if (result) {
                 const rootResult = getRootSignature(result);
                 const resultReturnType = getReturnTypeOfSignature(result);
-                if (rootResult.typeParameters && resultReturnType.freeTypeParameters) {
-                    const typeParametersToHandle = filter(resultReturnType.freeTypeParameters, tp => contains(rootResult.typeParameters, tp));
-                    const newReturnType = handleFreeTypeParameters(resultReturnType, typeParametersToHandle);
+                if (rootResult.typeParameters) {
+                    const shouldIgnore = filter(result.typeArguments!, t => !contains(rootResult.typeParameters, t));
+                    const newReturnType = handleFreeTypeParameters(resultReturnType, shouldIgnore);
                     if (newReturnType !== resultReturnType) {
                         const newResult = cloneSignature(result);
                         newResult.resolvedReturnType = newReturnType;
