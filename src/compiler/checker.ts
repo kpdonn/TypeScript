@@ -9705,18 +9705,18 @@ namespace ts {
             return type;
         }
 
-        function handleFreeTypeParameters(type: Type) {
+        function handleFreeTypeParameters(type: Type, freeTypeParameters: TypeParameter[]): Type {
             if (type.freeTypeParameters) {
                 const singleCallSignature = getSingleCallSignature(type);
                 if (singleCallSignature) {
-                    const clonedExtraTypeParameters = map(type.freeTypeParameters, cloneTypeParameter);
-                    const mapper = createTypeMapper(type.freeTypeParameters, clonedExtraTypeParameters);
+                    const clonedExtraTypeParameters = map(freeTypeParameters, cloneTypeParameter);
+                    const mapper = createTypeMapper(freeTypeParameters, clonedExtraTypeParameters);
                     const newSignature = instantiateSignature(singleCallSignature, mapper);
                     newSignature.typeParameters = concatenate(newSignature.typeParameters, clonedExtraTypeParameters);
                     return getOrCreateTypeFromSignature(newSignature);
                 }
                 else {
-                    const mapper = createTypeMapper(type.freeTypeParameters, map(type.freeTypeParameters, _ => emptyObjectType));
+                    const mapper = createTypeMapper(freeTypeParameters, map(freeTypeParameters, _ => emptyObjectType));
                     return instantiateType(type, mapper);
                 }
             }
@@ -18365,6 +18365,14 @@ namespace ts {
             return createDiagnosticForNodeArray(getSourceFileOfNode(node), typeArguments, Diagnostics.Expected_0_type_arguments_but_got_1, paramCount, typeArguments.length);
         }
 
+        function getRootSignature(signature: Signature): Signature {
+            let rootSignature = signature;
+            while (rootSignature.target) {
+                rootSignature = rootSignature.target;
+            }
+            return rootSignature;
+        }
+
         function resolveCall(node: CallLikeExpression, signatures: Signature[], candidatesOutArray: Signature[] | undefined, fallbackError?: DiagnosticMessage): Signature {
             const isTaggedTemplate = node.kind === SyntaxKind.TaggedTemplateExpression;
             const isDecorator = node.kind === SyntaxKind.Decorator;
@@ -18469,9 +18477,11 @@ namespace ts {
                 result = chooseOverload(candidates, assignableRelation, signatureHelpTrailingComma);
             }
             if (result) {
+                const rootResult = getRootSignature(result);
                 const resultReturnType = getReturnTypeOfSignature(result);
-                if (resultReturnType.freeTypeParameters) {
-                    const newReturnType = handleFreeTypeParameters(resultReturnType);
+                if (rootResult.typeParameters && resultReturnType.freeTypeParameters) {
+                    const typeParametersToHandle = filter(resultReturnType.freeTypeParameters, tp => contains(rootResult.typeParameters, tp));
+                    const newReturnType = handleFreeTypeParameters(resultReturnType, typeParametersToHandle);
                     if (newReturnType !== resultReturnType) {
                         const newResult = cloneSignature(result);
                         newResult.resolvedReturnType = newReturnType;
