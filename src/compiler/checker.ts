@@ -373,6 +373,7 @@ namespace ts {
         const keyofConstraintType = keyofStringsOnly ? stringType : stringNumberSymbolType;
 
         const emptyObjectType = createAnonymousType(undefined, emptySymbols, emptyArray, emptyArray, undefined, undefined);
+        const noInferenceType = createAnonymousType(undefined, emptySymbols, emptyArray, emptyArray, undefined, undefined);
 
         const emptyTypeLiteralSymbol = createSymbol(SymbolFlags.TypeLiteral, InternalSymbolName.Type);
         emptyTypeLiteralSymbol.members = createSymbolTable();
@@ -12368,6 +12369,7 @@ namespace ts {
                         const inference = getInferredType(context, i);
                         if (inference === t) {
                             inferences[i].isFixed = false;
+                            return context.providingContextualTypes ? noInferenceType : inference;
                         }
                         return inference;
                     }
@@ -12520,21 +12522,10 @@ namespace ts {
             let symbolStack: Symbol[];
             let visited: Map<boolean>;
             let contravariant = false;
-            let propagationType: Type;
             inferFromTypes(originalSource, originalTarget);
 
             function inferFromTypes(source: Type, target: Type) {
                 if (!couldContainTypeVariables(target)) {
-                    return;
-                }
-                if (source === wildcardType) {
-                    // We are inferring from an 'any' type. We want to infer this type for every type parameter
-                    // referenced in the target type, so we record it as the propagation type and infer from the
-                    // target to itself. Then, as we find candidates we substitute the propagation type.
-                    const savePropagationType = propagationType;
-                    propagationType = source;
-                    inferFromTypes(target, target);
-                    propagationType = savePropagationType;
                     return;
                 }
                 if (source.aliasSymbol && source.aliasTypeArguments && source.aliasSymbol === target.aliasSymbol) {
@@ -12592,7 +12583,7 @@ namespace ts {
                     // not contain anyFunctionType when we come back to this argument for its second round
                     // of inference. Also, we exclude inferences for silentNeverType (which is used as a wildcard
                     // when constructing types from type parameters that had no inference candidates).
-                    if (source.flags & TypeFlags.ContainsAnyFunctionType || source === silentNeverType) {
+                    if (source.flags & TypeFlags.ContainsAnyFunctionType || source === silentNeverType || source === noInferenceType) {
                         return;
                     }
                     const inference = getInferenceInfoForType(target);
@@ -12604,12 +12595,11 @@ namespace ts {
                                 inference.priority = priority;
                             }
                             if (priority === inference.priority) {
-                                const candidate = propagationType || source;
                                 if (contravariant) {
-                                    inference.contraCandidates = append(inference.contraCandidates, candidate);
+                                    inference.contraCandidates = append(inference.contraCandidates, source);
                                 }
                                 else {
-                                    inference.candidates = append(inference.candidates, candidate);
+                                    inference.candidates = append(inference.candidates, source);
                                 }
                             }
                             if (!(priority & InferencePriority.ReturnType) && target.flags & TypeFlags.TypeParameter && !isTypeParameterAtTopLevel(originalTarget, <TypeParameter>target)) {
@@ -19501,11 +19491,11 @@ namespace ts {
         function assignTypeToParameterAndFixTypeParameters(parameter: Symbol, contextualType: Type) {
             const links = getSymbolLinks(parameter);
             if (!links.type) {
-                links.type = contextualType.flags & TypeFlags.TypeParameter ? emptyObjectType : contextualType;
+                links.type = contextualType;
                 const decl = parameter.valueDeclaration as ParameterDeclaration;
                 if (decl.name.kind !== SyntaxKind.Identifier) {
                     // if inference didn't come up with anything but {}, fall back to the binding pattern if present.
-                    if (links.type === emptyObjectType) {
+                    if (links.type === noInferenceType) {
                         links.type = getTypeFromBindingPattern(decl.name);
                     }
                     assignBindingElementTypes(decl.name);
@@ -19820,7 +19810,14 @@ namespace ts {
                             }
                             const instantiatedContextualSignature = contextualMapper === identityMapper ?
                                 contextualSignature : instantiateSignature(contextualSignature, contextualMapper);
-                            assignContextualParameterTypes(signature, instantiatedContextualSignature);
+                            if (isInferenceContext(contextualMapper)) {
+                                contextualMapper.providingContextualTypes = true;
+                                assignContextualParameterTypes(signature, instantiatedContextualSignature);
+                                contextualMapper.providingContextualTypes = false;
+                            }
+                            else {
+                                assignContextualParameterTypes(signature, instantiatedContextualSignature);
+                            }
                         }
                         if (!getEffectiveReturnTypeNode(node) && !signature.resolvedReturnType) {
                             const returnType = getReturnTypeFromBody(node, checkMode);

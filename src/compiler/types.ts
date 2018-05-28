@@ -4169,6 +4169,7 @@ namespace ts {
         inferences: InferenceInfo[];        // Inferences made for each type parameter
         flags: InferenceFlags;              // Inference flags
         compareTypes: TypeComparer;         // Type comparer function
+        providingContextualTypes?: boolean;
     }
 
     /* @internal */
