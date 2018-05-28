@@ -12466,7 +12466,7 @@ namespace ts {
                 emptyObjectType;
         }
 
-        function inferTypes(inferences: InferenceInfo[], originalSource: Type, originalTarget: Type, priority: InferencePriority = 0) {
+        function inferTypes(inferences: InferenceInfo[], originalSource: Type, originalTarget: Type, priority: InferencePriority = 0, eraseSignatures = false) {
             let symbolStack: Symbol[];
             let visited: Map<boolean>;
             let contravariant = false;
@@ -12756,7 +12756,15 @@ namespace ts {
                 const targetLen = targetSignatures.length;
                 const len = sourceLen < targetLen ? sourceLen : targetLen;
                 for (let i = 0; i < len; i++) {
-                    inferFromSignature(getBaseSignature(sourceSignatures[sourceLen - len + i]), getBaseSignature(targetSignatures[targetLen - len + i]));
+                    let sourceSig = sourceSignatures[sourceLen - len + i];
+                    const targetSig = targetSignatures[targetLen - len + i];
+                    if (!eraseSignatures && sourceSig.typeParameters && sourceSig.typeParameters !== targetSig.typeParameters) {
+                        sourceSig = instantiateSignatureInContextOf(sourceSig, targetSig);
+                        inferFromSignature(sourceSig, targetSig);
+                    }
+                    else {
+                        inferFromSignature(getBaseSignature(sourceSig), getBaseSignature(targetSig));
+                    }
                 }
             }
 
@@ -17801,11 +17809,11 @@ namespace ts {
             const context = createInferenceContext(signature.typeParameters!, signature, InferenceFlags.InferUnionTypes, compareTypes);
             forEachMatchingParameterType(contextualSignature, signature, (source, target) => {
                 // Type parameters from outer context referenced by source type are fixed by instantiation of the source type
-                inferTypes(context.inferences, instantiateType(source, contextualMapper || identityMapper), target);
+                inferTypes(context.inferences, instantiateType(source, contextualMapper || identityMapper), target, /*priority*/ 0, /*eraseSignatures*/ true);
             });
 
-            const contextualReturnType = instantiateType(getReturnTypeOfSignature(contextualSignature), contextualMapper || identityMapper);
-            inferTypes(context.inferences, contextualReturnType, getReturnTypeOfSignature(signature), InferencePriority.ReturnType);
+            const contextualReturnType = instantiateType(getReturnTypeOfSignature(contextualSignature), contextualMapper ? cloneTypeMapper(contextualMapper) : identityMapper);
+            inferTypes(context.inferences, contextualReturnType, getReturnTypeOfSignature(signature), InferencePriority.ReturnType, /*eraseSignatures*/ true);
 
             return getSignatureInstantiation(signature, getInferredTypes(context), isInJavaScriptFile(contextualSignature.declaration));
         }
