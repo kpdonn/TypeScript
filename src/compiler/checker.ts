@@ -9651,6 +9651,9 @@ namespace ts {
         }
 
         function getTypeParametersForAnonymousType(type: AnonymousType): TypeParameter[] {
+            if (!mightReferenceTypeParameter(type)) {
+                return emptyArray;
+            }
             const { symbol } = type;
             const links = getSymbolLinks(symbol);
             let typeParameters = links.outerTypeParameters;
@@ -9870,6 +9873,10 @@ namespace ts {
             return getConditionalType(root, mapper);
         }
 
+        function mightReferenceTypeParameter(type: AnonymousType) {
+            return type.symbol && type.symbol.flags & (SymbolFlags.Function | SymbolFlags.Method | SymbolFlags.Class | SymbolFlags.TypeLiteral | SymbolFlags.ObjectLiteral) && type.symbol.declarations;
+        }
+
         function instantiateType(type: Type, mapper: TypeMapper | undefined): Type;
         function instantiateType(type: Type | undefined, mapper: TypeMapper | undefined): Type | undefined;
         function instantiateType(type: Type | undefined, mapper: TypeMapper | undefined): Type | undefined {
@@ -9882,8 +9889,7 @@ namespace ts {
                         // If the anonymous type originates in a declaration of a function, method, class, or
                         // interface, in an object type literal, or in an object literal expression, we may need
                         // to instantiate the type because it might reference a type parameter.
-                        return type.symbol && type.symbol.flags & (SymbolFlags.Function | SymbolFlags.Method | SymbolFlags.Class | SymbolFlags.TypeLiteral | SymbolFlags.ObjectLiteral) && type.symbol.declarations ?
-                            getAnonymousTypeInstantiation(<AnonymousType>type, mapper) : type;
+                        return mightReferenceTypeParameter(<AnonymousType>type) ? getAnonymousTypeInstantiation(<AnonymousType>type, mapper) : type;
                     }
                     if ((<ObjectType>type).objectFlags & ObjectFlags.Mapped) {
                         return getAnonymousTypeInstantiation(<MappedType>type, mapper);
@@ -12961,7 +12967,7 @@ namespace ts {
                         }
                     }
                 }
-                else if (inferredType.freeTypeParameters) {
+                else if (filter(getFreeTypeParameters(inferredType), tp => tp !== inference.typeParameter && contains(context.typeParameters, tp)).length) {
                     inferredType = instantiateType(inferredType, context);
                 }
                 inference.inferredType = inferredType;
