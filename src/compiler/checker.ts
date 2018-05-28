@@ -18008,6 +18008,11 @@ namespace ts {
             const headMessage = Diagnostics.Argument_of_type_0_is_not_assignable_to_parameter_of_type_1;
             const argCount = getEffectiveArgumentCount(node, args, signature);
             for (let i = 0; i < argCount; i++) {
+                if (excludeArgument && excludeArgument[i]) {
+                    // skip excluded arguments because their exclusion may have resulted in a type parameter
+                    // at this position remaining uninferred and uninstantiated.
+                    continue;
+                }
                 const arg = getEffectiveArgument(node, args, i);
                 // If the effective argument is 'undefined', then it is an argument that is present but is synthetic.
                 if (arg === undefined || arg.kind !== SyntaxKind.OmittedExpression) {
