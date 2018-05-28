@@ -19455,7 +19455,7 @@ namespace ts {
                 const decl = parameter.valueDeclaration as ParameterDeclaration;
                 if (decl.name.kind !== SyntaxKind.Identifier) {
                     // if inference didn't come up with anything but {}, fall back to the binding pattern if present.
-                    if (links.type === emptyObjectType) {
+                    if (links.type === emptyObjectType || links.type.flags & TypeFlags.TypeParameter) {
                         links.type = getTypeFromBindingPattern(decl.name);
                     }
                     assignBindingElementTypes(decl.name);
