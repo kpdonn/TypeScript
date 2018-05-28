@@ -19501,11 +19501,11 @@ namespace ts {
         function assignTypeToParameterAndFixTypeParameters(parameter: Symbol, contextualType: Type) {
             const links = getSymbolLinks(parameter);
             if (!links.type) {
-                links.type = contextualType;
+                links.type = contextualType.flags & TypeFlags.TypeParameter ? emptyObjectType : contextualType;
                 const decl = parameter.valueDeclaration as ParameterDeclaration;
                 if (decl.name.kind !== SyntaxKind.Identifier) {
                     // if inference didn't come up with anything but {}, fall back to the binding pattern if present.
-                    if (links.type === emptyObjectType || links.type.flags & TypeFlags.TypeParameter) {
+                    if (links.type === emptyObjectType) {
                         links.type = getTypeFromBindingPattern(decl.name);
                     }
                     assignBindingElementTypes(decl.name);
