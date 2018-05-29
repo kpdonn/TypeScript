@@ -12961,6 +12961,7 @@ namespace ts {
                     }
                 }
                 else if (filter(getFreeTypeParameters(inferredType), tp => tp !== inference.typeParameter && contains(context.typeParameters, tp)).length) {
+                    inference.inferredType = inferredType;
                     inferredType = instantiateType(inferredType, context);
                 }
                 inference.inferredType = inferredType;
