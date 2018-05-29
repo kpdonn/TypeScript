@@ -12369,7 +12369,7 @@ namespace ts {
                         const inference = getInferredType(context, i);
                         if (!inferences[i].inferredType) {
                             inferences[i].isFixed = false;
-                            return context.providingContextualTypes ? noInferenceType : inference;
+                            return context.providingContextualTypes || (context.mappingNoInferences && inferences[i].seenNoInferenceType) ? noInferenceType : inference;
                         }
                         return inference;
                     }
@@ -12386,7 +12386,8 @@ namespace ts {
                 inferredType: undefined,
                 priority: undefined,
                 topLevel: true,
-                isFixed: false
+                isFixed: false,
+                seenNoInferenceType: false,
             };
         }
 
@@ -12398,7 +12399,8 @@ namespace ts {
                 inferredType: inference.inferredType,
                 priority: inference.priority,
                 topLevel: inference.topLevel,
-                isFixed: inference.isFixed
+                isFixed: inference.isFixed,
+                seenNoInferenceType: inference.seenNoInferenceType,
             };
         }
 
@@ -12583,12 +12585,15 @@ namespace ts {
                     // not contain anyFunctionType when we come back to this argument for its second round
                     // of inference. Also, we exclude inferences for silentNeverType (which is used as a wildcard
                     // when constructing types from type parameters that had no inference candidates).
-                    if (source.flags & TypeFlags.ContainsAnyFunctionType || source === silentNeverType || source === noInferenceType) {
+                    if (source.flags & TypeFlags.ContainsAnyFunctionType || source === silentNeverType) {
                         return;
                     }
                     const inference = getInferenceInfoForType(target);
                     if (inference) {
-                        if (!inference.isFixed) {
+                        if (source === noInferenceType) {
+                            inference.seenNoInferenceType = true;
+                        }
+                        else if (!inference.isFixed) {
                             if (inference.priority === undefined || priority < inference.priority) {
                                 inference.candidates = undefined;
                                 inference.contraCandidates = undefined;
@@ -17886,6 +17891,7 @@ namespace ts {
                 if (!inference.isFixed) {
                     inference.inferredType = undefined;
                 }
+                inference.seenNoInferenceType = false;
             }
 
             // If a contextual type is available, infer from that type to the return type of the call expression. For
@@ -18063,6 +18069,13 @@ namespace ts {
                         signature.inferenceContext.providingContextualTypes = true;
                         paramType = instantiateType(paramType, signature.inferenceContext);
                         signature.inferenceContext.providingContextualTypes = false;
+                    }
+                    else if (signature.inferenceContext) {
+                        // map all type parameters that have seen a noInferenceType but nothing else to no inference type.
+                        // it might be safe just to do the excludeArgument logic always instead of this very similar logic.
+                        signature.inferenceContext.mappingNoInferences = true;
+                        paramType = instantiateType(paramType, signature.inferenceContext);
+                        signature.inferenceContext.mappingNoInferences = false;
                     }
                     // If the effective argument type is undefined, there is no synthetic type for the argument.
                     // In that case, we should check the argument.
