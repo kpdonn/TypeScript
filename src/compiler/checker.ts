@@ -10117,7 +10117,9 @@ namespace ts {
                 return Ternary.False;
             }
 
+            let originalTargetMapper: TypeMapper | undefined;
             if (source.typeParameters && source.typeParameters !== target.typeParameters) {
+                originalTargetMapper = target.mapper;
                 target = getCanonicalSignature(target);
                 source = instantiateSignatureInContextOf(source, target, /*contextualMapper*/ undefined, compareTypes);
             }
@@ -10180,7 +10182,7 @@ namespace ts {
             }
 
             if (!ignoreReturnTypes) {
-                const targetReturnType = getReturnTypeOfSignature(target);
+                const targetReturnType = instantiateType(getReturnTypeOfSignature(target), originalTargetMapper);
                 if (targetReturnType === voidType) {
                     return result;
                 }
