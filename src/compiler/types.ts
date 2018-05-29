@@ -4096,6 +4096,8 @@ namespace ts {
         instantiations?: Map<Signature>;    // Generic signature instantiation cache
         /* @internal */
         typeArguments?: Type[];
+        /* @internal */
+        inferenceContext?: InferenceContext;
     }
 
     export const enum IndexKind {

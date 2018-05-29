@@ -9755,8 +9755,8 @@ namespace ts {
             return type.freeTypeParameters;
         }
 
-        function handleFreeTypeParameters(type: Type, shouldIgnore: Type[]): Type {
-            const freeTypeParameters = filter(getFreeTypeParameters(type), tp => !contains(shouldIgnore, tp));
+        function handleFreeTypeParameters(type: Type, uninferred: Type[]): Type {
+            const freeTypeParameters = getFreeTypeParameters(type);
             if (freeTypeParameters.length) {
                 const singleCallSignature = getSingleCallSignature(type);
                 if (singleCallSignature) {
@@ -9767,7 +9767,7 @@ namespace ts {
                     return getOrCreateTypeFromSignature(newSignature);
                 }
                 else {
-                    const mapper = createTypeMapper(freeTypeParameters, map(freeTypeParameters, _ => emptyObjectType));
+                    const mapper = createTypeMapper(uninferred, map(uninferred, _ => emptyObjectType));
                     return instantiateType(type, mapper);
                 }
             }
@@ -12370,7 +12370,7 @@ namespace ts {
                     if (t === inferences[i].typeParameter) {
                         inferences[i].isFixed = true;
                         const inference = getInferredType(context, i);
-                        if (inference === t) {
+                        if (!inferences[i].inferredType) {
                             inferences[i].isFixed = false;
                             return context.providingContextualTypes ? noInferenceType : inference;
                         }
@@ -18413,14 +18413,6 @@ namespace ts {
             return createDiagnosticForNodeArray(getSourceFileOfNode(node), typeArguments, Diagnostics.Expected_0_type_arguments_but_got_1, paramCount, typeArguments.length);
         }
 
-        function getRootSignature(signature: Signature): Signature {
-            let rootSignature = signature;
-            while (rootSignature.target) {
-                rootSignature = rootSignature.target;
-            }
-            return rootSignature;
-        }
-
         function resolveCall(node: CallLikeExpression, signatures: Signature[], candidatesOutArray: Signature[] | undefined, fallbackError?: DiagnosticMessage): Signature {
             const isTaggedTemplate = node.kind === SyntaxKind.TaggedTemplateExpression;
             const isDecorator = node.kind === SyntaxKind.Decorator;
@@ -18525,11 +18517,10 @@ namespace ts {
                 result = chooseOverload(candidates, assignableRelation, signatureHelpTrailingComma);
             }
             if (result) {
-                const rootResult = getRootSignature(result);
                 const resultReturnType = getReturnTypeOfSignature(result);
-                if (rootResult.typeParameters) {
-                    const shouldIgnore = filter(result.typeArguments!, t => !contains(rootResult.typeParameters, t));
-                    const newReturnType = handleFreeTypeParameters(resultReturnType, shouldIgnore);
+                if (result.inferenceContext) {
+                    const uninferred = map(filter(result.inferenceContext.inferences, inf => !inf.inferredType), inf => inf.typeParameter);
+                    const newReturnType = handleFreeTypeParameters(resultReturnType, uninferred);
                     if (newReturnType !== resultReturnType) {
                         const newResult = cloneSignature(result);
                         newResult.resolvedReturnType = newReturnType;
@@ -18666,6 +18657,7 @@ namespace ts {
                             }
                             const isJavascript = isInJavaScriptFile(candidate.declaration);
                             candidate = getSignatureInstantiation(candidate, typeArgumentTypes, isJavascript);
+                            candidate.inferenceContext = inferenceContext;
                         }
                         if (!checkApplicableSignature(node, args!, candidate, relation, excludeArgument, /*reportErrors*/ false)) {
                             candidateForArgumentError = candidate;
