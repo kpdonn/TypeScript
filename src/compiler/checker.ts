@@ -3097,9 +3097,6 @@ namespace ts {
                     return undefined!; // TODO: GH#18217
                 }
 
-                if (type === noInferenceType) {
-                    return createTypeReferenceNode("{/*?*/}", /*typeArguments*/ undefined);
-                }
                 if (type.flags & TypeFlags.Any) {
                     return createKeywordTypeNode(SyntaxKind.AnyKeyword);
                 }
