@@ -10117,9 +10117,7 @@ namespace ts {
                 return Ternary.False;
             }
 
-            let originalTargetMapper: TypeMapper | undefined;
             if (source.typeParameters && source.typeParameters !== target.typeParameters) {
-                originalTargetMapper = target.mapper;
                 target = getCanonicalSignature(target);
                 source = instantiateSignatureInContextOf(source, target, /*contextualMapper*/ undefined, compareTypes);
             }
@@ -10182,7 +10180,7 @@ namespace ts {
             }
 
             if (!ignoreReturnTypes) {
-                const targetReturnType = instantiateType(getReturnTypeOfSignature(target), originalTargetMapper);
+                const targetReturnType = getReturnTypeOfSignature(target);
                 if (targetReturnType === voidType) {
                     return result;
                 }
@@ -12800,7 +12798,7 @@ namespace ts {
                 for (let i = 0; i < len; i++) {
                     let sourceSig = sourceSignatures[sourceLen - len + i];
                     const targetSig = targetSignatures[targetLen - len + i];
-                    if (!eraseSignatures && sourceSig.typeParameters && sourceSig.typeParameters !== targetSig.typeParameters) {
+                    if (!eraseSignatures && !sourceSig.isContextuallyTyped && sourceSig.typeParameters && sourceSig.typeParameters !== targetSig.typeParameters) {
                         sourceSig = instantiateSignatureInContextOf(sourceSig, targetSig);
                         inferFromSignature(sourceSig, targetSig);
                     }
@@ -19813,6 +19811,7 @@ namespace ts {
                             const instantiatedContextualSignature = contextualMapper === identityMapper ?
                                 contextualSignature : instantiateSignature(contextualSignature, contextualMapper);
                             if (isInferenceContext(contextualMapper)) {
+                                signature.isContextuallyTyped = true;
                                 contextualMapper.providingContextualTypes = true;
                                 assignContextualParameterTypes(signature, instantiatedContextualSignature);
                                 contextualMapper.providingContextualTypes = false;

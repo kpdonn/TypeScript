@@ -4098,6 +4098,8 @@ namespace ts {
         typeArguments?: Type[];
         /* @internal */
         inferenceContext?: InferenceContext;
+        /* @internal */
+        isContextuallyTyped?: boolean;
     }
 
     export const enum IndexKind {
