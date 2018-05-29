@@ -136,7 +136,7 @@ const f02: <A>(x: A) => A[] = wrap(list);
 >x : A
 >A : A
 >A : A
->wrap(list) : (a: A) => A[]
+>wrap(list) : <A>(a: A) => A[]
 >wrap : <A, B>(f: (a: A) => B) => (a: A) => B
 >list : <T>(a: T) => T[]
 
@@ -146,7 +146,7 @@ const f03: <A>(x: A) => A[] = wrap(x => [x]);
 >x : A
 >A : A
 >A : A
->wrap(x => [x]) : (a: A) => A[]
+>wrap(x => [x]) : <A>(a: A) => A[]
 >wrap : <A, B>(f: (a: A) => B) => (a: A) => B
 >x => [x] : (x: A) => A[]
 >x : A
@@ -160,7 +160,7 @@ const f10: <T>(x: T) => Box<T[]> = compose(a => list(a), b => box(b));
 >T : T
 >Box : Box<T>
 >T : T
->compose(a => list(a), b => box(b)) : (a: T) => Box<T[]>
+>compose(a => list(a), b => box(b)) : <T>(a: T) => Box<T[]>
 >compose : <A, B, C>(f: (a: A) => B, g: (b: B) => C) => (a: A) => C
 >a => list(a) : (a: T) => T[]
 >a : T
@@ -180,7 +180,7 @@ const f11: <T>(x: T) => Box<T[]> = compose(list, box);
 >T : T
 >Box : Box<T>
 >T : T
->compose(list, box) : (a: T) => Box<T[]>
+>compose(list, box) : <T>(a: T) => Box<T[]>
 >compose : <A, B, C>(f: (a: A) => B, g: (b: B) => C) => (a: A) => C
 >list : <T>(a: T) => T[]
 >box : <V>(x: V) => Box<V>
@@ -192,7 +192,7 @@ const f12: <T>(x: Box<T[]>) => T = compose(a => unbox(a), b => unlist(b));
 >Box : Box<T>
 >T : T
 >T : T
->compose(a => unbox(a), b => unlist(b)) : (a: Box<T[]>) => T
+>compose(a => unbox(a), b => unlist(b)) : <T>(a: Box<T[]>) => T
 >compose : <A, B, C>(f: (a: A) => B, g: (b: B) => C) => (a: A) => C
 >a => unbox(a) : (a: Box<T[]>) => T[]
 >a : Box<T[]>
@@ -212,7 +212,7 @@ const f13: <T>(x: Box<T[]>) => T = compose(unbox, unlist);
 >Box : Box<T>
 >T : T
 >T : T
->compose(unbox, unlist) : (a: Box<T[]>) => T
+>compose(unbox, unlist) : <T>(a: Box<T[]>) => T
 >compose : <A, B, C>(f: (a: A) => B, g: (b: B) => C) => (a: A) => C
 >unbox : <W>(x: Box<W>) => W
 >unlist : <T>(a: T[]) => T
@@ -268,7 +268,7 @@ const f21: <A>(a: A[]) => A[][] = arrayMap(x => [x]);
 >a : A[]
 >A : A
 >A : A
->arrayMap(x => [x]) : (a: A[]) => A[][]
+>arrayMap(x => [x]) : <A>(a: A[]) => A[][]
 >arrayMap : <T, U>(f: (x: T) => U) => (a: T[]) => U[]
 >x => [x] : (x: A) => A[]
 >x : A
@@ -281,7 +281,7 @@ const f22: <A>(a: A[]) => A[] = arrayMap(identity);
 >a : A[]
 >A : A
 >A : A
->arrayMap(identity) : (a: A[]) => A[]
+>arrayMap(identity) : <A>(a: A[]) => A[]
 >arrayMap : <T, U>(f: (x: T) => U) => (a: T[]) => U[]
 >identity : <T>(x: T) => T
 
@@ -292,7 +292,7 @@ const f23: <A>(a: A[]) => Box<A>[] = arrayMap(value => ({ value }));
 >A : A
 >Box : Box<T>
 >A : A
->arrayMap(value => ({ value })) : (a: A[]) => { value: A; }[]
+>arrayMap(value => ({ value })) : <A>(a: A[]) => { value: A; }[]
 >arrayMap : <T, U>(f: (x: T) => U) => (a: T[]) => U[]
 >value => ({ value }) : (value: A) => { value: A; }
 >value : A
@@ -320,7 +320,7 @@ const f31: <T extends Box<number>>(a: T[]) => T[] = arrayFilter(x => x.value > 1
 >a : T[]
 >T : T
 >T : T
->arrayFilter(x => x.value > 10) : (a: T[]) => T[]
+>arrayFilter(x => x.value > 10) : <T extends Box<number>>(a: T[]) => T[]
 >arrayFilter : <T>(f: (x: T) => boolean) => (a: T[]) => T[]
 >x => x.value > 10 : (x: T) => boolean
 >x : T
@@ -340,7 +340,7 @@ const f40: <A, B>(b: B, a: A) => [A, B] = flip(zip);
 >A : A
 >A : A
 >B : B
->flip(zip) : (y: B, x: A) => [A, B]
+>flip(zip) : <A, B>(y: B, x: A) => [A, B]
 >flip : <X, Y, Z>(f: (x: X, y: Y) => Z) => (y: Y, x: X) => Z
 >zip : <A, B>(a: A, b: B) => [A, B]
 

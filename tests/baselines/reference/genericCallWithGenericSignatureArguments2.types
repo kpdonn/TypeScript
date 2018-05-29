@@ -47,8 +47,8 @@ module onlyT {
 >T : T
 
         var r7 = foo((a: T) => a, (b: T) => b); // T => T
->r7 : (x: T) => T
->foo((a: T) => a, (b: T) => b) : (x: T) => T
+>r7 : <T extends Date>(x: T) => T
+>foo((a: T) => a, (b: T) => b) : <T extends Date>(x: T) => T
 >foo : <T>(a: (x: T) => T, b: (x: T) => T) => (x: T) => T
 >(a: T) => a : (a: T) => T
 >a : T
@@ -61,16 +61,16 @@ module onlyT {
 
         // BUG 835518
         var r9 = r7(new Date()); // should be ok
->r9 : T
->r7(new Date()) : T
->r7 : (x: T) => T
+>r9 : Date
+>r7(new Date()) : Date
+>r7 : <T extends Date>(x: T) => T
 >new Date() : Date
 >Date : DateConstructor
 
         var r10 = r7(1); // error
->r10 : T
->r7(1) : T
->r7 : (x: T) => T
+>r10 : any
+>r7(1) : any
+>r7 : <T extends Date>(x: T) => T
 >1 : 1
     }
 
@@ -226,8 +226,8 @@ module TU {
 >T : T
 
         var r7 = foo((a: T) => a, (b: T) => b); 
->r7 : (x: T) => T
->foo((a: T) => a, (b: T) => b) : (x: T) => T
+>r7 : <T extends Date>(x: T) => T
+>foo((a: T) => a, (b: T) => b) : <T extends Date>(x: T) => T
 >foo : <T, U>(a: (x: T) => T, b: (x: U) => U) => (x: T) => T
 >(a: T) => a : (a: T) => T
 >a : T
@@ -239,16 +239,16 @@ module TU {
 >b : T
 
         var r9 = r7(new Date()); 
->r9 : T
->r7(new Date()) : T
->r7 : (x: T) => T
+>r9 : Date
+>r7(new Date()) : Date
+>r7 : <T extends Date>(x: T) => T
 >new Date() : Date
 >Date : DateConstructor
 
         var r10 = r7(1); 
->r10 : T
->r7(1) : T
->r7 : (x: T) => T
+>r10 : any
+>r7(1) : any
+>r7 : <T extends Date>(x: T) => T
 >1 : 1
     }
 
