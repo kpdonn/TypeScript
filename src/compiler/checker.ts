@@ -18520,9 +18520,9 @@ namespace ts {
                 result = chooseOverload(candidates, assignableRelation, signatureHelpTrailingComma);
             }
             if (result) {
-                const resultReturnType = getReturnTypeOfSignature(result);
                 if (result.inferenceContext) {
                     const uninferred = map(filter(result.inferenceContext.inferences, inf => !inf.inferredType), inf => inf.typeParameter);
+                    const resultReturnType = getReturnTypeOfSignature(result);
                     const newReturnType = handleFreeTypeParameters(resultReturnType, uninferred);
                     if (newReturnType !== resultReturnType) {
                         const newResult = cloneSignature(result);
