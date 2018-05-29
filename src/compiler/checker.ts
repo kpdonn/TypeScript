@@ -18054,27 +18054,25 @@ namespace ts {
             const headMessage = Diagnostics.Argument_of_type_0_is_not_assignable_to_parameter_of_type_1;
             const argCount = getEffectiveArgumentCount(node, args, signature);
             for (let i = 0; i < argCount; i++) {
-                if (excludeArgument && excludeArgument[i]) {
-                    // skip excluded arguments because their exclusion may have resulted in a type parameter
-                    // at this position remaining uninferred and uninstantiated.
-                    continue;
-                }
                 const arg = getEffectiveArgument(node, args, i);
                 // If the effective argument is 'undefined', then it is an argument that is present but is synthetic.
                 if (arg === undefined || arg.kind !== SyntaxKind.OmittedExpression) {
                     // Check spread elements against rest type (from arity check we know spread argument corresponds to a rest parameter)
                     const paramType = getTypeAtPosition(signature, i);
+                    // get wildcard instantiation for excluded arguments because their exclusion may have resulted in a type parameter
+                    // at this position remaining uninferred and uninstantiated but will get inferred after they are no longer excluded.
+                    const checkParamType = excludeArgument && excludeArgument[i] ? getWildcardInstantiation(paramType) : paramType;
                     // If the effective argument type is undefined, there is no synthetic type for the argument.
                     // In that case, we should check the argument.
                     const argType = getEffectiveArgumentType(node, i) ||
-                        checkExpressionWithContextualType(arg!, paramType, excludeArgument && excludeArgument[i] ? identityMapper : undefined);
+                        checkExpressionWithContextualType(arg!, checkParamType, excludeArgument && excludeArgument[i] ? identityMapper : undefined);
                     // If one or more arguments are still excluded (as indicated by a non-null excludeArgument parameter),
                     // we obtain the regular type of any object literal arguments because we may not have inferred complete
                     // parameter types yet and therefore excess property checks may yield false positives (see #17041).
                     const checkArgType = excludeArgument ? getRegularTypeOfObjectLiteral(argType) : argType;
                     // Use argument expression as error location when reporting errors
                     const errorNode = reportErrors ? getEffectiveArgumentErrorNode(node, i, arg) : undefined;
-                    if (!checkTypeRelatedTo(checkArgType, paramType, relation, errorNode, headMessage)) {
+                    if (!checkTypeRelatedTo(checkArgType, checkParamType, relation, errorNode, headMessage)) {
                         return false;
                     }
                 }
