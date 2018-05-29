@@ -12958,6 +12958,9 @@ namespace ts {
                                     createBackreferenceMapper(context.signature!.typeParameters!, index),
                                     context));
                         }
+                        else if (!strictFunctionTypes) {
+                            inferredType = getDefaultTypeArgumentType(!!(context.flags & InferenceFlags.AnyDefault));
+                        }
                     }
                 }
                 else if (filter(getFreeTypeParameters(inferredType), tp => tp !== inference.typeParameter && contains(context.typeParameters, tp)).length) {
