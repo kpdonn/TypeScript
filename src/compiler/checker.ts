@@ -8970,7 +8970,7 @@ namespace ts {
             const isDeferred = root.isDistributive && maybeTypeOfKind(checkType, TypeFlags.Instantiable);
             let combinedMapper: TypeMapper | undefined;
             if (root.inferTypeParameters) {
-                const context = createInferenceContext(root.inferTypeParameters, /*signature*/ undefined, InferenceFlags.None);
+                const context = createInferenceContext(root.inferTypeParameters, /*signature*/ undefined, InferenceFlags.AlwaysDefault);
                 if (!isDeferred) {
                     // We don't want inferences from constraints as they may cause us to eagerly resolve the
                     // conditional type instead of deferring resolution. Also, we always want strict function
@@ -12955,7 +12955,7 @@ namespace ts {
                                     createBackreferenceMapper(context.signature!.typeParameters!, index),
                                     context));
                         }
-                        else if (!strictFunctionTypes) {
+                        else if (!strictFunctionTypes || context.flags & InferenceFlags.AlwaysDefault) {
                             inferredType = getDefaultTypeArgumentType(!!(context.flags & InferenceFlags.AnyDefault));
                         }
                     }

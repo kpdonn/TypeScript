@@ -4145,6 +4145,7 @@ namespace ts {
         InferUnionTypes = 1 << 0,  // Infer union types for disjoint candidates (otherwise unknownType)
         NoDefault       = 1 << 1,  // Infer unknownType for no inferences (otherwise anyType or emptyObjectType)
         AnyDefault      = 1 << 2,  // Infer anyType for no inferences (otherwise emptyObjectType)
+        AlwaysDefault   = 1 << 3,  // Infer the default type if there are no candidates or constraints (otherwise no inference is made and type parameter is returned)
     }
 
     /**
