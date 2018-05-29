@@ -18058,21 +18058,25 @@ namespace ts {
                 // If the effective argument is 'undefined', then it is an argument that is present but is synthetic.
                 if (arg === undefined || arg.kind !== SyntaxKind.OmittedExpression) {
                     // Check spread elements against rest type (from arity check we know spread argument corresponds to a rest parameter)
-                    const paramType = getTypeAtPosition(signature, i);
-                    // get wildcard instantiation for excluded arguments because their exclusion may have resulted in a type parameter
-                    // at this position remaining uninferred and uninstantiated but will get inferred after they are no longer excluded.
-                    const checkParamType = excludeArgument && excludeArgument[i] ? getWildcardInstantiation(paramType) : paramType;
+                    let paramType = getTypeAtPosition(signature, i);
+                    if (excludeArgument && excludeArgument[i] && signature.inferenceContext) {
+                        // there could be an uninferred type parameter here (that will be inferred on the next pass when this argument isn't excluded.)
+                        // so this code makes the inference context replace any uninferred types with noInferenceType so the assignment check below doesn't fail.
+                        signature.inferenceContext.providingContextualTypes = true;
+                        paramType = instantiateType(paramType, signature.inferenceContext);
+                        signature.inferenceContext.providingContextualTypes = false;
+                    }
                     // If the effective argument type is undefined, there is no synthetic type for the argument.
                     // In that case, we should check the argument.
                     const argType = getEffectiveArgumentType(node, i) ||
-                        checkExpressionWithContextualType(arg!, checkParamType, excludeArgument && excludeArgument[i] ? identityMapper : undefined);
+                        checkExpressionWithContextualType(arg!, paramType, excludeArgument && excludeArgument[i] ? identityMapper : undefined);
                     // If one or more arguments are still excluded (as indicated by a non-null excludeArgument parameter),
                     // we obtain the regular type of any object literal arguments because we may not have inferred complete
                     // parameter types yet and therefore excess property checks may yield false positives (see #17041).
                     const checkArgType = excludeArgument ? getRegularTypeOfObjectLiteral(argType) : argType;
                     // Use argument expression as error location when reporting errors
                     const errorNode = reportErrors ? getEffectiveArgumentErrorNode(node, i, arg) : undefined;
-                    if (!checkTypeRelatedTo(checkArgType, checkParamType, relation, errorNode, headMessage)) {
+                    if (!checkTypeRelatedTo(checkArgType, paramType, relation, errorNode, headMessage)) {
                         return false;
                     }
                 }
