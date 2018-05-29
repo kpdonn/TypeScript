@@ -14,8 +14,8 @@ declare function identity1<T, U>(f: (t: T) => U): (t2: T) => U
 >U : U
 
 const id1 = identity1(x => x)
->id1 : (t2: {}) => {}
->identity1(x => x) : (t2: {}) => {}
+>id1 : any
+>identity1(x => x) : any
 >identity1 : <T, U>(f: (t: T) => U) => (t2: T) => U
 >x => x : (x: {}) => {}
 >x : {}
@@ -81,15 +81,15 @@ declare function compose<A, B, C>(f: (x: A) => B, g: (y: B) => C): (x: A) => C;
 
 {
     let composed1 = compose(x => x, x2 => x2)
->composed1 : (x: {}) => {}
->compose(x => x, x2 => x2) : (x: {}) => {}
+>composed1 : any
+>compose(x => x, x2 => x2) : any
 >compose : <A, B, C>(f: (x: A) => B, g: (y: B) => C) => (x: A) => C
 >x => x : (x: {}) => {}
 >x : {}
 >x : {}
->x2 => x2 : (x2: {}) => {}
->x2 : {}
->x2 : {}
+>x2 => x2 : (x2: any) => any
+>x2 : any
+>x2 : any
 
     const expectedComposed1: <U>(u: U) => U = composed1;
 >expectedComposed1 : <U>(u: U) => U
@@ -97,31 +97,31 @@ declare function compose<A, B, C>(f: (x: A) => B, g: (y: B) => C): (x: A) => C;
 >u : U
 >U : U
 >U : U
->composed1 : (x: {}) => {}
+>composed1 : any
 
     const callComposed1 = composed1("test");
->callComposed1 : {}
->composed1("test") : {}
->composed1 : (x: {}) => {}
+>callComposed1 : any
+>composed1("test") : any
+>composed1 : any
 >"test" : "test"
 
     const expectedCallComposed1 : string = callComposed1;
 >expectedCallComposed1 : string
->callComposed1 : {}
+>callComposed1 : any
 }
 
 {
     let composed2 = compose(x => x, x2 => [x2])
->composed2 : (x: {}) => {}[]
->compose(x => x, x2 => [x2]) : (x: {}) => {}[]
+>composed2 : any
+>compose(x => x, x2 => [x2]) : any
 >compose : <A, B, C>(f: (x: A) => B, g: (y: B) => C) => (x: A) => C
 >x => x : (x: {}) => {}
 >x : {}
 >x : {}
->x2 => [x2] : (x2: {}) => {}[]
->x2 : {}
->[x2] : {}[]
->x2 : {}
+>x2 => [x2] : (x2: any) => any[]
+>x2 : any
+>[x2] : any[]
+>x2 : any
 
     const expectedComposed2: <U>(u: U) => U[] = composed2;
 >expectedComposed2 : <U>(u: U) => U[]
@@ -129,23 +129,23 @@ declare function compose<A, B, C>(f: (x: A) => B, g: (y: B) => C): (x: A) => C;
 >u : U
 >U : U
 >U : U
->composed2 : (x: {}) => {}[]
+>composed2 : any
 
     const callComposed2 = composed2("test");
->callComposed2 : {}[]
->composed2("test") : {}[]
->composed2 : (x: {}) => {}[]
+>callComposed2 : any
+>composed2("test") : any
+>composed2 : any
 >"test" : "test"
 
     const expectedCallComposed2: string[] = callComposed2;
 >expectedCallComposed2 : string[]
->callComposed2 : {}[]
+>callComposed2 : any
 }
 
 {
     let composed3 = compose(x => [x], x2 => x2)
->composed3 : (x: {}) => {}[]
->compose(x => [x], x2 => x2) : (x: {}) => {}[]
+>composed3 : <A>(x: A) => {}[]
+>compose(x => [x], x2 => x2) : <A>(x: A) => {}[]
 >compose : <A, B, C>(f: (x: A) => B, g: (y: B) => C) => (x: A) => C
 >x => [x] : (x: {}) => {}[]
 >x : {}
@@ -161,12 +161,12 @@ declare function compose<A, B, C>(f: (x: A) => B, g: (y: B) => C): (x: A) => C;
 >u : U
 >U : U
 >U : U
->composed3 : (x: {}) => {}[]
+>composed3 : <A>(x: A) => {}[]
 
     const callComposed3 = composed3("test");
 >callComposed3 : {}[]
 >composed3("test") : {}[]
->composed3 : (x: {}) => {}[]
+>composed3 : <A>(x: A) => {}[]
 >"test" : "test"
 
     const expectedCallComposed3 : string[] = callComposed3;
@@ -176,8 +176,8 @@ declare function compose<A, B, C>(f: (x: A) => B, g: (y: B) => C): (x: A) => C;
 
 {
     let composed4 = compose(x => [x], x2 => ({ boxed: x2 }));
->composed4 : (x: {}) => { boxed: {}[]; }
->compose(x => [x], x2 => ({ boxed: x2 })) : (x: {}) => { boxed: {}[]; }
+>composed4 : <A>(x: A) => { boxed: {}[]; }
+>compose(x => [x], x2 => ({ boxed: x2 })) : <A>(x: A) => { boxed: {}[]; }
 >compose : <A, B, C>(f: (x: A) => B, g: (y: B) => C) => (x: A) => C
 >x => [x] : (x: {}) => {}[]
 >x : {}
@@ -197,12 +197,12 @@ declare function compose<A, B, C>(f: (x: A) => B, g: (y: B) => C): (x: A) => C;
 >U : U
 >boxed : U[]
 >U : U
->composed4 : (x: {}) => { boxed: {}[]; }
+>composed4 : <A>(x: A) => { boxed: {}[]; }
 
     const callComposed4 = composed4("test");
 >callComposed4 : { boxed: {}[]; }
 >composed4("test") : { boxed: {}[]; }
->composed4 : (x: {}) => { boxed: {}[]; }
+>composed4 : <A>(x: A) => { boxed: {}[]; }
 >"test" : "test"
 
     const expectedCallComposed4 : {boxed: string[]} = callComposed4;
