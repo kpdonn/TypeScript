@@ -18658,7 +18658,9 @@ namespace ts {
                             }
                             const isJavascript = isInJavaScriptFile(candidate.declaration);
                             candidate = getSignatureInstantiation(candidate, typeArgumentTypes, isJavascript);
-                            candidate.inferenceContext = inferenceContext;
+                            if (!typeArguments) {
+                                candidate.inferenceContext = inferenceContext;
+                            }
                         }
                         if (!checkApplicableSignature(node, args!, candidate, relation, excludeArgument, /*reportErrors*/ false)) {
                             candidateForArgumentError = candidate;
