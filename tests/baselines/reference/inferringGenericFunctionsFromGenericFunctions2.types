@@ -234,40 +234,49 @@ declare function transitive<T>(x: T, f: (x: T) => T): void;
 >T : T
 
 bombastic(id2);  // Should be an error T = [string, number]
->bombastic(id2) : string | number
+>bombastic(id2) : any
 >bombastic : <R>(f: (x: string, y: number) => R) => R
->id2 : <T>(x: T, y: T) => T
+>id2 : <T, U extends T>(x: T, y: U) => U
 
 bombastic2(id2); // Should be an error T = [string, number]
 >bombastic2(id2) : void
 >bombastic2 : (f: (x: string, y: number) => string) => void
->id2 : <T>(x: T, y: T) => T
+>id2 : <T, U extends T>(x: T, y: U) => U
 
-bombastic<string|number>(id2);  // Should be OK
->bombastic<string|number>(id2) : string | number
+bombastic<string|number>(id2); // should be an error because bombastic's callback is (x: string, y: number) => R and the explicit type argument here is setting `R`, not setting T and U from id2
+>bombastic<string|number>(id2) : any
 >bombastic : <R>(f: (x: string, y: number) => R) => R
->id2 : <T>(x: T, y: T) => T
+>id2 : <T, U extends T>(x: T, y: U) => U
 
-declare function id3<T>(x: T, y: T, z: T): T;
->id3 : <T>(x: T, y: T, z: T) => T
+declare function id3<T, U extends T, V extends U>(x: T, y: U, z: V): V;
+>id3 : <T, U extends T, V extends U>(x: T, y: U, z: V) => V
 >T : T
+>U : U
+>T : T
+>V : V
+>U : U
 >x : T
 >T : T
->y : T
->T : T
->z : T
->T : T
->T : T
+>y : U
+>U : U
+>z : V
+>V : V
+>V : V
 
-bombastic3<string|number>(id3);  // Should be OK
->bombastic3<string|number>(id3) : string | number
+bombastic3(id3);  // Should be error
+>bombastic3(id3) : any
 >bombastic3 : <R>(f: (x: string, y: number, z: R) => R) => R
->id3 : <T>(x: T, y: T, z: T) => T
+>id3 : <T, U extends T, V extends U>(x: T, y: U, z: V) => V
+
+bombastic3<string|number>(id3);  // Should be error because of reason from bombastic<string|number>(id2)
+>bombastic3<string|number>(id3) : any
+>bombastic3 : <R>(f: (x: string, y: number, z: R) => R) => R
+>id3 : <T, U extends T, V extends U>(x: T, y: U, z: V) => V
 
 okay(id2);
->okay(id2) : number
+>okay(id2) : any
 >okay : <R>(f: (x: 1, y: number) => R) => R
->id2 : <T>(x: T, y: T) => T
+>id2 : <T, U extends T>(x: T, y: U) => U
 
 transitive(1, withNum);
 >transitive(1, withNum) : void
@@ -291,10 +300,10 @@ declare function occurs<R>(f: (x: number, xs: List<number>) => R): R;
 >R : R
 >R : R
 
-occurs(id2);
->occurs(id2) : number | { kind: "nil"; } | { kind: "cons"; val: number; rest: List<number>; }
+occurs(id2); // should be error
+>occurs(id2) : any
 >occurs : <R>(f: (x: number, xs: List<number>) => R) => R
->id2 : <T>(x: T, y: T) => T
+>id2 : <T, U extends T>(x: T, y: U) => U
 
 declare function f15<T extends number>(x: T, f: (x: T) => T): void;
 >f15 : <T extends number>(x: T, f: (x: T) => T) => void
@@ -610,8 +619,29 @@ declare function bar<T, U, V>(x: T, y: U, cb: (x: T, y: U) => V): V;
 >V : V
 >V : V
 
-declare function id2<T>(x: T, y: T): T;
->id2 : <T>(x: T, y: T) => T
+// having a second type parameter extend the first should prevent it from inferring a "string | number" union type from (x: string, y: number) => R
+declare function id2<T, U extends T>(x: T, y: U): U;
+>id2 : <T, U extends T>(x: T, y: U) => U
+>T : T
+>U : U
+>T : T
+>x : T
+>T : T
+>y : U
+>U : U
+>U : U
+
+var b2 = bar(1, "one", id2);  // Should be error
+>b2 : any
+>bar(1, "one", id2) : any
+>bar : <T, U, V>(x: T, y: U, cb: (x: T, y: U) => V) => V
+>1 : 1
+>"one" : "one"
+>id2 : <T, U extends T>(x: T, y: U) => U
+
+
+declare function id2OneTypeParam<T>(x: T, y: T): T;
+>id2OneTypeParam : <T>(x: T, y: T) => T
 >T : T
 >x : T
 >T : T
@@ -619,21 +649,15 @@ declare function id2<T>(x: T, y: T): T;
 >T : T
 >T : T
 
-var b1 = bar(1, "one", g);  // Should be number | string
->b1 : any
->bar(1, "one", g) : any
+var b4 = bar(1, "one", id2OneTypeParam);  // Should be number | string
+>b4 : string | number
+>bar(1, "one", id2OneTypeParam) : string | number
 >bar : <T, U, V>(x: T, y: U, cb: (x: T, y: U) => V) => V
 >1 : 1
 >"one" : "one"
->g : (x: boolean) => number
+>id2OneTypeParam : <T>(x: T, y: T) => T
 
-var b2 = bar(1, "one", id2);  // Should be number | string
->b2 : string | number
->bar(1, "one", id2) : string | number
->bar : <T, U, V>(x: T, y: U, cb: (x: T, y: U) => V) => V
->1 : 1
->"one" : "one"
->id2 : <T>(x: T, y: T) => T
+
 
 declare function withNum<N extends number>(x: N): N;
 >withNum : <N extends number>(x: N) => N
@@ -1141,6 +1165,18 @@ declare const cb2: { new<T>(x: T): number; new<T>(x: number): T; }
 >x : number
 >T : T
 
+declare const cb3: { new<T>(x: T): number; }
+>cb3 : new <T>(x: T) => number
+>T : T
+>x : T
+>T : T
+
+declare const cb4: { new<T>(x: number): T; }
+>cb4 : new <T>(x: number) => T
+>T : T
+>x : number
+>T : T
+
 declare function foo7<T>(x:T, cb: { new(x: T): string; new(x: T, y?: T): string }): void;
 >foo7 : <T>(x: T, cb: { new (x: T): string; new (x: T, y?: T | undefined): string; }) => void
 >T : T
@@ -1154,7 +1190,7 @@ declare function foo7<T>(x:T, cb: { new(x: T): string; new(x: T, y?: T): string 
 >y : T | undefined
 >T : T
 
-foo7(1, cb1); // Should error
+foo7(1, cb1); // Should error (but won't error because type parameters erased when comparing more than one signature)
 >foo7(1, cb1) : void
 >foo7 : <T>(x: T, cb: { new (x: T): string; new (x: T, y?: T | undefined): string; }) => void
 >1 : 1
@@ -1165,6 +1201,86 @@ foo7(1, cb2);
 >foo7 : <T>(x: T, cb: { new (x: T): string; new (x: T, y?: T | undefined): string; }) => void
 >1 : 1
 >cb2 : { new <T>(x: T): number; new <T>(x: number): T; }
+
+foo7(1, cb3);
+>foo7(1, cb3) : any
+>foo7 : <T>(x: T, cb: { new (x: T): string; new (x: T, y?: T | undefined): string; }) => void
+>1 : 1
+>cb3 : new <T>(x: T) => number
+
+foo7(1, cb4);
+>foo7(1, cb4) : void
+>foo7 : <T>(x: T, cb: { new (x: T): string; new (x: T, y?: T | undefined): string; }) => void
+>1 : 1
+>cb4 : new <T>(x: number) => T
+
+declare function foo8<T>(x:T, cb: { new(x: T): string; }): void;
+>foo8 : <T>(x: T, cb: new (x: T) => string) => void
+>T : T
+>x : T
+>T : T
+>cb : new (x: T) => string
+>x : T
+>T : T
+
+foo8(1, cb1); // Should error
+>foo8(1, cb1) : any
+>foo8 : <T>(x: T, cb: new (x: T) => string) => void
+>1 : 1
+>cb1 : new <T>(x: T) => T
+
+foo8(1, cb2);
+>foo8(1, cb2) : void
+>foo8 : <T>(x: T, cb: new (x: T) => string) => void
+>1 : 1
+>cb2 : { new <T>(x: T): number; new <T>(x: number): T; }
+
+foo8(1, cb3);
+>foo8(1, cb3) : any
+>foo8 : <T>(x: T, cb: new (x: T) => string) => void
+>1 : 1
+>cb3 : new <T>(x: T) => number
+
+foo8(1, cb4);
+>foo8(1, cb4) : void
+>foo8 : <T>(x: T, cb: new (x: T) => string) => void
+>1 : 1
+>cb4 : new <T>(x: number) => T
+
+declare function foo9<T>(x:T, cb: { new(x: T, y?: T): string }): void;
+>foo9 : <T>(x: T, cb: new (x: T, y?: T | undefined) => string) => void
+>T : T
+>x : T
+>T : T
+>cb : new (x: T, y?: T | undefined) => string
+>x : T
+>T : T
+>y : T | undefined
+>T : T
+
+foo9(1, cb1); // Should error
+>foo9(1, cb1) : any
+>foo9 : <T>(x: T, cb: new (x: T, y?: T | undefined) => string) => void
+>1 : 1
+>cb1 : new <T>(x: T) => T
+
+foo9(1, cb2);
+>foo9(1, cb2) : void
+>foo9 : <T>(x: T, cb: new (x: T, y?: T | undefined) => string) => void
+>1 : 1
+>cb2 : { new <T>(x: T): number; new <T>(x: number): T; }
+
+foo9(1, cb3);
+>foo9(1, cb3) : any
+>foo9 : <T>(x: T, cb: new (x: T, y?: T | undefined) => string) => void
+>1 : 1
+>cb3 : new <T>(x: T) => number
+
+foo9(1, cb4);
+>foo9(1, cb4) : void
+>foo9 : <T>(x: T, cb: new (x: T, y?: T | undefined) => string) => void
+>1 : 1
+>cb4 : new <T>(x: number) => T
 
 function map<A, B>(items: A[], f: (x: A) => B): B[]{
 >map : <A, B>(items: A[], f: (x: A) => B) => B[]

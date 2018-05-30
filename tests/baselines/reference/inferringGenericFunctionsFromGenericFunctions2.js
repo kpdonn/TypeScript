@@ -37,15 +37,16 @@ declare function transitive<T>(x: T, f: (x: T) => T): void;
 
 bombastic(id2);  // Should be an error T = [string, number]
 bombastic2(id2); // Should be an error T = [string, number]
-bombastic<string|number>(id2);  // Should be OK
-declare function id3<T>(x: T, y: T, z: T): T;
-bombastic3<string|number>(id3);  // Should be OK
+bombastic<string|number>(id2); // should be an error because bombastic's callback is (x: string, y: number) => R and the explicit type argument here is setting `R`, not setting T and U from id2
+declare function id3<T, U extends T, V extends U>(x: T, y: U, z: V): V;
+bombastic3(id3);  // Should be error
+bombastic3<string|number>(id3);  // Should be error because of reason from bombastic<string|number>(id2)
 okay(id2);
 transitive(1, withNum);
 transitive('1', withNum);
 
 declare function occurs<R>(f: (x: number, xs: List<number>) => R): R;
-occurs(id2);
+occurs(id2); // should be error
 
 declare function f15<T extends number>(x: T, f: (x: T) => T): void;
 declare function g15(n: number): number;
@@ -115,9 +116,15 @@ trans(({a, b = 10}) => a);
 declare function idCreator<T>(f: (x: T|undefined) => T): T;
 const icn: number = idCreator(_ => 5); // ZZZ
 declare function bar<T, U, V>(x: T, y: U, cb: (x: T, y: U) => V): V;
-declare function id2<T>(x: T, y: T): T;
-var b1 = bar(1, "one", g);  // Should be number | string
-var b2 = bar(1, "one", id2);  // Should be number | string
+// having a second type parameter extend the first should prevent it from inferring a "string | number" union type from (x: string, y: number) => R
+declare function id2<T, U extends T>(x: T, y: U): U;
+var b2 = bar(1, "one", id2);  // Should be error
+
+
+declare function id2OneTypeParam<T>(x: T, y: T): T;
+var b4 = bar(1, "one", id2OneTypeParam);  // Should be number | string
+
+
 
 declare function withNum<N extends number>(x: N): N;
 declare function withString<S extends string>(f: (x: S) => S): void;
@@ -210,10 +217,26 @@ const r3 = foo(function (x: any) { return x; });
 
 declare const cb1: { new <T>(x: T): T };
 declare const cb2: { new<T>(x: T): number; new<T>(x: number): T; }
+declare const cb3: { new<T>(x: T): number; }
+declare const cb4: { new<T>(x: number): T; }
 declare function foo7<T>(x:T, cb: { new(x: T): string; new(x: T, y?: T): string }): void;
 
-foo7(1, cb1); // Should error
+foo7(1, cb1); // Should error (but won't error because type parameters erased when comparing more than one signature)
 foo7(1, cb2);
+foo7(1, cb3);
+foo7(1, cb4);
+
+declare function foo8<T>(x:T, cb: { new(x: T): string; }): void;
+foo8(1, cb1); // Should error
+foo8(1, cb2);
+foo8(1, cb3);
+foo8(1, cb4);
+
+declare function foo9<T>(x:T, cb: { new(x: T, y?: T): string }): void;
+foo9(1, cb1); // Should error
+foo9(1, cb2);
+foo9(1, cb3);
+foo9(1, cb4);
 
 function map<A, B>(items: A[], f: (x: A) => B): B[]{
     return items.map(f);
@@ -365,12 +388,13 @@ var zr = zipWith([1, 2], ['a', 'b'], pair);
 lego2(lego1);
 bombastic(id2); // Should be an error T = [string, number]
 bombastic2(id2); // Should be an error T = [string, number]
-bombastic(id2); // Should be OK
-bombastic3(id3); // Should be OK
+bombastic(id2); // should be an error because bombastic's callback is (x: string, y: number) => R and the explicit type argument here is setting `R`, not setting T and U from id2
+bombastic3(id3); // Should be error
+bombastic3(id3); // Should be error because of reason from bombastic<string|number>(id2)
 okay(id2);
 transitive(1, withNum);
 transitive('1', withNum);
-occurs(id2);
+occurs(id2); // should be error
 f15(5, g15);
 var rg1 = g1({ p: "" });
 var Node = /** @class */ (function () {
@@ -443,8 +467,8 @@ trans(function (_a) {
     return a;
 });
 var icn = idCreator(function (_) { return 5; }); // ZZZ
-var b1 = bar(1, "one", g); // Should be number | string
-var b2 = bar(1, "one", id2); // Should be number | string
+var b2 = bar(1, "one", id2); // Should be error
+var b4 = bar(1, "one", id2OneTypeParam); // Should be number | string
 withString(withNum); // Error
 useString(withNum); // Error
 var a10 = ["a", "b"];
@@ -501,8 +525,18 @@ function foo(x) { return x; }
 var r1 = foo(function (x) { return x; });
 var r2 = foo(function (x) { return x; });
 var r3 = foo(function (x) { return x; });
-foo7(1, cb1); // Should error
+foo7(1, cb1); // Should error (but won't error because type parameters erased when comparing more than one signature)
 foo7(1, cb2);
+foo7(1, cb3);
+foo7(1, cb4);
+foo8(1, cb1); // Should error
+foo8(1, cb2);
+foo8(1, cb3);
+foo8(1, cb4);
+foo9(1, cb1); // Should error
+foo9(1, cb2);
+foo9(1, cb3);
+foo9(1, cb4);
 function map(items, f) {
     return items.map(f);
 }
