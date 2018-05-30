@@ -9752,19 +9752,20 @@ namespace ts {
             return type.freeTypeParameters;
         }
 
-        function handleFreeTypeParameters(type: Type, uninferred: Type[]): Type {
+        function handleFreeTypeParameters(type: Type, typeParametersToIgnore: TypeParameter[] | undefined, isJs: boolean): Type {
             const freeTypeParameters = getFreeTypeParameters(type);
-            if (freeTypeParameters.length) {
+            const parametersToHandle = filter(freeTypeParameters, tp => !contains(typeParametersToIgnore, tp));
+            if (parametersToHandle.length) {
                 const singleCallSignature = getSingleCallSignature(type);
                 if (singleCallSignature) {
-                    const clonedExtraTypeParameters = map(freeTypeParameters, cloneTypeParameter);
-                    const mapper = createTypeMapper(freeTypeParameters, clonedExtraTypeParameters);
+                    const clonedExtraTypeParameters = map(parametersToHandle, cloneTypeParameter);
+                    const mapper = createTypeMapper(parametersToHandle, clonedExtraTypeParameters);
                     const newSignature = instantiateSignature(singleCallSignature, mapper);
                     newSignature.typeParameters = concatenate(newSignature.typeParameters, clonedExtraTypeParameters);
                     return getOrCreateTypeFromSignature(newSignature);
                 }
                 else {
-                    const mapper = createTypeMapper(uninferred, map(uninferred, _ => emptyObjectType));
+                    const mapper = createTypeMapper(parametersToHandle, map(parametersToHandle, _ => getDefaultTypeArgumentType(isJs)));
                     return instantiateType(type, mapper);
                 }
             }
@@ -18541,9 +18542,16 @@ namespace ts {
             }
             if (result) {
                 if (result.inferenceContext) {
-                    const uninferred = map(filter(result.inferenceContext.inferences, inf => !inf.inferredType && !inf.hasInferredSelf), inf => inf.typeParameter);
+                    const specificallyInferred = map(filter(result.inferenceContext.inferences, inf => !!inf.inferredType), inf => inf.inferredType!);
+                    const specificallyInferredTypeParameters = specificallyInferred ? flatMap(specificallyInferred, getFreeTypeParameters) : emptyArray;
+                    const contextualType = isDecorator ? undefined : getContextualType(<Expression>node);
+                    const contextualTypeParameters = contextualType ? getFreeTypeParameters(contextualType) : emptyArray;
+                    const outerTypeParameters = getOuterTypeParameters(node);
+                    const candidateTypeParametersNotAlsoOuter = filter(result.target!.typeParameters!, tp => !contains(outerTypeParameters, tp));
+                    const possibleTypeParameters = concatenate(specificallyInferredTypeParameters, concatenate(outerTypeParameters, contextualTypeParameters));
+                    const typeParametersToIgnore = filter(possibleTypeParameters, tp => !contains(candidateTypeParametersNotAlsoOuter, tp));
                     const resultReturnType = getReturnTypeOfSignature(result);
-                    const newReturnType = handleFreeTypeParameters(resultReturnType, uninferred);
+                    const newReturnType = handleFreeTypeParameters(resultReturnType, typeParametersToIgnore, isInJavaScriptFile(node));
                     if (newReturnType !== resultReturnType) {
                         const newResult = cloneSignature(result);
                         newResult.resolvedReturnType = newReturnType;

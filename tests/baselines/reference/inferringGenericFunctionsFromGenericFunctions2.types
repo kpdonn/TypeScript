@@ -1047,7 +1047,7 @@ function append2<L>(xs: List<L>, ys: List<L>): List<L> {
 >foldr : <V, A>(list: List<V>, initial: A, f: (x: V, acc: A) => A) => A
 >xs : List<L>
 >ys : List<L>
->flip(fconst) : <L>(b: L, a: List<L>) => List<L>
+>flip(fconst) : (b: L, a: List<L>) => List<L>
 >flip : <A, B, R>(f: (a: A, b: B) => R) => (b: B, a: A) => R
 >fconst : <X, Y>(x: X, y: Y) => X
 }
@@ -1067,7 +1067,7 @@ function append3<L>(xs: List<L>, ys: List<L>) {
 >foldr : <V, A>(list: List<V>, initial: A, f: (x: V, acc: A) => A) => A
 >xs : List<L>
 >ys : List<L>
->flip(fconst) : <L>(b: L, a: List<L>) => List<L>
+>flip(fconst) : (b: L, a: List<L>) => List<L>
 >flip : <A, B, R>(f: (a: A, b: B) => R) => (b: B, a: A) => R
 >fconst : <X, Y>(x: X, y: Y) => X
 }
@@ -1087,9 +1087,9 @@ function append4<L>(xs: List<L>, ys: List<L>) {
 >foldr : <V, A>(list: List<V>, initial: A, f: (x: V, acc: A) => A) => A
 >xs : List<L>
 >ys : List<L>
->flip(flip(cons)) : <L>(b: L, a: List<L>) => List<L>
+>flip(flip(cons)) : (b: L, a: List<L>) => List<L>
 >flip : <A, B, R>(f: (a: A, b: B) => R) => (b: B, a: A) => R
->flip(cons) : <L>(b: List<L>, a: L) => List<L>
+>flip(cons) : (b: List<L>, a: L) => List<L>
 >flip : <A, B, R>(f: (a: A, b: B) => R) => (b: B, a: A) => R
 >cons : <C>(x: C, xs: List<C>) => List<C>
 }
@@ -1887,7 +1887,7 @@ declare function uParam33(x: string, y: number|string): void;
 >y : string | number
 
 union3(uParam31);  // error;  A,X = [number, string]
->union3(uParam31) : string | number | A
+>union3(uParam31) : string | number | {}
 >union3 : <A, B>(f: (a: string | A, b: number | A) => B) => B
 >uParam31 : <X>(x: number | X, y: string | X) => X
 
@@ -1940,13 +1940,13 @@ union4(uParam41, 4); // A = number, B = string, C = void
 >4 : 4
 
 union4(uParam42, 4); // A = number, B = X, C = X
->union4(uParam42, 4) : 4 | B
+>union4(uParam42, 4) : {} | 4
 >union4 : <A, B, C>(f: (b: A | B) => C, a: A) => C
 >uParam42 : <X>(y: number | X) => X
 >4 : 4
 
 union4(uParam43, 4); // A = number, B = string, C = number
->union4(uParam43, 4) : 4 | B
+>union4(uParam43, 4) : {} | 4
 >union4 : <A, B, C>(f: (b: A | B) => C, a: A) => C
 >uParam43 : <X>(y: string | X) => X
 >4 : 4
