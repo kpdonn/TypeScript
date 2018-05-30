@@ -12367,10 +12367,17 @@ namespace ts {
                     if (t === inferences[i].typeParameter) {
                         inferences[i].isFixed = true;
                         const inference = getInferredType(context, i);
+
+                        if (inferences[i].inferredType === inferences[i].typeParameter) {
+                            inferences[i].hasInferredSelf = true;
+                            inferences[i].inferredType = undefined;
+                        }
+
                         if (!inferences[i].inferredType) {
                             inferences[i].isFixed = false;
                             return context.providingContextualTypes || (context.mappingNoInferences && inferences[i].seenNoInferenceType) ? noInferenceType : inference;
                         }
+
                         return inference;
                     }
                 }
@@ -18534,7 +18541,7 @@ namespace ts {
             }
             if (result) {
                 if (result.inferenceContext) {
-                    const uninferred = map(filter(result.inferenceContext.inferences, inf => !inf.inferredType), inf => inf.typeParameter);
+                    const uninferred = map(filter(result.inferenceContext.inferences, inf => !inf.inferredType && !inf.hasInferredSelf), inf => inf.typeParameter);
                     const resultReturnType = getReturnTypeOfSignature(result);
                     const newReturnType = handleFreeTypeParameters(resultReturnType, uninferred);
                     if (newReturnType !== resultReturnType) {

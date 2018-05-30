@@ -1552,8 +1552,8 @@ const f6 = compose(f_2, g_2)  // <T> (a: T) => number
 >g_2 : <T>(x: T) => boolean
 
 const f7 = compose(id, x => String(x)) // (a: {}) => string
->f7 : any
->compose(id, x => String(x)) : any
+>f7 : <A>(a: A) => string
+>compose(id, x => String(x)) : <A>(a: A) => string
 >compose : <A, B, C>(f: (b: B) => C, g: (a: A) => B) => (a: A) => C
 >id : <I>(x: I) => I
 >x => String(x) : (x: {}) => string

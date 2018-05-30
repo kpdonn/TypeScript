@@ -4138,6 +4138,7 @@ namespace ts {
         topLevel: boolean;                       // True if all inferences are to top level occurrences
         isFixed: boolean;                        // True if inferences are fixed
         seenNoInferenceType: boolean;
+        hasInferredSelf?: true;
     }
 
     /* @internal */
