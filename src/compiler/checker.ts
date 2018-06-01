@@ -18542,13 +18542,13 @@ namespace ts {
             }
             if (result) {
                 if (result.inferenceContext) {
-                    const specificallyInferred = map(filter(result.inferenceContext.inferences, inf => !!inf.inferredType), inf => inf.inferredType!);
-                    const specificallyInferredTypeParameters = specificallyInferred ? flatMap(specificallyInferred, getFreeTypeParameters) : emptyArray;
+                    const argTypes = map(filter(args, a => !!a), a => getTypeOfExpression(a, /*cache*/ false));
+                    const argTypeParameters = flatMap(argTypes, getFreeTypeParameters);
                     const contextualType = isDecorator ? undefined : getContextualType(<Expression>node);
                     const contextualTypeParameters = contextualType ? getFreeTypeParameters(contextualType) : emptyArray;
                     const outerTypeParameters = getOuterTypeParameters(node);
                     const candidateTypeParametersNotAlsoOuter = filter(result.target!.typeParameters!, tp => !contains(outerTypeParameters, tp));
-                    const possibleTypeParameters = concatenate(specificallyInferredTypeParameters, concatenate(outerTypeParameters, contextualTypeParameters));
+                    const possibleTypeParameters = concatenate(argTypeParameters, concatenate(outerTypeParameters, contextualTypeParameters));
                     const typeParametersToIgnore = filter(possibleTypeParameters, tp => !contains(candidateTypeParametersNotAlsoOuter, tp));
                     const resultReturnType = getReturnTypeOfSignature(result);
                     const newReturnType = handleFreeTypeParameters(resultReturnType, typeParametersToIgnore, isInJavaScriptFile(node));
