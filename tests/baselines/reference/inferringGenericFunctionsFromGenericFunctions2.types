@@ -184,7 +184,7 @@ declare function lego2<C, D>(f: (l: List<C>, x: D, y: D) => D): void;
 >D : D
 
 lego2(lego1);
->lego2(lego1) : any
+>lego2(lego1) : void
 >lego2 : <C, D>(f: (l: List<C>, x: D, y: D) => D) => void
 >lego1 : <A, B>(x: A, l: List<B>, y: A) => A
 
