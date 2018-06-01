@@ -12811,7 +12811,7 @@ namespace ts {
                 for (let i = 0; i < len; i++) {
                     let sourceSig = sourceSignatures[sourceLen - len + i];
                     const targetSig = targetSignatures[targetLen - len + i];
-                    if (!eraseSignatures && !sourceSig.isContextuallyTyped && sourceSig.typeParameters && sourceSig.typeParameters !== targetSig.typeParameters) {
+                    if (strictFunctionTypes && !eraseSignatures && !sourceSig.isContextuallyTyped && sourceSig.typeParameters && sourceSig.typeParameters !== targetSig.typeParameters) {
                         sourceSig = instantiateSignatureInContextOf(sourceSig, targetSig);
                         inferFromSignature(sourceSig, targetSig);
                     }

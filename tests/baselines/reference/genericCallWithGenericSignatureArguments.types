@@ -114,8 +114,8 @@ function other<T>(x: T) {
 >T : T
 
     var r6 = foo((a: T) => a, (b: T) => b); // T => T
->r6 : <T>(x: T) => T
->foo((a: T) => a, (b: T) => b) : <T>(x: T) => T
+>r6 : (x: T) => T
+>foo((a: T) => a, (b: T) => b) : (x: T) => T
 >foo : <T>(a: (x: T) => T, b: (x: T) => T) => (x: T) => T
 >(a: T) => a : (a: T) => T
 >a : T
@@ -146,8 +146,8 @@ function other2<T extends Date>(x: T) {
 >T : T
 
     var r7 = foo((a: T) => a, (b: T) => b); // T => T
->r7 : <T extends Date>(x: T) => T
->foo((a: T) => a, (b: T) => b) : <T extends Date>(x: T) => T
+>r7 : (x: T) => T
+>foo((a: T) => a, (b: T) => b) : (x: T) => T
 >foo : <T>(a: (x: T) => T, b: (x: T) => T) => (x: T) => T
 >(a: T) => a : (a: T) => T
 >a : T
@@ -170,9 +170,9 @@ function other2<T extends Date>(x: T) {
 >b : {}
 
     var r8 = r7(null);
->r8 : any
->r7(null) : any
->r7 : <T extends Date>(x: T) => T
+>r8 : T
+>r7(null) : T
+>r7 : (x: T) => T
 >null : null
 
     // BUG 835518
