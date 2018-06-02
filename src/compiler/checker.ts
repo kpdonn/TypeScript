@@ -18785,8 +18785,6 @@ namespace ts {
 
             function resetContextualArguments() {
                 if (!isDecorator && !isSingleNonGenericCandidate && originalExcludeArgument) {
-                    const oldExcludeArgument = excludeArgument;
-                    noop(oldExcludeArgument);
                     excludeArgument = originalExcludeArgument.slice();
                     excludeCount = originalExcludeCount;
                     for (let i = isTaggedTemplate ? 1 : 0; i < args!.length; i++) {
@@ -18811,7 +18809,7 @@ namespace ts {
                         }
                         if (!getEffectiveReturnTypeNode(contextSensitiveFunction)) {
                             const oldReturnType = oldSignature.resolvedReturnType;
-                            if (oldReturnType) {
+                            if (oldReturnType && oldReturnType.symbol) {
                                 getSymbolLinks(oldReturnType.symbol).outerTypeParameters = undefined;
                             }
                             oldSignature.resolvedReturnType = undefined;
