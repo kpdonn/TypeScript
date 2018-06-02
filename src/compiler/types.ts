@@ -4139,8 +4139,6 @@ namespace ts {
         priority?: InferencePriority;            // Priority of current inference set
         topLevel: boolean;                       // True if all inferences are to top level occurrences
         isFixed: boolean;                        // True if inferences are fixed
-        seenNoInferenceType: boolean;
-        hasInferredSelf?: true;
     }
 
     /* @internal */
@@ -4178,8 +4176,7 @@ namespace ts {
         inferences: InferenceInfo[];        // Inferences made for each type parameter
         flags: InferenceFlags;              // Inference flags
         compareTypes: TypeComparer;         // Type comparer function
-        providingContextualTypes?: boolean;
-        mappingNoInferences?: boolean;
+        useEmptyObjectForNoInference?: boolean;
     }
 
     /* @internal */

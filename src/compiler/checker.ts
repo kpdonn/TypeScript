@@ -373,7 +373,6 @@ namespace ts {
         const keyofConstraintType = keyofStringsOnly ? stringType : stringNumberSymbolType;
 
         const emptyObjectType = createAnonymousType(undefined, emptySymbols, emptyArray, emptyArray, undefined, undefined);
-        const noInferenceType = createAnonymousType(undefined, emptySymbols, emptyArray, emptyArray, undefined, undefined);
 
         const emptyTypeLiteralSymbol = createSymbol(SymbolFlags.TypeLiteral, InternalSymbolName.Type);
         emptyTypeLiteralSymbol.members = createSymbolTable();
@@ -9223,7 +9222,7 @@ namespace ts {
             const skippedPrivateMembers = createUnderscoreEscapedMap<boolean>();
             let stringIndexInfo: IndexInfo | undefined;
             let numberIndexInfo: IndexInfo | undefined;
-            if (left === emptyObjectType || left === noInferenceType) {
+            if (left === emptyObjectType) {
                 // for the first spread element, left === emptyObjectType, so take the right's string indexer
                 stringIndexInfo = getIndexInfoOfType(right, IndexKind.String);
                 numberIndexInfo = getIndexInfoOfType(right, IndexKind.Number);
@@ -12375,13 +12374,12 @@ namespace ts {
                         const inference = getInferredType(context, i);
 
                         if (inferences[i].inferredType === inferences[i].typeParameter) {
-                            inferences[i].hasInferredSelf = true;
                             inferences[i].inferredType = undefined;
                         }
 
                         if (!inferences[i].inferredType) {
                             inferences[i].isFixed = false;
-                            return context.providingContextualTypes || (context.mappingNoInferences && inferences[i].seenNoInferenceType) ? noInferenceType : inference;
+                            return context.useEmptyObjectForNoInference ? emptyObjectType : inference;
                         }
 
                         return inference;
@@ -12400,7 +12398,6 @@ namespace ts {
                 priority: undefined,
                 topLevel: true,
                 isFixed: false,
-                seenNoInferenceType: false,
             };
         }
 
@@ -12413,7 +12410,6 @@ namespace ts {
                 priority: inference.priority,
                 topLevel: inference.topLevel,
                 isFixed: inference.isFixed,
-                seenNoInferenceType: inference.seenNoInferenceType,
             };
         }
 
@@ -12603,10 +12599,7 @@ namespace ts {
                     }
                     const inference = getInferenceInfoForType(target);
                     if (inference) {
-                        if (source === noInferenceType) {
-                            inference.seenNoInferenceType = true;
-                        }
-                        else if (!inference.isFixed) {
+                        if (!inference.isFixed) {
                             if (inference.priority === undefined || priority < inference.priority) {
                                 inference.candidates = undefined;
                                 inference.contraCandidates = undefined;
@@ -16164,7 +16157,7 @@ namespace ts {
                 }
             }
 
-            if (spread !== emptyObjectType && spread !== noInferenceType) {
+            if (spread !== emptyObjectType) {
                 if (propertiesArray.length > 0) {
                     spread = getSpreadType(spread, createObjectLiteralType(), node.symbol, propagatedFlags, /*objectFlags*/ 0);
                 }
@@ -16353,10 +16346,10 @@ namespace ts {
             if (hasSpreadAnyType) {
                 return anyType;
             }
-            if (typeToIntersect && spread !== emptyObjectType && spread !== noInferenceType) {
+            if (typeToIntersect && spread !== emptyObjectType) {
                 return getIntersectionType([typeToIntersect, spread]);
             }
-            return typeToIntersect || (spread === emptyObjectType || spread === noInferenceType ? createJsxAttributesType() : spread);
+            return typeToIntersect || (spread === emptyObjectType ? createJsxAttributesType() : spread);
 
             /**
              * Create anonymous type from given attributes symbol table.
@@ -17922,7 +17915,6 @@ namespace ts {
                 if (!inference.isFixed) {
                     inference.inferredType = undefined;
                 }
-                inference.seenNoInferenceType = false;
             }
 
             // If a contextual type is available, infer from that type to the return type of the call expression. For
@@ -18097,9 +18089,9 @@ namespace ts {
                     if (excludeArgument && excludeArgument[i] && signature.inferenceContext) {
                         // there could be an uninferred type parameter here (that will be inferred on the next pass when this argument isn't excluded.)
                         // so this code makes the inference context replace any uninferred types with noInferenceType so the assignment check below doesn't fail.
-                        signature.inferenceContext.providingContextualTypes = true;
+                        signature.inferenceContext.useEmptyObjectForNoInference = true;
                         paramType = instantiateType(paramType, signature.inferenceContext);
-                        signature.inferenceContext.providingContextualTypes = false;
+                        signature.inferenceContext.useEmptyObjectForNoInference = false;
                     }
                     // If the effective argument type is undefined, there is no synthetic type for the argument.
                     // In that case, we should check the argument.
