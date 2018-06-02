@@ -5222,12 +5222,17 @@ namespace ts {
                     case SyntaxKind.JSDocCallbackTag:
                     case SyntaxKind.MappedType:
                     case SyntaxKind.ConditionalType:
-                        const outerTypeParameters = getOuterTypeParameters(node, includeThisTypes);
+                        let outerTypeParameters = getOuterTypeParameters(node, includeThisTypes);
                         if (node.kind === SyntaxKind.MappedType) {
                             return append(outerTypeParameters, getDeclaredTypeOfTypeParameter(getSymbolOfNode((<MappedTypeNode>node).typeParameter)));
                         }
                         else if (node.kind === SyntaxKind.ConditionalType) {
                             return concatenate(outerTypeParameters, getInferTypeParameters(<ConditionalTypeNode>node));
+                        }
+                        else if ((node.kind === SyntaxKind.FunctionExpression || node.kind === SyntaxKind.ArrowFunction) && node.contextualTypeParameters) {
+                            for (const tp of node.contextualTypeParameters) {
+                                outerTypeParameters = appendIfUnique(outerTypeParameters, tp);
+                            }
                         }
                         const outerAndOwnTypeParameters = appendTypeParameters(outerTypeParameters, getEffectiveTypeParameterDeclarations(<DeclarationWithTypeParameters>node));
                         const thisType = includeThisTypes &&
@@ -19483,7 +19488,7 @@ namespace ts {
             }
         }
 
-        function assignContextualParameterTypes(signature: Signature, context: Signature) {
+        function assignContextualParameterTypes(signature: Signature, context: Signature, node: Node) {
             signature.typeParameters = context.typeParameters;
             if (context.thisParameter) {
                 const parameter = signature.thisParameter;
@@ -19501,6 +19506,9 @@ namespace ts {
                     const contextualParameterType = getTypeAtPosition(context, i);
                     const originalContextualParameterType = signature.isContextuallyTyped ? getTypeAtPosition(context.target!, i) : undefined;
                     assignTypeToParameterAndFixTypeParameters(parameter, contextualParameterType, contextualParameterType === originalContextualParameterType);
+                    for (const tp of getFreeTypeParameters(contextualParameterType)) {
+                        node.contextualTypeParameters = appendIfUnique(node.contextualTypeParameters, tp);
+                    }
                 }
             }
             if (signature.hasRestParameter && isRestParameterIndex(context, signature.parameters.length - 1)) {
@@ -19510,6 +19518,9 @@ namespace ts {
                     const contextualParameterType = getTypeOfSymbol(last(context.parameters));
                     const originalContextualParameterType = signature.isContextuallyTyped ? getTypeOfSymbol(last(context.target!.parameters)) : undefined;
                     assignTypeToParameterAndFixTypeParameters(parameter, contextualParameterType, contextualParameterType === originalContextualParameterType);
+                    for (const tp of getFreeTypeParameters(contextualParameterType)) {
+                        node.contextualTypeParameters = appendIfUnique(node.contextualTypeParameters, tp);
+                    }
                 }
             }
         }
@@ -19853,10 +19864,10 @@ namespace ts {
                                 contextualSignature : instantiateSignature(contextualSignature, contextualMapper);
                             if (isInferenceContext(contextualMapper)) {
                                 signature.isContextuallyTyped = true;
-                                assignContextualParameterTypes(signature, instantiatedContextualSignature);
+                                assignContextualParameterTypes(signature, instantiatedContextualSignature, node);
                             }
                             else {
-                                assignContextualParameterTypes(signature, instantiatedContextualSignature);
+                                assignContextualParameterTypes(signature, instantiatedContextualSignature, node);
                             }
                         }
                         if (!getEffectiveReturnTypeNode(node) && !signature.resolvedReturnType) {

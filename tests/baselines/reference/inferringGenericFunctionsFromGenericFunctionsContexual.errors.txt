@@ -1,16 +1,7 @@
 tests/cases/compiler/inferringGenericFunctionsFromGenericFunctionsContexual.ts(8,23): error TS7006: Parameter 'x' implicitly has an 'any' type.
-tests/cases/compiler/inferringGenericFunctionsFromGenericFunctionsContexual.ts(43,11): error TS2322: Type '<A>(x: A) => { boxed: A[]; }' is not assignable to type '<U>(u: U) => { boxed: U[]; }'.
-  Type '{ boxed: A[]; }' is not assignable to type '{ boxed: U[]; }'.
-    Types of property 'boxed' are incompatible.
-      Type 'A[]' is not assignable to type 'U[]'.
-        Type 'A' is not assignable to type 'U'.
-tests/cases/compiler/inferringGenericFunctionsFromGenericFunctionsContexual.ts(45,11): error TS2322: Type '{ boxed: A[]; }' is not assignable to type '{ boxed: string[]; }'.
-  Types of property 'boxed' are incompatible.
-    Type 'A[]' is not assignable to type 'string[]'.
-      Type 'A' is not assignable to type 'string'.
 
 
-==== tests/cases/compiler/inferringGenericFunctionsFromGenericFunctionsContexual.ts (3 errors) ====
+==== tests/cases/compiler/inferringGenericFunctionsFromGenericFunctionsContexual.ts (1 errors) ====
     export {}
     
     declare function identity1<T, U>(f: (t: T) => U): (t2: T) => U
@@ -56,18 +47,7 @@ tests/cases/compiler/inferringGenericFunctionsFromGenericFunctionsContexual.ts(4
     {
         let composed4 = compose(x => [x], x2 => ({ boxed: x2 }));
         const expectedComposed4: <U>(u: U) => {boxed: U[]} = composed4;
-              ~~~~~~~~~~~~~~~~~
-!!! error TS2322: Type '<A>(x: A) => { boxed: A[]; }' is not assignable to type '<U>(u: U) => { boxed: U[]; }'.
-!!! error TS2322:   Type '{ boxed: A[]; }' is not assignable to type '{ boxed: U[]; }'.
-!!! error TS2322:     Types of property 'boxed' are incompatible.
-!!! error TS2322:       Type 'A[]' is not assignable to type 'U[]'.
-!!! error TS2322:         Type 'A' is not assignable to type 'U'.
         const callComposed4 = composed4("test");
         const expectedCallComposed4 : {boxed: string[]} = callComposed4;
-              ~~~~~~~~~~~~~~~~~~~~~
-!!! error TS2322: Type '{ boxed: A[]; }' is not assignable to type '{ boxed: string[]; }'.
-!!! error TS2322:   Types of property 'boxed' are incompatible.
-!!! error TS2322:     Type 'A[]' is not assignable to type 'string[]'.
-!!! error TS2322:       Type 'A' is not assignable to type 'string'.
     }
     

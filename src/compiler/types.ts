@@ -588,6 +588,8 @@ namespace ts {
         /* @internal */ emitNode?: EmitNode;                  // Associated EmitNode (initialized by transforms)
         /* @internal */ contextualType?: Type;                // Used to temporarily assign a contextual type during overload resolution
         /* @internal */ contextualMapper?: TypeMapper;        // Mapper for contextual type
+        /* @internal */ contextualTypeParameters?: TypeParameter[]; // Type parameters from contextual type. Not temporary like contextualType and contextualMapper.
+
     }
 
     export interface JSDocContainer {

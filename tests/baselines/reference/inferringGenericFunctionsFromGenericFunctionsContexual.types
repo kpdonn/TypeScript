@@ -200,14 +200,14 @@ declare function compose<A, B, C>(f: (x: A) => B, g: (y: B) => C): (x: A) => C;
 >composed4 : <A>(x: A) => { boxed: A[]; }
 
     const callComposed4 = composed4("test");
->callComposed4 : { boxed: A[]; }
->composed4("test") : { boxed: A[]; }
+>callComposed4 : { boxed: string[]; }
+>composed4("test") : { boxed: string[]; }
 >composed4 : <A>(x: A) => { boxed: A[]; }
 >"test" : "test"
 
     const expectedCallComposed4 : {boxed: string[]} = callComposed4;
 >expectedCallComposed4 : { boxed: string[]; }
 >boxed : string[]
->callComposed4 : { boxed: A[]; }
+>callComposed4 : { boxed: string[]; }
 }
 
