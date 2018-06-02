@@ -7517,9 +7517,7 @@ namespace ts {
         }
 
         function createSignatureInstantiation(signature: Signature, typeArguments: Type[]): Signature {
-            const newSignature = instantiateSignature(signature, createSignatureTypeMapper(signature, typeArguments), /*eraseTypeParameters*/ true);
-            newSignature.typeArguments = typeArguments;
-            return newSignature;
+            return instantiateSignature(signature, createSignatureTypeMapper(signature, typeArguments), /*eraseTypeParameters*/ true);
         }
         function createSignatureTypeMapper(signature: Signature, typeArguments: Type[]): TypeMapper {
             return createTypeMapper(signature.typeParameters!, typeArguments);

@@ -4101,8 +4101,6 @@ namespace ts {
         /* @internal */
         instantiations?: Map<Signature>;    // Generic signature instantiation cache
         /* @internal */
-        typeArguments?: Type[];
-        /* @internal */
         inferenceContext?: InferenceContext;
         /* @internal */
         isContextuallyTyped?: boolean;
