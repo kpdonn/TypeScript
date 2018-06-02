@@ -1096,6 +1096,9 @@ namespace ts {
         kind: SyntaxKind.ThisType;
     }
 
+    /* @internal */
+    export type MaybeContextSensitive = Expression | MethodDeclaration | ObjectLiteralElementLike | JsxAttributeLike;
+
     export type FunctionOrConstructorTypeNode = FunctionTypeNode | ConstructorTypeNode;
 
     export interface FunctionTypeNode extends TypeNode, SignatureDeclarationBase {
@@ -3642,6 +3645,7 @@ namespace ts {
         AssignmentsMarked                   = 0x00400000,  // Parameter assignments have been marked
         ClassWithConstructorReference       = 0x00800000,  // Class that contains a binding to its constructor inside of the class body.
         ConstructorReferenceInClass         = 0x01000000,  // Binding to a class constructor inside of the class's body.
+        ContextReset                        = 0x02000000,  // Contextual types were previously set but have been cleared. This means the node does not need to be added to deferredNodes again.
     }
 
     /* @internal */

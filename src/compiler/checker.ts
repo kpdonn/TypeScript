@@ -9677,12 +9677,13 @@ namespace ts {
                         }
                     }
                 }
+                const ownTypeParameters = declaration.contextualTypeParameters;
                 let outerTypeParameters = getOuterTypeParameters(declaration, /*includeThisTypes*/ true);
                 if (isJavaScriptConstructor(declaration)) {
                     const templateTagParameters = getTypeParametersFromDeclaration(declaration as DeclarationWithTypeParameters);
                     outerTypeParameters = addRange(outerTypeParameters, templateTagParameters);
                 }
-                typeParameters = outerTypeParameters || emptyArray;
+                typeParameters = concatenate(outerTypeParameters, ownTypeParameters) || emptyArray;
                 typeParameters = symbol.flags & SymbolFlags.TypeLiteral && !type.aliasTypeArguments ?
                     filter(typeParameters, tp => isTypeParameterPossiblyReferenced(tp, declaration)) :
                     typeParameters;
@@ -9940,6 +9941,62 @@ namespace ts {
         function instantiateIndexInfo(info: IndexInfo | undefined, mapper: TypeMapper): IndexInfo | undefined {
             return info && createIndexInfo(instantiateType(info.type, mapper), info.isReadonly, info.declaration);
         }
+
+
+        function visitContextSensitive(node: MaybeContextSensitive, visitor: (node: Node) => void): void {
+            if (!isContextSensitive(node)) {
+                return;
+            }
+            switch (node.kind) {
+                case SyntaxKind.FunctionExpression:
+                case SyntaxKind.ArrowFunction:
+                case SyntaxKind.MethodDeclaration:
+                    if (isContextSensitiveFunctionLikeDeclaration(<FunctionExpression | ArrowFunction | MethodDeclaration>node)) {
+                        visitor(node);
+                    }
+                    return;
+                case SyntaxKind.ObjectLiteralExpression:
+                    return forEach((<ObjectLiteralExpression>node).properties, n => visitContextSensitive(n, visitor));
+                case SyntaxKind.ArrayLiteralExpression:
+                    return forEach((<ArrayLiteralExpression>node).elements, n => visitContextSensitive(n, visitor));
+                case SyntaxKind.ConditionalExpression:
+                    visitContextSensitive((<ConditionalExpression>node).whenTrue, visitor);
+                    visitContextSensitive((<ConditionalExpression>node).whenFalse, visitor);
+                    return;
+                case SyntaxKind.BinaryExpression:
+                    if ((<BinaryExpression>node).operatorToken.kind === SyntaxKind.BarBarToken) {
+                        visitContextSensitive((<BinaryExpression>node).left, visitor);
+                        visitContextSensitive((<BinaryExpression>node).right, visitor);
+                    }
+                    return;
+                case SyntaxKind.PropertyAssignment:
+                    visitContextSensitive((<PropertyAssignment>node).initializer, visitor);
+                    return;
+                case SyntaxKind.ParenthesizedExpression:
+                    visitContextSensitive((<ParenthesizedExpression>node).expression, visitor);
+                    return;
+                case SyntaxKind.JsxAttributes:
+                    return forEach((<JsxAttributes>node).properties, n => visitContextSensitive(n, visitor));
+                case SyntaxKind.JsxAttribute: {
+                    // If there is no initializer, JSX attribute has a boolean value of true which is not context sensitive.
+                    const { initializer } = node as JsxAttribute;
+                    if (!!initializer) {
+                        visitContextSensitive(initializer, visitor);
+                    }
+                    return;
+                }
+                case SyntaxKind.JsxExpression: {
+                    // It is possible to that node.expression is undefined (e.g <div x={} />)
+                    const { expression } = node as JsxExpression;
+                    if (!!expression) {
+                        visitContextSensitive(expression, visitor);
+                    }
+                    return;
+                }
+            }
+            return;
+        }
+
 
         // Returns true if the given expression contains (at any level of nesting) a function or arrow expression
         // that is subject to contextual typing.
@@ -12989,24 +13046,21 @@ namespace ts {
                         }
                     }
                 }
-                else if (filter(getFreeTypeParameters(inferredType), tp => tp !== inference.typeParameter && contains(context.typeParameters, tp)).length) {
+                else if (inferredType !== inference.typeParameter && !!filter(getFreeTypeParameters(inferredType), tp => contains(context.typeParameters, tp)).length) {
                     inference.inferredType = neverType;
                     inferredType = instantiateType(inferredType, context);
                 }
                 inference.inferredType = inferredType;
 
-                const constraint = getConstraintOfTypeParameter(inference.typeParameter);
-                if (constraint) {
-                    const instantiatedConstraint = instantiateType(constraint, context);
-                    if (inferredType) {
+                if (inferredType && inferredType !== inference.typeParameter) {
+                    const constraint = getConstraintOfTypeParameter(inference.typeParameter);
+                    if (constraint) {
+                        const instantiatedConstraint = instantiateType(constraint, context);
                         if (!context.compareTypes(inferredType, getTypeWithThisArgument(instantiatedConstraint, inferredType))) {
                             inference.inferredType = inferredType = instantiatedConstraint;
                             return instantiatedConstraint;
                         }
-                        return inferredType;
                     }
-                    inference.inferredType = inferredType = instantiatedConstraint;
-                    return instantiatedConstraint;
                 }
             }
 
@@ -18100,7 +18154,10 @@ namespace ts {
                     // If one or more arguments are still excluded (as indicated by a non-null excludeArgument parameter),
                     // we obtain the regular type of any object literal arguments because we may not have inferred complete
                     // parameter types yet and therefore excess property checks may yield false positives (see #17041).
-                    const checkArgType = excludeArgument ? getRegularTypeOfObjectLiteral(argType) : argType;
+                    let checkArgType = excludeArgument ? getRegularTypeOfObjectLiteral(argType) : argType;
+                    if (arg && arg.contextualTypeParameters && signature.mapper) {
+                        checkArgType = instantiateType(checkArgType, createTypeMapper(arg.contextualTypeParameters, map(arg.contextualTypeParameters, signature.mapper)));
+                    }
                     // Use argument expression as error location when reporting errors
                     const errorNode = reportErrors ? getEffectiveArgumentErrorNode(node, i, arg) : undefined;
                     if (!checkTypeRelatedTo(checkArgType, paramType, relation, errorNode, headMessage)) {
@@ -18501,6 +18558,8 @@ namespace ts {
                     }
                 }
             }
+            const originalExcludeArgument = excludeArgument ? excludeArgument.slice() : undefined;
+            const originalExcludeCount = excludeCount;
 
             // The following variables are captured and modified by calls to chooseOverload.
             // If overload resolution or type argument inference fails, we want to report the
@@ -18671,6 +18730,9 @@ namespace ts {
                     if (!hasCorrectArity(node, args!, originalCandidate, signatureHelpTrailingComma)) {
                         continue;
                     }
+                    if (candidateIndex > 0) {
+                        resetContextualArguments();
+                    }
 
                     let candidate: Signature;
                     const inferenceContext = originalCandidate.typeParameters ?
@@ -18719,6 +18781,49 @@ namespace ts {
                 }
 
                 return undefined;
+            }
+
+            function resetContextualArguments() {
+                if (!isDecorator && !isSingleNonGenericCandidate && originalExcludeArgument) {
+                    const oldExcludeArgument = excludeArgument;
+                    noop(oldExcludeArgument);
+                    excludeArgument = originalExcludeArgument.slice();
+                    excludeCount = originalExcludeCount;
+                    for (let i = isTaggedTemplate ? 1 : 0; i < args!.length; i++) {
+                        visitContextSensitive(args![i], visit);
+                    }
+                }
+
+                function visit(contextSensitiveFunction: FunctionExpression | ArrowFunction | MethodDeclaration) {
+                    const nodeLinks = getNodeLinks(contextSensitiveFunction);
+
+                    if (nodeLinks.flags & NodeCheckFlags.ContextChecked) {
+                        const functionSymbol = getMergedSymbol(contextSensitiveFunction.symbol);
+                        const symbolLinks = getSymbolLinks(functionSymbol);
+                        const oldType = symbolLinks.type;
+                        Debug.assertDefined(oldType);
+                        const oldSignature = getSignaturesOfType(oldType!, SignatureKind.Call)[0];
+                        for (const p of oldSignature.parameters) {
+                            if (isTransientSymbol(p) || !getEffectiveTypeAnnotationNode(p.valueDeclaration)) {
+                                getSymbolLinks(p).outerTypeParameters = undefined;
+                                getSymbolLinks(p).type = undefined;
+                            }
+                        }
+                        if (!getEffectiveReturnTypeNode(contextSensitiveFunction)) {
+                            const oldReturnType = oldSignature.resolvedReturnType;
+                            if (oldReturnType) {
+                                getSymbolLinks(oldReturnType.symbol).outerTypeParameters = undefined;
+                            }
+                            oldSignature.resolvedReturnType = undefined;
+                        }
+                        symbolLinks.type = undefined;
+                        symbolLinks.outerTypeParameters = undefined;
+                        contextSensitiveFunction.contextualTypeParameters = undefined;
+                        nodeLinks.flags &= ~NodeCheckFlags.ContextChecked;
+                        nodeLinks.flags |= NodeCheckFlags.ContextReset;
+                    }
+                }
+
             }
         }
 
@@ -19870,7 +19975,9 @@ namespace ts {
                         }
                     }
                     checkSignatureDeclaration(node);
-                    checkNodeDeferred(node);
+                    if (!(links.flags & NodeCheckFlags.ContextReset)) {
+                        checkNodeDeferred(node);
+                    }
                 }
             }
 
