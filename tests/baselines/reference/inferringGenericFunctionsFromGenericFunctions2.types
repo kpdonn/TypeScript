@@ -1672,11 +1672,11 @@ const f7 = compose(id, x => String(x)) // (a: {}) => string
 >compose(id, x => String(x)) : <A>(a: A) => string
 >compose : <A, B, C>(f: (b: B) => C, g: (a: A) => B) => (a: A) => C
 >id : <I>(x: I) => I
->x => String(x) : (x: {}) => string
->x : {}
+>x => String(x) : (x: A) => string
+>x : A
 >String(x) : string
 >String : StringConstructor
->x : {}
+>x : A
 
 declare function h<R>(f: (x: number) => R): R;
 >h : <R>(f: (x: number) => R) => R

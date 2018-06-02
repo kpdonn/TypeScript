@@ -18096,13 +18096,6 @@ namespace ts {
                         paramType = instantiateType(paramType, signature.inferenceContext);
                         signature.inferenceContext.providingContextualTypes = false;
                     }
-                    else if (signature.inferenceContext) {
-                        // map all type parameters that have seen a noInferenceType but nothing else to no inference type.
-                        // it might be safe just to do the excludeArgument logic always instead of this very similar logic.
-                        signature.inferenceContext.mappingNoInferences = true;
-                        paramType = instantiateType(paramType, signature.inferenceContext);
-                        signature.inferenceContext.mappingNoInferences = false;
-                    }
                     // If the effective argument type is undefined, there is no synthetic type for the argument.
                     // In that case, we should check the argument.
                     const argType = getEffectiveArgumentType(node, i) ||
@@ -19506,7 +19499,8 @@ namespace ts {
                 const parameter = signature.parameters[i];
                 if (!getEffectiveTypeAnnotationNode(<ParameterDeclaration>parameter.valueDeclaration)) {
                     const contextualParameterType = getTypeAtPosition(context, i);
-                    assignTypeToParameterAndFixTypeParameters(parameter, contextualParameterType);
+                    const originalContextualParameterType = signature.isContextuallyTyped ? getTypeAtPosition(context.target!, i) : undefined;
+                    assignTypeToParameterAndFixTypeParameters(parameter, contextualParameterType, contextualParameterType === originalContextualParameterType);
                 }
             }
             if (signature.hasRestParameter && isRestParameterIndex(context, signature.parameters.length - 1)) {
@@ -19514,7 +19508,8 @@ namespace ts {
                 const parameter = last(signature.parameters);
                 if (isTransientSymbol(parameter) || !getEffectiveTypeAnnotationNode(<ParameterDeclaration>parameter.valueDeclaration)) {
                     const contextualParameterType = getTypeOfSymbol(last(context.parameters));
-                    assignTypeToParameterAndFixTypeParameters(parameter, contextualParameterType);
+                    const originalContextualParameterType = signature.isContextuallyTyped ? getTypeOfSymbol(last(context.target!.parameters)) : undefined;
+                    assignTypeToParameterAndFixTypeParameters(parameter, contextualParameterType, contextualParameterType === originalContextualParameterType);
                 }
             }
         }
@@ -19534,14 +19529,14 @@ namespace ts {
             }
         }
 
-        function assignTypeToParameterAndFixTypeParameters(parameter: Symbol, contextualType: Type) {
+        function assignTypeToParameterAndFixTypeParameters(parameter: Symbol, contextualType: Type, noInference?: boolean) {
             const links = getSymbolLinks(parameter);
             if (!links.type) {
                 links.type = contextualType;
                 const decl = parameter.valueDeclaration as ParameterDeclaration;
                 if (decl.name.kind !== SyntaxKind.Identifier) {
                     // if inference didn't come up with anything but {}, fall back to the binding pattern if present.
-                    if (links.type === noInferenceType || links.type === emptyObjectType) {
+                    if (links.type === emptyObjectType || (links.type.flags & TypeFlags.TypeParameter && noInference)) {
                         links.type = getTypeFromBindingPattern(decl.name);
                     }
                     assignBindingElementTypes(decl.name);
@@ -19858,9 +19853,7 @@ namespace ts {
                                 contextualSignature : instantiateSignature(contextualSignature, contextualMapper);
                             if (isInferenceContext(contextualMapper)) {
                                 signature.isContextuallyTyped = true;
-                                contextualMapper.providingContextualTypes = true;
                                 assignContextualParameterTypes(signature, instantiatedContextualSignature);
-                                contextualMapper.providingContextualTypes = false;
                             }
                             else {
                                 assignContextualParameterTypes(signature, instantiatedContextualSignature);
