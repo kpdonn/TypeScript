@@ -12661,11 +12661,29 @@ namespace ts {
                     inferFromTypes(getTrueTypeFromConditionalType(<ConditionalType>source), getTrueTypeFromConditionalType(<ConditionalType>target));
                     inferFromTypes(getFalseTypeFromConditionalType(<ConditionalType>source), getFalseTypeFromConditionalType(<ConditionalType>target));
                 }
-                else if (target.flags & TypeFlags.UnionOrIntersection) {
-                    const targetTypes = (<UnionOrIntersectionType>target).types;
+                else if (target.flags & TypeFlags.Union) {
+                    const targetTypes = (<UnionType>target).types;
+                    // Make regular inference to each type in union that isn't a type variable
+                    // or make a secondary inference to the source for every type variable.
+                    // If a better inference comes along it will overwrite this one, and if one doesn't then
+                    // a broad inference is better than no inference at all.
+                    for (const t of targetTypes) {
+                        if (getInferenceInfoForType(t)) {
+                            const savePriority = priority;
+                            priority |= InferencePriority.NakedTypeVariable;
+                            inferFromTypes(source, t);
+                            priority = savePriority;
+                        }
+                        else {
+                            inferFromTypes(source, t);
+                        }
+                    }
+                }
+                else if (target.flags & TypeFlags.Intersection) {
+                    const targetTypes = (<IntersectionType>target).types;
                     let typeVariableCount = 0;
                     let typeVariable: TypeParameter | IndexedAccessType | undefined;
-                    // First infer to each type in union or intersection that isn't a type variable
+                    // First infer to each type in intersection that isn't a type variable
                     for (const t of targetTypes) {
                         if (getInferenceInfoForType(t)) {
                             typeVariable = <InstantiableType>t;

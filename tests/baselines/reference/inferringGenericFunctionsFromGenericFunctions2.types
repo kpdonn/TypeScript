@@ -1934,7 +1934,7 @@ declare function uParam43<X>(y: string|X): X;
 >X : X
 
 union4(uParam41, 4); // A = number, B = string, C = void
->union4(uParam41, 4) : any
+>union4(uParam41, 4) : void
 >union4 : <A, B, C>(f: (b: A | B) => C, a: A) => C
 >uParam41 : (y: string | number) => void
 >4 : 4
