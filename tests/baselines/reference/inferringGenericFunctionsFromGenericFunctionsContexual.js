@@ -5,18 +5,13 @@ declare function identity1<T, U>(f: (t: T) => U): (t2: T) => U
 const id1 = identity1(x => x)
 
 
-declare function identity2<T>(f: T): T
+declare function identity2<T extends number, U>(f: (t: T) => U): (t2: T) => U
 const id2 = identity2(x => x)
 
 
-declare function identity3<T extends number, U>(f: (t: T) => U): (t2: T) => U
-const id3 = identity3(x => x)
-
-
-
-
-
-declare function compose<A, B, C>(f: (x: A) => B, g: (y: B) => C): (x: A) => C;
+// compose<D, E extends string, F> is just something I put in to make sure the contextual types handle multiple signatures.
+declare function compose<D, E extends string, F>(f: (d: D) => E, g: (e: E) => F): (d2: D) => [D, F];
+declare function compose<A, B, C>(f: (a1: A) => B, g: (b1: B) => C): (a2: A) => C;
 
 {
     let composed1 = compose(x => x, x2 => x2)
@@ -46,13 +41,19 @@ declare function compose<A, B, C>(f: (x: A) => B, g: (y: B) => C): (x: A) => C;
     const expectedCallComposed4 : {boxed: string[]} = callComposed4;
 }
 
+{
+    let composed5 = compose(x => "" + x, x2 => ({ boxed: x2 }));
+    const expectedComposed5: <U>(u: U) => [U, {boxed: string}] = composed5;
+    const callComposed5 = composed5(123456);
+    const expectedCallComposed5 : [number, {boxed: string}] = callComposed5;
+}
+
 
 //// [inferringGenericFunctionsFromGenericFunctionsContexual.js]
 "use strict";
 exports.__esModule = true;
 var id1 = identity1(function (x) { return x; });
 var id2 = identity2(function (x) { return x; });
-var id3 = identity3(function (x) { return x; });
 {
     var composed1 = compose(function (x) { return x; }, function (x2) { return x2; });
     var expectedComposed1 = composed1;
@@ -76,4 +77,10 @@ var id3 = identity3(function (x) { return x; });
     var expectedComposed4 = composed4;
     var callComposed4 = composed4("test");
     var expectedCallComposed4 = callComposed4;
+}
+{
+    var composed5 = compose(function (x) { return "" + x; }, function (x2) { return ({ boxed: x2 }); });
+    var expectedComposed5 = composed5;
+    var callComposed5 = composed5(123456);
+    var expectedCallComposed5 = callComposed5;
 }
